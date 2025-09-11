@@ -1,6 +1,6 @@
 # UET Graduation Thesis Template
 
-Latex template for graduation thesis at University of Engineering and Technology, Vietnam National University.
+Latex and Word template for graduation thesis at University of Engineering and Technology, Vietnam National University.
 
 
 ### Features
@@ -10,9 +10,10 @@ Latex template for graduation thesis at University of Engineering and Technology
 - List of terms.
 - Citing references.
 - Support for Vietnamese language.
+- Word template (.docx).
 
 
-### How to use
+### How to use (LaTeX)
 1. Download zip file from Github Repository.
 2. Go to [Overleaf](https://www.overleaf.com/) and create a new project.
 3. Upload the downloaded zip file to your Overleaf project.
