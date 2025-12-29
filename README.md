@@ -1,6 +1,8 @@
 # UET Graduation Thesis Template
 
-LaTeX template for graduation thesis at University of Engineering and Technology, Vietnam National University — now with **Obsidian + Markdown** workflow!
+A **Markdown-first** writing workflow for your graduation thesis at University of Engineering and Technology, Vietnam National University.
+
+> ✍️ Write in Markdown with **Obsidian** → 🔄 Convert with **Pandoc** → 📄 Output professional **LaTeX/PDF**
 
 ## ✨ Features
 
@@ -134,6 +136,14 @@ pdflatex main.tex
 2. Export library: `File → Export Library → Better BibTeX`
 3. Save as `references.bib` in thesis folder
 4. In Markdown, cite as: `[@AuthorYear]`
+
+## 🙏 Special Thanks
+
+This repository is forked from the amazing work by **[@huythai855](https://github.com/huythai855)**!
+
+If you find this template useful, please consider giving a ⭐ to the **original repository** to support the author:
+
+👉 **[huythai855/uet-graduation-thesis-template](https://github.com/huythai855/uet-graduation-thesis-template)**
 
 ## 🔗 References
 
