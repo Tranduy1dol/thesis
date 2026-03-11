@@ -1,7 +1,7 @@
 ---
-title: "Tên chương 5"
+title: Cài đặt và đánh giá
 chapter: 5
-toc-title: "TÊN CHƯƠNG 5"
+toc-title: CÀI ĐẶT VÀ ĐÁNH GIÁ
 ---
 
 # Tên chương 5

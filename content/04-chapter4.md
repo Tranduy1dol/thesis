@@ -1,7 +1,7 @@
 ---
-title: "Tên chương 4"
+title: Sơ đồ chữ ký
 chapter: 4
-toc-title: "TÊN CHƯƠNG 4"
+toc-title: SƠ ĐỒ CHỮ KÝ
 ---
 
 # Tên chương 4
