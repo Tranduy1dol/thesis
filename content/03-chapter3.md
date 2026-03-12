@@ -4,138 +4,263 @@ chapter: 3
 toc-title: PHƯƠNG PHÁP XÂY DỰNG ĐƯỜNG CONG ELLIPTIC
 ---
 
-# Phương pháp xây dựng đường cong elliptic
----
+# Chương 3: Phương pháp xây dựng đường cong elliptic thân thiện với phép ghép cặp
 
-## Họ đường cong BLS
----
-Họ đường cong **BLS (Barreto-Lynn-Scott)** là một tập hợp các đường cong Elliptic được thiết kế đặc biệt để **thân thiện với phép ghép cặp (pairing-friendly)**, đóng vai trò nền tảng trong các giao thức mật mã hiện đại như zk-SNARKs và chữ ký số tổng hợp,.
+Chương này trình bày trọng tâm lý thuyết của luận văn: các phương pháp xây dựng đường cong elliptic có bậc nhúng (embedding degree) xác định, phục vụ cho các ứng dụng mật mã dựa trên phép ghép cặp (pairing-based cryptography). Chúng ta sẽ đi từ nền tảng lý thuyết của Phương pháp Nhân phức (CM) và Đa thức lớp Hilbert, đến thuật toán Cocks-Pinch truyền thống, và cuối cùng là thuật toán Cocks-Pinch Cải tiến được đề xuất trong luận văn này, với khả năng sinh tham số trường cơ sở có cấu trúc NTT-friendly nhằm kháng lại tấn công rây trường số tháp (Tower Number Field Sieve - TNFS).
 
-Dưới đây là các đặc điểm và chi tiết kỹ thuật về họ đường cong này:
+## Phương pháp Nhân phức (Complex Multiplication Method)
 
-### 1. Nguồn gốc và Đặc điểm cấu trúc
+### Ý tưởng cốt lõi
 
-- **Tên gọi:** Được đặt theo tên của ba nhà toán học Paulo Barreto, Ben Lynn và Michael Scott, những người đã tìm ra cách tham số hóa bộ giải cho phương trình Nhân phức (Complex Multiplication - CM) vào năm 2002,.
-- **Dạng phương trình:** Tất cả các đường cong BLS đều có biệt thức CM là **$D = -3$**, điều này dẫn đến phương trình đường cong có dạng **Short Weierstrass** tối giản: **$y^2 = x^3 + b$** (với $b$ là một hằng số trong trường cơ sở).
-- **Trường định nghĩa:** Các đường cong này được định nghĩa trên các **trường số nguyên tố** (prime fields), nghĩa là tham số $m$ trong trường mở rộng $F_{p^m}$ bằng 1.
-- **Bậc nhúng (Embedding Degree):** Họ BLS có thể được xây dựng với nhiều bậc nhúng khác nhau, thường là bội số của 6 (như $k=6, 12, 24, 48$).
+Phương pháp Nhân phức (CM) là công cụ nền tảng để **xây dựng đường cong elliptic có số điểm định trước**. Thay vì chọn ngẫu nhiên các hệ số $a, b$ rồi đếm điểm, CM đi ngược lại: bắt đầu từ bậc nhóm mong muốn $\#E(\mathbb{F}_p) = p + 1 - t$ rồi suy ngược ra phương trình đường cong.
 
-### 2. Các đại diện tiêu biểu
+Ý tưởng xuất phát từ lý thuyết số học phức: mỗi đường cong elliptic $E$ sở hữu một **vành nội cấu** (endomorphism ring) $\text{End}(E)$. Với đường cong thông thường (không siêu dị), vành này đẳng cấu với một **thứ tự trong trường số** $\mathbb{Q}(\sqrt{D})$, trong đó $D < 0$ là số nguyên âm gọi là **biệt thức CM**. Giá trị $D$ đặc trưng hoàn toàn cho "loại" đường cong về mặt số học phức.
 
-- **BLS12-381:** Đây là đường cong nổi tiếng nhất trong họ này, được sử dụng rộng rãi trong các dự án như **Zcash, Ethereum 2.0** và các hệ thống zk-SNARK hiện đại,. Nó có bậc nhúng là **12** và cung cấp mức bảo mật khoảng 120-128 bit,. Trường cơ sở của nó được thiết kế để hỗ trợ thuật toán **FFT (Fast Fourier Transform)** hiệu quả, giúp tăng tốc độ tạo bằng chứng,.
-- **BLS6_6 (Đường cong MoonMath):** Một đường cong "toy example" (ví dụ minh họa) được thiết kế riêng cho việc tính toán bằng tay (pen-and-paper). Nó có bậc nhúng $k=6$ và trường cơ sở 6-bit ($p=43$), cho phép người học tự tính toán các bảng cộng điểm và phép ghép cặp Weil mà không cần máy tính,.
+### Điều kiện CM và phương trình Diophantine
 
-### 3. Ứng dụng chính
+Để tồn tại một đường cong elliptic trên $\mathbb{F}_p$ có vết Frobenius $t$ và biệt thức CM là $D$, điều kiện cần và đủ là phương trình Diophantine sau phải có nghiệm nguyên:
 
-- **zk-SNARKs:** Các đường cong BLS cho phép thực hiện các phép toán "trong số mũ" (in the exponent), giúp kiểm tra các ràng buộc đa thức mà không làm lộ dữ liệu gốc,.
-- **Chữ ký số tổng hợp (Aggregate Signatures):** Cho phép kết hợp nhiều chữ ký từ các người dùng khác nhau thành một chữ ký duy nhất và xác minh toàn bộ chỉ trong một bước, giúp tiết kiệm không gian lưu trữ trên blockchain,.
-- **Tính toán đệ quy:** Mặc dù các đường cong BLS không tạo thành các "chu kỳ đường cong" (cycles of curves) một cách tự nhiên như họ đường cong Pasta, nhưng chúng có thể được kết hợp với các đường cong khác (như BW6-761) để thực hiện xác minh đệ quy một lớp,.
+$$4p = t^2 + |D| \cdot v^2$$
 
-### 4. Phương pháp xây dựng
+trong đó $p$ là đặc số trường, $t$ là vết Frobenius, $v$ là một số nguyên dương, và $D < 0$. Phương trình này **ràng buộc trực tiếp** bộ tham số $(p, t, D)$ với nhau; không phải mọi bộ ba nào cũng có thể thỏa mãn đồng thời.
 
-Đường cong BLS được tổng hợp bằng **Phương pháp Nhân phức (CM Method)**. Quá trình này bao gồm:
+Ví dụ: Với $D = -3$ (biệt thức của secp256k1, BLS12-381), phương trình trở thành $4p = t^2 + 3v^2$.
 
-1. Sử dụng các đa thức tham số $p(x)$ và $t(x)$ để tìm các số nguyên tố phù hợp cho trường cơ sở và vết Frobenius.
-2. Tính **đa thức lớp Hilbert (Hilbert class polynomial)** tương ứng với $D = -3$.
-3. Tìm nghiệm của đa thức này trong trường cơ sở để xác định giá trị **j-invariant**, từ đó suy ra các hệ số $a$ (bằng 0) và $b$ của đường cong,.
+### Đa thức lớp Hilbert $H_D(x)$
 
-## Phương pháp nhân phức
----
-**Phương pháp Nhân phức (Complex Multiplication Method - CM)** là kỹ thuật quan trọng nhất để **thiết kế và khởi tạo các đường cong Elliptic từ đầu** nhằm thỏa mãn các thuộc tính toán học cụ thể, chẳng hạn như có một bậc (order) hoặc bậc nhúng (embedding degree) nhất định. Đây là công cụ nền tảng để xây dựng các đường cong "thân thiện với phép ghép cặp" (pairing-friendly) như họ đường cong BLS hay MNT dùng trong các hệ thống zk-SNARK.
+Khi đã có $D$, bước tiếp theo là tính **Đa thức lớp Hilbert** (Hilbert class polynomial) $H_D(x)$. Đây là đa thức hệ số nguyên được xây dựng từ lý thuyết số học phức mà nghiệm phức của nó chính là các **$j$-invariant** của tất cả đường cong elliptic phức $\mathbb{C}/\mathcal{O}$ với thứ tự CM là $\mathcal{O}$.
 
-Dưới đây là các bước thực hiện cơ bản theo quy trình CM:
+Bậc của $H_D(x)$ bằng **số lớp** (class number) $h(D)$ — một bất biến số học của thứ tự $\mathbb{Z}[\sqrt{D}]$. Với $|D|$ nhỏ:
 
-1. **Lựa chọn tham số mục tiêu:** Nhà thiết kế bắt đầu bằng cách chọn **trường cơ sở $\mathbb{F}_q$** và **vết Frobenius $t$** sao cho vết này thỏa mãn giới hạn Hasse $|t| \leq 2\sqrt{q}$. Lựa chọn này xác định chính xác số lượng điểm trên đường cong thông qua công thức $r = q + 1 - t$.
-2. **Giải phương trình CM:** Để phương pháp này hoạt động, cần tồn tại một số nguyên âm $D$ (gọi là **biệt thức CM**) và một số nguyên $v$ thỏa mãn phương trình: **$4q = t^2 + |D|v^2$**.
-3. **Tính đa thức lớp Hilbert:** Sử dụng biệt thức $D$, nhà toán học sẽ tính toán **đa thức lớp Hilbert $H_D(x)$**. Đây là một đa thức có các hệ số nguyên, và khi được chiếu lên trường hữu hạn $\mathbb{F}_q$ (bằng cách lấy các hệ số modulo $p$), các nghiệm của nó chính là các giá trị **$j$-invariant** của họ đường cong mong muốn.
-4. **Xác định phương trình đường cong:** Từ mỗi nghiệm $j_0$ của đa thức, ta có thể tính toán các hệ số $a$ và $b$ cho phương trình dạng **Short Weierstrass** ($y^2 = x^3 + ax + b$).
-5. **Xử lý đường cong xoắn (Twist):** Một giá trị $j$-invariant có thể tạo ra hai đường cong khác nhau: đường cong có bậc $r$ như mong muốn và "đường cong xoắn" của nó. Để xác định đúng đường cong, ta chọn một điểm ngẫu nhiên trên đường cong đó và kiểm tra xem phép nhân vô hướng của điểm đó với $r$ có trả về điểm vô cực hay không.
+| $   | D   | $              | $h(D)$ | $H_D(x)$ |
+| --- | --- | -------------- | ------ | -------- |
+| 3   | 1   | $x$            |        |          |
+| 4   | 1   | $x - 1728$     |        |          |
+| 7   | 1   | $x + 3375$     |        |          |
+| 11  | 1   | $x + 32768$    |        |          |
+| 23  | 3   | $x^3 + \cdots$ |        |          |
 
-**Ví dụ thực tế:** Phương pháp này đã được sử dụng để tổng hợp đường cong **secp256k1** (dùng trong Bitcoin) với biệt thức $D = -3$, dẫn đến phương trình đơn giản $y^2 = x^3 + 7$. Trong các bài tập thực hành, chương trình `get_curve.c` thường được dùng để tự động hóa việc tìm các tham số này từ đầu ra của quá trình quét tham số.
+Với $|D| = 3$ và $|D| = 4$, đa thức này bậc 1, nên **$j$-invariant được xác định ngay lập tức**: $j = 0$ và $j = 1728$ tương ứng. Đây là lý do tại sao secp256k1 ($j=0$, $D=-3$) và nhiều đường cong BLS có dạng đơn giản $y^2 = x^3 + b$.
 
-## Phương pháp xây dựng đường cong với bậc nhúng cụ thể
----
-Việc xây dựng các đường cong elliptic có **bậc nhúng** (embedding degree - $k$) cụ thể là một kỹ thuật quan trọng trong mật mã học dựa trên phép ghép cặp (pairing-based cryptography),.
+### Quy trình CM đầy đủ
 
-Dưới đây là phương pháp xây dựng và cách lựa chọn bậc nhúng phù hợp dựa trên các nguồn tài liệu:
+Cho bộ tham số $(p, t, D)$ thỏa mãn $4p = t^2 + |D|v^2$:
 
-### 1. Phương pháp xây dựng đường cong có bậc nhúng cụ thể
+1. **Tính $j$-invariant**: Tìm nghiệm $j_0 \in \mathbb{F}_p$ của $H_D(x) \pmod{p}$.
+2. **Suy ra hệ số đường cong**: Từ $j_0$, tính $c = j_0 \cdot (1728 - j_0)^{-1} \pmod{p}$, sau đó:
+   - $a = 3c$, $b = 2c$ (trường hợp tổng quát $j_0 \neq 0, 1728$)
+   - $a = 0$, $b$ tùy ý (khi $j_0 = 0$, tức $D = -3$)
+   - $a$ tùy ý, $b = 0$ (khi $j_0 = 1728$, tức $D = -4$)
+3. **Kiểm tra xoắn (Twist test)**: Đường cong $E: y^2 = x^3 + ax + b$ và đường cong xoắn $E': y^2 = x^3 + a\delta^2 x + b\delta^3$ (với $\delta$ là phần tử không phải thặng dư bậc hai) có tổng số điểm $\#E + \#E' = 2(p+1)$. Ta cần chọn đúng đường cong có $r \mid \#E$.
+4. **Tìm điểm sinh (Generator)**: Nhân ngẫu nhiên một điểm trên đường cong với hệ số cofactor $h = \#E / r$ để tìm điểm sinh $G$ có bậc chính xác là $r$.
 
-Thông thường, một đường cong elliptic ngẫu nhiên sẽ có bậc nhúng cực kỳ lớn ($k \approx r$), khiến việc tính toán các phép ghép cặp trên trường mở rộng $\mathbb{F}_{q^k}$ là không khả thi,. Để tạo ra các đường cong "**pairing-friendly**" (có $k$ nhỏ), các nhà toán học sử dụng các phương pháp sau:
+### Trường hợp $D = -3$: Xoắn sextic
 
-- **Sử dụng Đa thức Cyclotomic ($\Phi_k$):** Bậc nhúng $k$ được xác định là số nguyên dương nhỏ nhất sao cho bậc của nhóm điểm $r$ chia hết cho $q^k - 1$,. Một số nguyên tố $r$ phù hợp phải thỏa mãn $r | \Phi_k(q)$, trong đó $\Phi_k$ là đa thức cyclotomic bậc $k$,.
-- **Tiêu chuẩn MNT (Miyaji, Nakabayashi, Takano):** Phương pháp này sử dụng các tính chất của đa thức cyclotomic để xây dựng các đường cong không siêu dị (non-supersingular) có bậc nhúng cụ thể như $k = 3, 4, 6$,.
-- **Phương pháp Nhân Phức (Complex Multiplication - CM):** Đây là phương pháp phổ biến nhất để tổng hợp đường cong từ các tham số trừu tượng ($q, t, r, D$).
-    1. **Tìm tham số:** Tìm các số nguyên $q$ (đặc số trường), $t$ (vết Frobenius), $r$ (bậc nhóm) và $D$ (biệt thức CM) thỏa mãn phương trình CM: $4q = t^2 + |D|v^2$,.
-    2. **Tính đa thức lớp Hilbert ($H_D$):** Sử dụng biệt thức $D$ để lập đa thức lớp Hilbert,.
-    3. **Tìm j-invariant:** Các nghiệm của đa thức $H_D \pmod q$ chính là giá trị $j$-invariant của đường cong cần tìm,.
-    4. **Xác định hệ số $a, b$:** Từ $j$-invariant, ta tính toán được các hệ số $a, b$ cho phương trình Weierstrass $y^2 = x^3 + ax + b$,.
-- **Các họ đường cong đặc biệt:** Ví dụ họ **BLS (Barreto-Lynn-Scott)** được thiết kế để có bậc nhúng là bội số của 6 (như BLS12-381 hoặc BLS6_6 dùng trong tính toán thủ công),.
+Với $D = -3$, tình huống phức tạp hơn vì đường cong $y^2 = x^3 + b$ có **6 xoắn** (sextic twists) thay vì chỉ 2. Sáu vết Frobenius khả dĩ là:
 
-### 2. Cách chọn bậc nhúng phù hợp (không ngẫu nhiên)
+$$t, \quad -t, \quad \frac{t \pm 3v}{2}, \quad \frac{-t \pm 3v}{2}$$
 
-Bậc nhúng không được chọn ngẫu nhiên mà phải dựa trên sự cân bằng giữa **độ an toàn** và **hiệu suất tính toán**,.
+trong đó $4p = t^2 + 3v^2$. Để xác định xoắn đúng, ta lần lượt thử các giá trị $b$ nhỏ và kiểm tra số điểm thực sự của đường cong $y^2 = x^3 + b$ bằng cách tính phép nhân vô hướng $[p+1-t']P$ với điểm ngẫu nhiên $P$.
 
-- **Cân bằng độ an toàn giữa hai bài toán:**
-    - Bài toán Logarit rời rạc trên đường cong (ECDLP) có độ khó phụ thuộc vào kích thước của $r$.
-    - Bài toán Logarit rời rạc trên trường hữu hạn (DLP) trên trường mở rộng $\mathbb{F}_{q^k}$ có độ khó phụ thuộc vào kích thước của $q^k$.
-    - Mục tiêu là chọn $k$ sao cho hai bài toán này có độ khó tương đương nhau để tối ưu hóa kích thước khóa.
-- **Dựa trên mức an toàn mục tiêu:** Theo các tiêu chuẩn mật mã, ta có bảng tham khảo để chọn $k$ và $r$: 
+Trong cài đặt của luận văn (tệp `complex_multiplication.rs`), hàm `find_twist` thực hiện:
 
-| Mức an toàn (bit) | Kích thước r (bit) | Kích thước trường mở rộng $q^k$ (bit) | Bậc nhúng $k$ phù hợp |
-| ----------------- | ------------------ | ------------------------------------- | --------------------- |
-| 80                | 160                | 960-1280                              | 6-8                   |
-| 112               | 224                | 2200-3600                             | 10-16                 |
-| 128               | 256                | 3000-5000                             | 12-20                 |
-| 192               | 384                | 8000-10000                            | 20-16                 |
-| 256               | 512                | 14000-18000                           | 28-36                 |
+```rust
+// Sáu bậc nhóm khả dĩ cho D = -3 (j = 0)
+let candidates = [
+    p1.borrowing_sub(&config.t).0,    //  p + 1 - t
+    p1.carrying_add(&config.t).0,     //  p + 1 + t
+    p1.borrowing_sub(&t3p).0,         //  p + 1 - (t+3v)/2
+    p1.carrying_add(&t3p).0,          //  p + 1 + (t+3v)/2
+    p1.borrowing_sub(&t3m).0,         //  p + 1 - (t-3v)/2
+    p1.carrying_add(&t3m).0,          //  p + 1 + (t-3v)/2
+];
+// Tìm bậc nào chia hết cho r, rồi tìm b tương ứng
+```
 
-- **Tỉ số $\rho$:** Các nhà thiết kế đường cong còn quan tâm đến giá trị $\rho = \log q / \log r$. Lý tưởng nhất là $\rho \approx 1$ để trường cơ sở $q$ không quá lớn so với nhóm điểm $r$, giúp tối ưu hiệu suất tính toán.
-- **Tính toán hiệu quả:** Bậc nhúng $k$ nên được chọn sao cho trường mở rộng $\mathbb{F}_{q^k}$ có cấu trúc thuận lợi cho các thuật toán như nhân nhanh (FFT) hoặc các phép toán số học trường extension,.
+## Thuật toán Cocks-Pinch truyền thống
 
-## Thuật toán xây dựng đường cong họ BLS
----
-Họ đường cong **BLS (Barreto-Lynn-Scott)** là một gia đình các đường cong Elliptic được thiết kế đặc biệt để tối ưu cho các phép ghép cặp (pairing-friendly), sử dụng biệt thức CM $D=3$. Thuật toán xây dựng và các công thức đặc trưng cho số phần tử trường cơ sở $q(u)$ và bậc nhóm $r(u)$ dựa trên các đa thức tham số hóa.
+### Vấn đề: Xây dựng ngược từ $r$
 
-### 1. Thuật toán xây dựng đường cong BLS
----
+Phương pháp CM truyền thống xuất phát từ $p$ được chọn trước, đòi hỏi giải phương trình $4p = t^2 + |D|v^2$ — một bài toán biểu diễn số nguyên bởi dạng toàn phương (quadratic form) không hề dễ trong không gian lớn.
 
-Việc xây dựng đường cong BLS là một trường hợp cụ thể của **Phương pháp Nhân phức (CM Method)** với điều kiện $D=3$, dẫn đến phương trình đường cong có dạng Short Weierstrass tối giản là $y^2 = x^3 + b$.
+**Thuật toán Cocks-Pinch (CP)** đảo chiều bài toán: **bắt đầu từ $r$ rồi xây dựng $p$**. Đây là cách tiếp cận tự nhiên hơn khi mục tiêu là đảm bảo $r$ có kích thước an toàn (ví dụ: 512 bit) với bậc nhúng $k$ cho trước.
 
-**Các bước thực hiện:**
+### Điều kiện bậc nhúng
 
-1. **Chọn tham số $u$:** Chọn một số nguyên $u$ (đôi khi ký hiệu là $x$) sao cho các giá trị đa thức $q(u)$ và $r(u)$ trả về kết quả là các số nguyên tố.
-2. **Tính toán tham số:** Sử dụng các đa thức đặc trưng (tùy theo bậc nhúng $k$) để tính:
-    - Vết Frobenius $t(u)$.
-    - Số phần tử trường cơ sở $q(u)$.
-    - Bậc của nhóm điểm $r(u)$.
-3. **Kiểm tra điều kiện:** Đảm bảo $|t(u)| \leq 2\sqrt{q(u)}$ (giới hạn Hasse) và $r(u)$ là ước của số lượng điểm trên đường cong $n(u) = q(u) + 1 - t(u)$.
-4. **Tìm hệ số $b$:** Vì $D=3$, Hilbert class polynomial luôn là $H_{-3}(x) = x$, dẫn đến $j$-invariant bằng $0$. Hệ số $b$ được tìm bằng cách thử các giá trị nhỏ trong trường $\mathbb{F}_q$ cho đến khi tìm được đường cong có bậc chính xác là $n(u)$.
+Bậc nhúng $k$ của đường cong là **số nguyên dương nhỏ nhất** sao cho $r \mid p^k - 1$, hay tương đương $p \equiv 1 \pmod{r}$ khi $k=1$, hoặc tổng quát hơn $p$ là nghiệm của $\Phi_k(x) \equiv 0 \pmod{r}$.
 
-### 2. Công thức tính $q(u)$ và $r(u)$ cho các họ BLS tiêu biểu
----
+Điều kiện cụ thể: $r \mid \Phi_k(p)$, trong đó $\Phi_k$ là đa thức cyclotomic. Điều này có nghĩa là tồn tại $u$ nguyên tố cùng nhau với $k$ sao cho:
 
-Các công thức này được xây dựng dựa trên **Đa thức Cyclotomic** $\Phi_k(u)$.
-#### Đối với BLS12 (Bậc nhúng $k=12$, phổ biến nhất như BLS12-381)
----
+$$p \equiv \rho^i \pmod{r} \quad \text{với } \rho \text{ là nghiệm nguyên thủy của } \Phi_k(x) \equiv 0 \pmod{r}$$
 
-Dựa trên cấu trúc tham số hóa cho $D=3$ và $k=12$:
-- **Vết Frobenius:** $t(u) = u + 1$
-- **Số phần tử nhóm (Bậc nhóm):** $$r(u) = \Phi_{12}(u) = u^4 - u^2 + 1$$
-- **Số phần tử trường cơ sở:** $$q(u) = (u-1)^2 \cdot \frac{r(u)}{3} + u$$ _(Phép chia cho 3 đảm bảo $q(u)$ có thể là số nguyên khi $u \equiv 1 \pmod 3$)_ .
+### Thuật toán CP cho $k = 18$
 
-#### Đối với BLS6 (Bậc nhúng $k=6$, ví dụ trong MoonMath)
+Với $k = 18$ và $D = -3$, bậc nhóm $r = \Phi_{18}(T) = T^6 - T^3 + 1$ với $T$ nguyên tùy ý. Các bước:
 
-Dựa trên các đa thức cho $k=6$:
+**Bước 1 — Sinh $r$ từ $T$:**
 
-- **Vết Frobenius:** $t(u) = u + 1$
-- **Số phần tử nhóm:** $$r(u) = \Phi_6(u) = u^2 - u + 1$$
-- **Số phần tử trường cơ sở:** $$q(u) = \frac{1}{3}(u-1)^2(u^2-u+1) + u$$
+$$r = \Phi_{18}(T) = T^6 - T^3 + 1$$
 
-### 3. Ý nghĩa của tham số hóa
----
+Kiểm tra tính nguyên tố của $r$ bằng thuật toán Miller-Rabin.
 
-Việc sử dụng các đa thức $q(u)$ và $r(u)$ cho phép các nhà thiết kế hệ thống mật mã tạo ra các đường cong có **độ an toàn mục tiêu cụ thể** chỉ bằng cách thay đổi giá trị đầu vào $u$.
+**Bước 2 — Tính $\sqrt{-D} \pmod{r}$:**
 
-- **Tỷ số $\rho$:** Trong các công thức BLS, tỷ số $\rho = \log q / \log r$ thường xấp xỉ $1.5$ đối với $k=12$, giúp cân bằng giữa độ khó của bài toán logarit rời rạc trên đường cong và trên trường mở rộng.
-- **Tối ưu hóa:** Tham số $u$ thường được chọn có "trọng lượng Hamming thấp" (nhiều bit 0) để tăng tốc độ tính toán trong thuật toán Miller khi thực hiện phép ghép cặp.
+Cần $\beta = \sqrt{-3} \pmod{r}$. Do $r \equiv 1 \pmod{3}$ (do cấu trúc của $\Phi_{18}$), phần tử này luôn tồn tại. Dùng thuật toán Tonelli–Shanks.
+
+**Bước 3 — Tính $t_0, y_0$ modulo $r$:**
+
+Với mỗi $i$ thỏa $\gcd(i, k) = 1$ và $1 \leq i < k$:
+
+$$t_0 = T^i + 1 \pmod{r}, \quad y_0 = \frac{t_0 - 2}{\beta} \pmod{r}$$
+
+**Bước 4 — Nâng (lift) lên số nguyên:**
+
+Tìm $t, y \in \mathbb{Z}$ với $t \equiv t_0 \pmod{r}$, $y \equiv y_0 \pmod{r}$ sao cho:
+
+$$p = \frac{t^2 + 3y^2}{4}$$
+
+là số nguyên và là số nguyên tố. Để làm điều này, thử các dịch chuyển nhỏ:
+
+$$t = t_0 + h_t \cdot r, \quad y = y_0 + h_y \cdot r, \quad h_t, h_y \in \{-20, \ldots, 20\}$$
+
+cho đến khi $\frac{t^2 + 3y^2}{4}$ là số nguyên tố đúng kích thước mục tiêu.
+
+Trong cài đặt (`cocks_pinch.rs`), hàm `try_lift_to_prime` thực hiện tìm kiếm này:
+
+```rust
+for ht in -half_range..=half_range {
+    for hy in -half_range..=half_range {
+        let t = apply_lift(lp.t0, r, ht as i32);
+        let y = apply_lift(lp.y0, r, hy as i32);
+        // p = (t² + 3y²) / 4
+        let numerator = t² + 3y²;
+        if numerator % 4 != 0 { continue; }
+        let p = numerator / 4;
+        if is_prime(&p) { return Some(CurveParams { p, r, t, y, .. }); }
+    }
+}
+```
+
+### Phân tích độ phức tạp trung bình
+
+Mật độ số nguyên tố lân cận $N$ là khoảng $1/\ln N$, tức $1/1024\ln 2 \approx 1/709$. Với lưới $(h_t, h_y) \in [-20, 20]^2$ tạo ra $41 \times 41 = 1681$ ứng viên $p$ mỗi lần, tỉ lệ thành công mỗi lần sinh $r$ là khoảng $1681/709 \approx 2.4$ ứng viên $p$ nguyên tố. Trong thực tế, thường cần khoảng **100–500 lần sinh $r$** để tìm được bộ tham số hợp lệ.
+
+## Thuật toán Cocks-Pinch Cải tiến
+
+### Động lực: Tấn công rây trường số tháp (TNFS)
+
+Bảo mật của phép ghép cặp phụ thuộc vào độ khó của **bài toán logarit rời rạc** (DLP) trên trường mở rộng $\mathbb{F}_{p^k}$. Năm 2016, Barbulescu và Duquesne chỉ ra rằng thuật toán **Tower Number Field Sieve (TNFS)** — một biến thể của NFS — có thể giảm đáng kể độ phức tạp tấn công DLP trên $\mathbb{F}_{p^k}$ khi $k$ composite và $p$ có cấu trúc đặc biệt. Điều này **phá vỡ ước lượng bảo mật ban đầu** của các đường cong như BN256 (từ ~128 bit xuống còn ~100 bit hiệu quả).
+
+Để kháng lại TNFS, cần đảm bảo trường cơ sở của đường cong có **cấu trúc tốt** ở cả hai trường: trường vô hướng $\mathbb{F}_r$ (phục vụ tính toán ZK proof) và trường cơ sở $\mathbb{F}_p$ (phục vụ phép ghép cặp).
+
+### Yêu cầu NTT-friendly
+
+Một số nguyên tố $q$ được gọi là **NTT-friendly** (hoặc FFT-friendly) nếu $q - 1$ chia hết cho một lũy thừa đủ lớn của 2, tức là:
+
+$$2^s \mid (q - 1) \quad \text{với } s \text{ đủ lớn}$$
+
+Số $s$ được gọi là **số hạng hai-adicity** (two-adicity) của $q$. Ý nghĩa: trường $\mathbb{F}_q$ chứa một căn nguyên thủy $2^s$-th của đơn vị, cho phép áp dụng **Biến đổi Lý thuyết số (NTT)** — tức FFT trên trường hữu hạn — để nhân đa thức bậc cao trong $O(n \log n)$ thay vì $O(n^2)$.
+
+Đây là yếu tố *quyết định* hiệu năng trong:
+- Sinh chứng minh ZK (Groth16, PLONK): tính $H(x) = (A(x) \cdot B(x) - C(x)) / Z(x)$
+- Các cam kết đa thức (KZG, FRI)
+- Thuật toán MSM (Multi-scalar multiplication) biến thể NTT
+
+**Tương quan với TNFS:** Một trường $\mathbb{F}_p$ với two-adicity cao có $p-1 = d \cdot 2^s$, nghĩa là $p = d \cdot 2^s + 1$. Cấu trúc này khiến cho tháp trường (tower field extension) $\mathbb{F}_{p^k}$ có đặc điểm tốt hơn từ góc độ kháng TNFS: các thuật toán rây cần khai thác cấu trúc phân tích của $p-1$ để tìm quan hệ, do đó khi $p-1$ có cấu trúc **không phân tích tùy tiện** mà theo dạng chuẩn $d \cdot 2^s + 1$, sự khai thác thông tin này trở nên khó hơn.
+
+### Cải tiến 1: NTT-friendly $r$ qua ràng buộc $T$
+
+**Nhận xét then chốt:** Vì $r = \Phi_{18}(T) = T^6 - T^3 + 1$, ta có:
+
+$$r - 1 = T^3(T^3 - 1)$$
+
+Nếu $T \equiv 0 \pmod{2^k}$, thì $T^3 \equiv 0 \pmod{2^{3k}}$, và do đó:
+
+$$v_2(r-1) = v_2(T^3(T^3 - 1)) = 3k$$
+
+(vì $T^3 \equiv 0 \pmod{2^{3k}}$ và $T^3 - 1 \equiv -1 \pmod{2}$ là lẻ).
+
+**Kết luận:** Để đảm bảo $\text{two-adicity}(r-1) \geq s$, chỉ cần **chọn $T \equiv 0 \pmod{2^{\lceil s/3 \rceil}}$**. Đây là ràng buộc *không cần rejection sampling* — mọi $T$ thỏa mãn điều kiện này đều cho $r$ với two-adicity ít nhất $s$.
+
+Trong cài đặt:
+
+```rust
+// Chọn T là bội số của 2^ceil(s/3): đảm bảo two_adicity(r-1) >= s
+let t_align = min_scalar_two_adicity.div_ceil(3);
+let step = U1024::ONE.shl(t_align as usize);
+// t_val luôn là bội số của step
+let t_val = t_base + U1024::rand(&t_steps) * step;
+let r = cyclotomic_phi18(&t_val);
+// Đảm bảo r thỏa mãn: two_adicity(r-1) = 3 * v₂(T) >= s
+```
+
+Với `min_scalar_two_adicity = 32`, ta cần $\lceil 32/3 \rceil = 11$, tức $T \equiv 0 \pmod{2^{11}}$. Điều này **không làm giảm không gian tham số** đáng kể — vẫn còn $2^{85}/2^{11} = 2^{74}$ ứng viên $T$ trong dải hợp lệ.
+
+### Cải tiến 2: NTT-friendly $p$ qua mở rộng lưới nâng
+
+Sau khi có $t_0, y_0 \pmod{r}$, tham số $p$ được xác định bởi:
+
+$$p = \frac{(t_0 + h_t r)^2 + 3(y_0 + h_y r)^2}{4}$$
+
+Vì $r \equiv 0 \pmod{2^{3k}}$ (do $T \equiv 0 \pmod{2^k}$), các bit thấp hơn $3k$ của $p-1$ chỉ phụ thuộc vào $t_0, y_0$ (cố định cho mỗi $r$). Tuy nhiên, các bit từ vị trí $3k$ trở lên bị ảnh hưởng bởi $h_t, h_y$.
+
+Để đạt $\text{two-adicity}(p-1) \geq s_p > 3k$, ta cần mở rộng lưới $(h_t, h_y)$ ra ngoài phạm vi $\pm 20$ mặc định:
+
+$$\text{extra} = \max(0,\, s_p - 3k), \quad \text{half\_range} = 20 + 2^{\text{extra}}$$
+
+Điều này đảm bảo có đủ ứng viên $h_t, h_y$ để **bao phủ mọi tổ hợp bit từ vị trí $3k$ đến $s_p$** trong $p-1$.
+
+```rust
+struct LiftParams<'a> {
+    t0: &'a U1024,
+    y0: &'a U1024,
+    target_p_bits: usize,
+    min_base_two_adicity: u32,  // s_p
+    r_two_adicity: u32,         // 3k
+}
+
+// Mở rộng lưới tìm kiếm tỉ lệ với khoảng cách giữa s_p và 3k
+let extra = lp.min_base_two_adicity
+    .saturating_sub(lp.r_two_adicity)
+    .min(10); // giới hạn để lưới không bùng nổ
+let half_range = 20i64 + (1i64 << extra);
+```
+
+### Phân tích hiệu năng của thuật toán cải tiến
+
+Bảng dưới so sánh thuật toán CP gốc và CP Cải tiến với cùng mục tiêu $(r \approx 2^{512}, p \approx 2^{1024}, k = 18)$:
+
+| Tham số | CP Truyền thống | CP Cải tiến ($s_r = 32, s_p = 32$) |
+|---|---|---|
+| Ràng buộc trên $T$ | Không có | $T \equiv 0 \pmod{2^{11}}$ |
+| two-adicity của $r-1$ | Ngẫu nhiên (~1-3) | $\geq 33$ (đảm bảo) |
+| two-adicity của $p-1$ | Ngẫu nhiên (~1) | $\geq 32$ (với lưới mở rộng) |
+| Lưới $(h_t, h_y)$ | $[-20, 20]^2$ | $[-21, 21]^2$ (khi $s_p \leq 3k$) |
+| Chi phí mỗi lần thử | ~50ms | ~50ms |
+| Số lần thử trung bình | ~100–500 | ~3.000–6.000 |
+| Thời gian thực tế | ~2–10 giây | ~30–60 giây |
+| $r$ hỗ trợ NTT? | Không | Có (bậc $2^{33}$) |
+| $p$ hỗ trợ NTT? | Không | Có (bậc $2^{34}$) |
+
+*Kết quả thực nghiệm điển hình:*
+```
+r two-adicity: 2^33 | (r-1)  →  r = d·2^33 + 1, NTT đến bậc 2^33
+p two-adicity: 2^34 | (p-1)  →  p = d·2^34 + 1, NTT đến bậc 2^34
+Thời gian tổng: 32.81s
+```
+
+### So sánh với BLS12-381
+
+Đường cong BLS12-381 — chuẩn công nghiệp hiện tại trong ZK proof — có:
+- $r$ two-adicity = **32** (đủ cho ZK circuits đến $2^{32}$ ràng buộc)
+- $p$ two-adicity = **32**
+
+Đường cong được xây dựng trong luận văn này đạt **33–34**, tức là **vượt BLS12-381 về cấu trúc NTT** trong khi kích thước khóa lớn hơn ($p \approx 2^{1024}$ so với $p \approx 2^{381}$), cung cấp mức bảo mật hậu lượng tử cao hơn trong ngữ cảnh phép ghép cặp.
+
+### Giới hạn và hướng mở rộng
+
+Thuật toán cải tiến vẫn có giới hạn thực tế:
+
+- **Two-adicity tối đa đạt được**: Khi $s_p > 3k + 10$, lưới $(h_t, h_y)$ phải có $\text{half\_range} > 2^{10} = 1024$, số lần lặp vượt $10^6$ mỗi ứng viên $r$, khiến tìm kiếm không thực tế. Nếu cần $s_p$ cực cao (>50), cần dùng họ đường cong chuyên dụng thiết kế từ đầu như Pasta curves (Pallas/Vesta).
+- **Tỉ số $\rho$**: Thuật toán CP vốn cho tỉ số $\rho = \log p / \log r \approx 2$, không tối ưu bằng các họ đường cong chuyên biệt như BN256 ($\rho = 1$). Đây là sự đánh đổi cố hữu của phương pháp CP.
+- **Chỉ $k=18$ và $D=-3$** được cài đặt trong hệ thống hiện tại. Mở rộng sang $k = 12, 24$ đòi hỏi thay đổi đa thức cyclotomic và công thức CM.

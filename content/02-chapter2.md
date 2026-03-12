@@ -5,7 +5,7 @@ toc-title: CƠ SỞ TOÁN HỌC
 ---
 # Chương 2: Cơ sở toán học và Kiến trúc hệ thống ECC
 
-## 2.1 Định nghĩa Trường hữu hạn (Lớp Prime Field)
+## Định nghĩa Trường hữu hạn (Lớp Prime Field)
 
 Để các phép toán mật mã đảm bảo tính chính xác và an toàn, chúng không được thực hiện trên tập số thực mà phải diễn ra trong một không gian giới hạn gọi là Trường hữu hạn (Finite Field).
 
@@ -19,7 +19,7 @@ toc-title: CƠ SỞ TOÁN HỌC
     - **Nghịch đảo cộng (số đối):** Số đối của $x$ là $−x=p−x \pmod p$. Điều này giúp tránh việc xử lý số âm trong logic lập trình khối số nguyên không dấu (như U1024).
     - **Nghịch đảo nhân:** Với mọi phần tử $x\ne 0$, luôn tồn tại nghịch đảo nhân $x^{-1}$ sao cho $x\cdot x^{−1}=1$. Theo Định lý nhỏ Fermat, $x^{−1}=x^{p−2} \pmod p$.
 
-## 2.2 Định nghĩa Đường cong elliptic (Lớp Affine Point)
+## Định nghĩa Đường cong elliptic (Lớp Affine Point)
 
 ### Hình học hệ tọa độ Affine và Điều kiện không suy biến
 
@@ -39,7 +39,7 @@ $$4a^3 + 27b^2 \neq 0$$
 
 Trong thực tế triển khai ứng dụng, thay vì tự sinh các thông số ngẫu nhiên, hệ thống cần sử dụng các bộ tham số chuẩn hóa (như SEC 2 v2) để tránh các lỗ hổng bảo mật nghiêm trọng (như tấn công MOV hay đường cong dị thường). Một bộ tham số đường cong đầy đủ bao gồm: $(p, a, b, G, n, h)$. Trong đó $G$ là Điểm cơ sở (Generator Point) và $n$ là bậc (Order) của điểm $G$.
 
-## 2.3 Luật cộng nhóm và Phép tính trên đường cong
+## Luật cộng nhóm và Phép tính trên đường cong
 
 ### Các thành phần cơ bản và Quy tắc hình học
 
@@ -63,19 +63,17 @@ Với đường cong $y^2 = x^3 + ax + b$, nếu $P_1 = (x_1, y_1)$ và $P_2 = (
 
 Phép nhân một điểm $P$ với một số nguyên $k$ (ký hiệu là $[k]P$) được thực hiện bằng cách cộng điểm $P$ với chính nó $k$ lần. Trong thực tế, thuật toán **"Double and Add"** (nhân đôi và cộng) thường được sử dụng để thực hiện phép tính này một cách hiệu quả với độ phức tạp logarit theo giá trị của $k$. Đây là hàm cốt lõi để tạo khóa công khai (Public Key) và xử lý chữ ký số (Schnorr/ECDSA).
 
-## 2.4 Tối ưu hóa hiệu năng tính toán
+## Tối ưu hóa hiệu năng tính toán
 
 Khi vận hành trên các trường số cực lớn, phép chia và modulo truyền thống trở thành "nút thắt cổ chai". Việc áp dụng các thuật toán tối ưu là bắt buộc. **Phép nhân Karatsuba** và **phép nhân Montgomery** là hai kỹ thuật tối ưu hóa toán học quan trọng, thường được sử dụng kết hợp trong mật mã học để tăng tốc độ tính toán số học trên các số nguyên lớn và đa thức.
-### 1. Phép nhân Karatsuba
+### Phép nhân Karatsuba
 Thuật toán Karatsuba tập trung vào việc **giảm số lượng các phép nhân** thành phần cần thiết để có được tích số.
 - **Nguyên lý:** Chia việc nhân hai số có $n$ chữ số thành **ba phép nhân** các số có $n/2$ chữ số, thay vì bốn phép nhân như phương pháp thông thường.
 - **Độ phức tạp:** Đạt mức **$O(n^{\log_2 3}) \approx O(n^{1.58})$**, nhanh hơn đáng kể so với $O(n^2)$ khi $n$ lớn.
 
-### 2. Phép nhân Montgomery (Áp dụng trong Runtime Field)
+### Phép nhân Montgomery
 
 Phép nhân Montgomery tập trung vào việc **làm cho phép lấy dư (modulo) nhanh hơn**. Phương pháp này thực hiện **phép nhân modulo** hiệu quả bằng cách **tránh các phép chia thử (trial division)** cho mô-đun $N$ vốn rất tốn kém về mặt tính toán.
 - **Biểu diễn N-residue:** Thay vì làm việc với số nguyên $a \pmod N$, số liệu được chuyển sang không gian Montgomery: $aR \pmod N$, trong đó $R$ là cơ số nguyên tố cùng nhau với $N$ (thường chọn $R$ là lũy thừa của 2 để phép modulo và chia $R$ cực kỳ rẻ).
 - **Thuật toán REDC:** Lõi của phương pháp, giúp tính nhanh giá trị $TR^{-1} \pmod N$ từ số nguyên $T$.
 - **Quy trình:** Tính $T = (aR)(bR) = abR^2$, sau đó dùng REDC để thu được $(abR^2)R^{-1} = abR \pmod N$. Kết quả lưu lại trong không gian Montgomery cho phép tính toán chuỗi cực nhanh.
-
-Việc kết hợp hai thuật toán này, kết hợp cùng các hệ tọa độ tối ưu (như Tọa độ Hình chiếu - Projective Coordinates giúp tính toán không cần phép chia) chính là chìa khóa để triển khai một hệ thống ECC chuẩn công nghiệp vừa đơn giản lại vừa có hiệu suất cao.
