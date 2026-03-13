@@ -77,7 +77,96 @@ let candidates = [
 // Tìm bậc nào chia hết cho r, rồi tìm b tương ứng
 ```
 
+## Tham số đầu vào của hệ thống
+
+Trước khi đi vào chi tiết thuật toán, phần này giải thích ý nghĩa và cơ sở lựa chọn của 7 tham số đầu vào trong cài đặt thực tế (`cocks_pinch.rs`):
+
+```rust
+let k                    = 18u64;
+let d                    = U1024::from(3);
+let target_r_bits        = 512;
+let target_p_bits        = 1024;
+let max_attempts         = 100_000u64;
+let min_scalar_two_adicity = 32u32;
+let min_base_two_adicity   = 32u32;
+```
+
+### `k = 18` — Bậc nhúng (Embedding Degree)
+
+Bậc nhúng $k$ xác định **trường mở rộng** $\mathbb{F}_{p^k}$ nơi phép ghép cặp Weil/Tate được tính toán. Giá trị $k = 18$ được chọn vì:
+
+- **Cân bằng bảo mật:** Với $r \approx 2^{512}$ và $p \approx 2^{1024}$, kích thước trường mở rộng là $p^k \approx 2^{1024 \times 18} = 2^{18432}$ bit. Theo tiêu chuẩn NFS hiện tại, bài toán DLP trên $\mathbb{F}_{p^{18}}$ ở mức bảo mật $\geq 256$ bit — tương đương với mức bảo mật của khóa $r \approx 2^{512}$.
+- **Hỗ trợ Đa thức Cyclotomic bậc 18:** $\Phi_{18}(T) = T^6 - T^3 + 1$ cho phép sinh $r$ hiệu quả, có cấu trúc NTT-friendly tự nhiên khi $T \equiv 0 \pmod{2^k}$ (xem §3.3.1).
+- **Thực tế:** $k = 18$ là bậc nhúng phổ biến trong họ đường cong KSS18, phù hợp với mức bảo mật hậu lượng tử cao hơn các đường cong BLS12 (dùng trong Ethereum 2.0).
+
+### `d = 3` — Biệt thức CM ($|D|$)
+
+Biệt thức CM $D = -3$ được chọn vì những ưu điểm nổi bật:
+
+- **Đa thức Hilbert bậc 1:** $H_{-3}(x) = x$, nên $j$-invariant bằng 0 và phương trình đường cong có dạng cực kỳ đơn giản $y^2 = x^3 + b$. Không cần giải đa thức bậc cao.
+- **Phổ biến trong thực tế:** secp256k1 (Bitcoin), BLS12-381 (Ethereum), và nhiều đường cong quan trọng khác đều dùng $D = -3$.
+- **Điều kiện CM đơn giản:** Phương trình $4p = t^2 + 3v^2$ dễ giải hơn với hầu hết các giá trị $(t, v)$ nguyên, tăng xác suất tìm được $p$ nguyên tố trong lưới nâng.
+
+### `target_r_bits = 512` — Kích thước bậc nhóm $r$
+
+Tham số này xác định **mức bảo mật** của bài toán logarit rời rạc trên đường cong (ECDLP):
+
+- Với $r \approx 2^{512}$, thuật toán Pollard-rho tốt nhất cần $\approx 2^{256}$ phép tính, đạt mức bảo mật **256-bit** — vượt tiêu chuẩn NIST SP 800-57 cho ứng dụng đến năm 2030+ và phù hợp với kịch bản hậu lượng tử (post-quantum).
+- Đây cũng là kích thước của **khóa riêng** (private key scalar) và **kích thước chữ ký** trong các giao thức Schnorr và ECDSA trên đường cong này.
+
+### `target_p_bits = 1024` — Kích thước trường cơ sở $p$
+
+Kích thước trường cơ sở tác động đến hai yếu tố:
+
+- **Bảo mật DLP trên $\mathbb{F}_{p^k}$:** Với $p \approx 2^{1024}$ và $k = 18$, kích thước trường mở rộng là $2^{18432}$ bit. Theo ước lượng NFS/TNFS, điều này cho mức bảo mật $\geq 250$ bit — phù hợp với ứng dụng yêu cầu bảo mật dài hạn.
+- **Hiệu năng:** Kích thước 1024 bit làm cho mỗi phép nhân trường tốn gấp đôi so với 512 bit về mặt thời gian CPU, nhưng vẫn trong giới hạn thực tế với phép nhân Montgomery đa độ chính xác.
+- **Tỉ số $\rho$:** $\rho = \log_2 p / \log_2 r = 1024/512 = 2$. Đây là tỉ số điển hình của Cocks-Pinch (so với $\rho = 1.5$ của BLS12 hay $\rho = 1$ của BN).
+
+### `max_attempts = 100_000` — Số lần thử tối đa
+
+Giới hạn vòng lặp tìm kiếm an toàn. Trong thực nghiệm, thuật toán CP cải tiến thường tìm được kết quả trong **100–6000 lần thử** (tùy cấu hình NTT), do đó `100_000` là giới hạn rất thoải mái đảm bảo không bao giờ bị timeout trong điều kiện bình thường. Nếu vượt giới hạn này (không bao giờ xảy ra trong thực tế), hệ thống báo lỗi thay vì chạy mãi mãi.
+
+### `min_scalar_two_adicity = 32` — Two-adicity tối thiểu của $r - 1$
+
+Tham số này ràng buộc **cấu trúc NTT-friendly của trường vô hướng $\mathbb{F}_r$**:
+
+$$2^{32} \mid (r - 1) \quad \Longleftrightarrow \quad r = d \cdot 2^{32} + 1 \text{ với } d \text{ lẻ}$$
+
+Ý nghĩa thực tế: trường $\mathbb{F}_r$ chứa một căn nguyên thủy $2^{32}$-th của đơn vị, cho phép thực hiện NTT trên các đa thức bậc lên đến $2^{32} \approx 4 \times 10^9$. Đây là yêu cầu cốt lõi để tạo chứng minh ZK hiệu quả:
+
+- Trong Groth16/PLONK, phép nhân đa thức $A(x) \cdot B(x)$ với mạch có $2^{20}$ ràng buộc cần NTT bậc $\geq 2^{21}$ — thỏa mãn với $2^{32}$.
+- BLS12-381 (chuẩn công nghiệp) có $r$ two-adicity = 32; hệ thống này đạt $\geq 33$, **vượt chuẩn BLS12-381**.
+
+Giá trị 32 đạt được **không cần rejection sampling** nhờ ràng buộc $T \equiv 0 \pmod{2^{11}}$ (vì $v_2(r-1) = 3 \cdot v_2(T) \geq 3 \times 11 = 33 \geq 32$).
+
+### `min_base_two_adicity = 32` — Two-adicity tối thiểu của $p - 1$
+
+Tương tự, tham số này ràng buộc **cấu trúc NTT-friendly của trường cơ sở $\mathbb{F}_p$**:
+
+$$2^{32} \mid (p - 1) \quad \Longleftrightarrow \quad p = d \cdot 2^{32} + 1$$
+
+Đây cũng là yêu cầu của thuật toán Miller trong phép ghép cặp: các biểu thức trung gian (line evaluations) được tính trong $\mathbb{F}_{p^k}$ và có thể được tăng tốc bằng NTT nếu $p$ có cấu trúc NTT. Ngoài ra:
+
+- $p = d \cdot 2^{32} + 1$ kháng TNFS tốt hơn $p$ tùy ý (xem §3.3), do cấu trúc $p-1$ không có nhân tử nhỏ ngẫu nhiên mà thuật toán rây có thể khai thác.
+- Giá trị này đạt được bằng cách mở rộng lưới nâng $(h_t, h_y)$ trong hàm `try_lift_to_prime`.
+
+### Tổng hợp: Đặc trưng đường cong mục tiêu
+
+Từ 7 tham số trên, đường cong được xây dựng có đặc trưng:
+
+| Thuộc tính | Giá trị | Ý nghĩa |
+|---|---|---|
+| Phương trình | $y^2 = x^3 + b$ | $D=-3$, $j=0$, dạng tối giản |
+| Bậc nhúng | $k = 18$ | Phép ghép cặp trong $\mathbb{F}_{p^{18}}$ |
+| Kích thước $r$ | 512 bit | Bảo mật ECDLP 256-bit |
+| Kích thước $p$ | 1024 bit | Bảo mật DLP $\geq 250$-bit |
+| Two-adicity $r$ | $\geq 33$ | NTT/FFT trên $\mathbb{F}_r$ đến bậc $2^{33}$ |
+| Two-adicity $p$ | $\geq 32$ | NTT/FFT trên $\mathbb{F}_p$ đến bậc $2^{32}$ |
+| Dạng $r$ | $d \cdot 2^{33} + 1$ | NTT-friendly scalar field |
+| Dạng $p$ | $d \cdot 2^{34} + 1$ | NTT-friendly base field (kháng TNFS) |
+
 ## Thuật toán Cocks-Pinch truyền thống
+
 
 ### Vấn đề: Xây dựng ngược từ $r$
 
