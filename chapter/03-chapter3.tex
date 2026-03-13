@@ -1,0 +1,669 @@
+% UET Thesis Pandoc LaTeX Template
+% Customized for University of Engineering and Technology, VNU
+
+\clearpage
+\phantomsection
+
+\setcounter{chapter}{3}
+\addcontentsline{toc}{chapter}{Phương pháp xây dựng đường cong elliptic}
+\chapter[]{Phương pháp xây dựng đường cong elliptic}
+
+Chương này trình bày trọng tâm lý thuyết của luận văn: các phương pháp
+xây dựng đường cong elliptic có bậc nhúng (embedding degree) xác định,
+phục vụ cho các ứng dụng mật mã dựa trên phép ghép cặp (pairing-based
+cryptography). Chúng ta sẽ đi từ nền tảng lý thuyết của Phương pháp Nhân
+phức (CM) và Đa thức lớp Hilbert, đến thuật toán Cocks-Pinch truyền
+thống, và cuối cùng là thuật toán Cocks-Pinch Cải tiến được đề xuất
+trong luận văn này, với khả năng sinh tham số trường cơ sở có cấu trúc
+NTT-friendly nhằm kháng lại tấn công rây trường số tháp (Tower Number
+Field Sieve - TNFS).
+
+\section{Phương pháp Nhân phức (Complex Multiplication
+Method)}\label{phux1b0ux1a1ng-phuxe1p-nhuxe2n-phux1ee9c-complex-multiplication-method}
+
+\subsection{Ý tưởng cốt lõi}\label{uxfd-tux1b0ux1edfng-cux1ed1t-luxf5i}
+
+Phương pháp Nhân phức (CM) là công cụ nền tảng để \textbf{xây dựng đường
+cong elliptic có số điểm định trước}. Thay vì chọn ngẫu nhiên các hệ số
+\(a, b\) rồi đếm điểm, CM đi ngược lại: bắt đầu từ bậc nhóm mong muốn
+\(\#E(\mathbb{F}_p) = p + 1 - t\) rồi suy ngược ra phương trình đường
+cong.
+
+Ý tưởng xuất phát từ lý thuyết số học phức: mỗi đường cong elliptic
+\(E\) sở hữu một \textbf{vành nội cấu} (endomorphism ring)
+\(\text{End}(E)\). Với đường cong thông thường (không siêu dị), vành này
+đẳng cấu với một \textbf{thứ tự trong trường số}
+\(\mathbb{Q}(\sqrt{D})\), trong đó \(D < 0\) là số nguyên âm gọi là
+\textbf{biệt thức CM}. Giá trị \(D\) đặc trưng hoàn toàn cho ``loại''
+đường cong về mặt số học phức.
+
+\subsection{Điều kiện CM và phương trình
+Diophantine}\label{ux111iux1ec1u-kiux1ec7n-cm-vuxe0-phux1b0ux1a1ng-truxecnh-diophantine}
+
+Để tồn tại một đường cong elliptic trên \(\mathbb{F}_p\) có vết
+Frobenius \(t\) và biệt thức CM là \(D\), điều kiện cần và đủ là phương
+trình Diophantine sau phải có nghiệm nguyên:
+
+\[4p = t^2 + |D| \cdot v^2\]
+
+trong đó \(p\) là đặc số trường, \(t\) là vết Frobenius, \(v\) là một số
+nguyên dương, và \(D < 0\). Phương trình này \textbf{ràng buộc trực
+tiếp} bộ tham số \((p, t, D)\) với nhau; không phải mọi bộ ba nào cũng
+có thể thỏa mãn đồng thời.
+
+Ví dụ: Với \(D = -3\) (biệt thức của secp256k1, BLS12-381), phương trình
+trở thành \(4p = t^2 + 3v^2\).
+
+\subsection{\texorpdfstring{Đa thức lớp Hilbert
+\(H_D(x)\)}{Đa thức lớp Hilbert H\_D(x)}}\label{ux111a-thux1ee9c-lux1edbp-hilbert-h_dx}
+
+Khi đã có \(D\), bước tiếp theo là tính \textbf{Đa thức lớp Hilbert}
+(Hilbert class polynomial) \(H_D(x)\). Đây là đa thức hệ số nguyên được
+xây dựng từ lý thuyết số học phức mà nghiệm phức của nó chính là các
+\textbf{\(j\)-invariant} của tất cả đường cong elliptic phức
+\(\mathbb{C}/\mathcal{O}\) với thứ tự CM là \(\mathcal{O}\).
+
+Bậc của \(H_D(x)\) bằng \textbf{số lớp} (class number) \(h(D)\) --- một
+bất biến số học của thứ tự \(\mathbb{Z}[\sqrt{D}]\). Với \(|D|\) nhỏ:
+
+\begin{longtable}[]{@{}lllll@{}}
+\toprule\noalign{}
+\$ & D & \$ & \(h(D)\) & \(H_D(x)\) \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+3 & 1 & \(x\) & & \\
+4 & 1 & \(x - 1728\) & & \\
+7 & 1 & \(x + 3375\) & & \\
+11 & 1 & \(x + 32768\) & & \\
+23 & 3 & \(x^3 + \cdots\) & & \\
+\end{longtable}
+
+Với \(|D| = 3\) và \(|D| = 4\), đa thức này bậc 1, nên
+\textbf{\(j\)-invariant được xác định ngay lập tức}: \(j = 0\) và
+\(j = 1728\) tương ứng. Đây là lý do tại sao secp256k1 (\(j=0\),
+\(D=-3\)) và nhiều đường cong BLS có dạng đơn giản \(y^2 = x^3 + b\).
+
+\subsection{Quy trình CM đầy
+đủ}\label{quy-truxecnh-cm-ux111ux1ea7y-ux111ux1ee7}
+
+Cho bộ tham số \((p, t, D)\) thỏa mãn \(4p = t^2 + |D|v^2\):
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Tính \(j\)-invariant}: Tìm nghiệm \(j_0 \in \mathbb{F}_p\) của
+  \(H_D(x) \pmod{p}\).
+\item
+  \textbf{Suy ra hệ số đường cong}: Từ \(j_0\), tính
+  \(c = j_0 \cdot (1728 - j_0)^{-1} \pmod{p}\), sau đó:
+
+  \begin{itemize}
+  \tightlist
+  \item
+    \(a = 3c\), \(b = 2c\) (trường hợp tổng quát \(j_0 \neq 0, 1728\))
+  \item
+    \(a = 0\), \(b\) tùy ý (khi \(j_0 = 0\), tức \(D = -3\))
+  \item
+    \(a\) tùy ý, \(b = 0\) (khi \(j_0 = 1728\), tức \(D = -4\))
+  \end{itemize}
+\item
+  \textbf{Kiểm tra xoắn (Twist test)}: Đường cong
+  \(E: y^2 = x^3 + ax + b\) và đường cong xoắn
+  \(E': y^2 = x^3 + a\delta^2 x + b\delta^3\) (với \(\delta\) là phần tử
+  không phải thặng dư bậc hai) có tổng số điểm \(\#E + \#E' = 2(p+1)\).
+  Ta cần chọn đúng đường cong có \(r \mid \#E\).
+\item
+  \textbf{Tìm điểm sinh (Generator)}: Nhân ngẫu nhiên một điểm trên
+  đường cong với hệ số cofactor \(h = \#E / r\) để tìm điểm sinh \(G\)
+  có bậc chính xác là \(r\).
+\end{enumerate}
+
+\subsection{\texorpdfstring{Trường hợp \(D = -3\): Xoắn
+sextic}{Trường hợp D = -3: Xoắn sextic}}\label{trux1b0ux1eddng-hux1ee3p-d--3-xoux1eafn-sextic}
+
+Với \(D = -3\), tình huống phức tạp hơn vì đường cong \(y^2 = x^3 + b\)
+có \textbf{6 xoắn} (sextic twists) thay vì chỉ 2. Sáu vết Frobenius khả
+dĩ là:
+
+\[t, \quad -t, \quad \frac{t \pm 3v}{2}, \quad \frac{-t \pm 3v}{2}\]
+
+trong đó \(4p = t^2 + 3v^2\). Để xác định xoắn đúng, ta lần lượt thử các
+giá trị \(b\) nhỏ và kiểm tra số điểm thực sự của đường cong
+\(y^2 = x^3 + b\) bằng cách tính phép nhân vô hướng \([p+1-t']P\) với
+điểm ngẫu nhiên \(P\).
+
+Trong cài đặt của luận văn (tệp \texttt{complex\_multiplication.rs}),
+hàm \texttt{find\_twist} thực hiện:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{// Sáu bậc nhóm khả dĩ cho D = {-}3 (j = 0)}
+\KeywordTok{let}\NormalTok{ candidates }\OperatorTok{=}\NormalTok{ [}
+\NormalTok{    p1}\OperatorTok{.}\NormalTok{borrowing\_sub(}\OperatorTok{\&}\NormalTok{config}\OperatorTok{.}\NormalTok{t)}\OperatorTok{.}\DecValTok{0}\OperatorTok{,}    \CommentTok{//  p + 1 {-} t}
+\NormalTok{    p1}\OperatorTok{.}\NormalTok{carrying\_add(}\OperatorTok{\&}\NormalTok{config}\OperatorTok{.}\NormalTok{t)}\OperatorTok{.}\DecValTok{0}\OperatorTok{,}     \CommentTok{//  p + 1 + t}
+\NormalTok{    p1}\OperatorTok{.}\NormalTok{borrowing\_sub(}\OperatorTok{\&}\NormalTok{t3p)}\OperatorTok{.}\DecValTok{0}\OperatorTok{,}         \CommentTok{//  p + 1 {-} (t+3v)/2}
+\NormalTok{    p1}\OperatorTok{.}\NormalTok{carrying\_add(}\OperatorTok{\&}\NormalTok{t3p)}\OperatorTok{.}\DecValTok{0}\OperatorTok{,}          \CommentTok{//  p + 1 + (t+3v)/2}
+\NormalTok{    p1}\OperatorTok{.}\NormalTok{borrowing\_sub(}\OperatorTok{\&}\NormalTok{t3m)}\OperatorTok{.}\DecValTok{0}\OperatorTok{,}         \CommentTok{//  p + 1 {-} (t{-}3v)/2}
+\NormalTok{    p1}\OperatorTok{.}\NormalTok{carrying\_add(}\OperatorTok{\&}\NormalTok{t3m)}\OperatorTok{.}\DecValTok{0}\OperatorTok{,}          \CommentTok{//  p + 1 + (t{-}3v)/2}
+\NormalTok{]}\OperatorTok{;}
+\CommentTok{// Tìm bậc nào chia hết cho r, rồi tìm b tương ứng}
+\end{Highlighting}
+\end{Shaded}
+
+\section{Tham số đầu vào của hệ
+thống}\label{tham-sux1ed1-ux111ux1ea7u-vuxe0o-cux1ee7a-hux1ec7-thux1ed1ng}
+
+Trước khi đi vào chi tiết thuật toán, phần này giải thích ý nghĩa và cơ
+sở lựa chọn của 7 tham số đầu vào trong cài đặt thực tế
+(\texttt{cocks\_pinch.rs}):
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{let}\NormalTok{ k                    }\OperatorTok{=} \DecValTok{18u64}\OperatorTok{;}
+\KeywordTok{let}\NormalTok{ d                    }\OperatorTok{=} \PreprocessorTok{U1024::}\NormalTok{from(}\DecValTok{3}\NormalTok{)}\OperatorTok{;}
+\KeywordTok{let}\NormalTok{ target\_r\_bits        }\OperatorTok{=} \DecValTok{512}\OperatorTok{;}
+\KeywordTok{let}\NormalTok{ target\_p\_bits        }\OperatorTok{=} \DecValTok{1024}\OperatorTok{;}
+\KeywordTok{let}\NormalTok{ max\_attempts         }\OperatorTok{=} \DecValTok{100\_000u64}\OperatorTok{;}
+\KeywordTok{let}\NormalTok{ min\_scalar\_two\_adicity }\OperatorTok{=} \DecValTok{32u32}\OperatorTok{;}
+\KeywordTok{let}\NormalTok{ min\_base\_two\_adicity   }\OperatorTok{=} \DecValTok{32u32}\OperatorTok{;}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{\texorpdfstring{\texttt{k\ =\ 18} --- Bậc nhúng (Embedding
+Degree)}{k = 18 --- Bậc nhúng (Embedding Degree)}}\label{k-18-bux1eadc-nhuxfang-embedding-degree}
+
+Bậc nhúng \(k\) xác định \textbf{trường mở rộng} \(\mathbb{F}_{p^k}\)
+nơi phép ghép cặp Weil/Tate được tính toán. Giá trị \(k = 18\) được chọn
+vì:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Cân bằng bảo mật:} Với \(r \approx 2^{512}\) và
+  \(p \approx 2^{1024}\), kích thước trường mở rộng là
+  \(p^k \approx 2^{1024 \times 18} = 2^{18432}\) bit. Theo tiêu chuẩn
+  NFS hiện tại, bài toán DLP trên \(\mathbb{F}_{p^{18}}\) ở mức bảo mật
+  \(\geq 256\) bit --- tương đương với mức bảo mật của khóa
+  \(r \approx 2^{512}\).
+\item
+  \textbf{Hỗ trợ Đa thức Cyclotomic bậc 18:}
+  \(\Phi_{18}(T) = T^6 - T^3 + 1\) cho phép sinh \(r\) hiệu quả, có cấu
+  trúc NTT-friendly tự nhiên khi \(T \equiv 0 \pmod{2^k}\) (xem §3.3.1).
+\item
+  \textbf{Thực tế:} \(k = 18\) là bậc nhúng phổ biến trong họ đường cong
+  KSS18, phù hợp với mức bảo mật hậu lượng tử cao hơn các đường cong
+  BLS12 (dùng trong Ethereum 2.0).
+\end{itemize}
+
+\subsection{\texorpdfstring{\texttt{d\ =\ 3} --- Biệt thức CM
+(\(|D|\))}{d = 3 --- Biệt thức CM (\textbar D\textbar)}}\label{d-3-biux1ec7t-thux1ee9c-cm-d}
+
+Biệt thức CM \(D = -3\) được chọn vì những ưu điểm nổi bật:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Đa thức Hilbert bậc 1:} \(H_{-3}(x) = x\), nên \(j\)-invariant
+  bằng 0 và phương trình đường cong có dạng cực kỳ đơn giản
+  \(y^2 = x^3 + b\). Không cần giải đa thức bậc cao.
+\item
+  \textbf{Phổ biến trong thực tế:} secp256k1 (Bitcoin), BLS12-381
+  (Ethereum), và nhiều đường cong quan trọng khác đều dùng \(D = -3\).
+\item
+  \textbf{Điều kiện CM đơn giản:} Phương trình \(4p = t^2 + 3v^2\) dễ
+  giải hơn với hầu hết các giá trị \((t, v)\) nguyên, tăng xác suất tìm
+  được \(p\) nguyên tố trong lưới nâng.
+\end{itemize}
+
+\subsection{\texorpdfstring{\texttt{target\_r\_bits\ =\ 512} --- Kích
+thước bậc nhóm
+\(r\)}{target\_r\_bits = 512 --- Kích thước bậc nhóm r}}\label{target_r_bits-512-kuxedch-thux1b0ux1edbc-bux1eadc-nhuxf3m-r}
+
+Tham số này xác định \textbf{mức bảo mật} của bài toán logarit rời rạc
+trên đường cong (ECDLP):
+
+\begin{itemize}
+\tightlist
+\item
+  Với \(r \approx 2^{512}\), thuật toán Pollard-rho tốt nhất cần
+  \(\approx 2^{256}\) phép tính, đạt mức bảo mật \textbf{256-bit} ---
+  vượt tiêu chuẩn NIST SP 800-57 cho ứng dụng đến năm 2030+ và phù hợp
+  với kịch bản hậu lượng tử (post-quantum).
+\item
+  Đây cũng là kích thước của \textbf{khóa riêng} (private key scalar) và
+  \textbf{kích thước chữ ký} trong các giao thức Schnorr và ECDSA trên
+  đường cong này.
+\end{itemize}
+
+\subsection{\texorpdfstring{\texttt{target\_p\_bits\ =\ 1024} --- Kích
+thước trường cơ sở
+\(p\)}{target\_p\_bits = 1024 --- Kích thước trường cơ sở p}}\label{target_p_bits-1024-kuxedch-thux1b0ux1edbc-trux1b0ux1eddng-cux1a1-sux1edf-p}
+
+Kích thước trường cơ sở tác động đến hai yếu tố:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Bảo mật DLP trên \(\mathbb{F}_{p^k}\):} Với
+  \(p \approx 2^{1024}\) và \(k = 18\), kích thước trường mở rộng là
+  \(2^{18432}\) bit. Theo ước lượng NFS/TNFS, điều này cho mức bảo mật
+  \(\geq 250\) bit --- phù hợp với ứng dụng yêu cầu bảo mật dài hạn.
+\item
+  \textbf{Hiệu năng:} Kích thước 1024 bit làm cho mỗi phép nhân trường
+  tốn gấp đôi so với 512 bit về mặt thời gian CPU, nhưng vẫn trong giới
+  hạn thực tế với phép nhân Montgomery đa độ chính xác.
+\item
+  \textbf{Tỉ số \(\rho\):}
+  \(\rho = \log_2 p / \log_2 r = 1024/512 = 2\). Đây là tỉ số điển hình
+  của Cocks-Pinch (so với \(\rho = 1.5\) của BLS12 hay \(\rho = 1\) của
+  BN).
+\end{itemize}
+
+\subsection{\texorpdfstring{\texttt{max\_attempts\ =\ 100\_000} --- Số
+lần thử tối
+đa}{max\_attempts = 100\_000 --- Số lần thử tối đa}}\label{max_attempts-100_000-sux1ed1-lux1ea7n-thux1eed-tux1ed1i-ux111a}
+
+Giới hạn vòng lặp tìm kiếm an toàn. Trong thực nghiệm, thuật toán CP cải
+tiến thường tìm được kết quả trong \textbf{100--6000 lần thử} (tùy cấu
+hình NTT), do đó \texttt{100\_000} là giới hạn rất thoải mái đảm bảo
+không bao giờ bị timeout trong điều kiện bình thường. Nếu vượt giới hạn
+này (không bao giờ xảy ra trong thực tế), hệ thống báo lỗi thay vì chạy
+mãi mãi.
+
+\subsection{\texorpdfstring{\texttt{min\_scalar\_two\_adicity\ =\ 32}
+--- Two-adicity tối thiểu của
+\(r - 1\)}{min\_scalar\_two\_adicity = 32 --- Two-adicity tối thiểu của r - 1}}\label{min_scalar_two_adicity-32-two-adicity-tux1ed1i-thiux1ec3u-cux1ee7a-r---1}
+
+Tham số này ràng buộc \textbf{cấu trúc NTT-friendly của trường vô hướng
+\(\mathbb{F}_r\)}:
+
+\[2^{32} \mid (r - 1) \quad \Longleftrightarrow \quad r = d \cdot 2^{32} + 1 \text{ với } d \text{ lẻ}\]
+
+Ý nghĩa thực tế: trường \(\mathbb{F}_r\) chứa một căn nguyên thủy
+\(2^{32}\)-th của đơn vị, cho phép thực hiện NTT trên các đa thức bậc
+lên đến \(2^{32} \approx 4 \times 10^9\). Đây là yêu cầu cốt lõi để tạo
+chứng minh ZK hiệu quả:
+
+\begin{itemize}
+\tightlist
+\item
+  Trong Groth16/PLONK, phép nhân đa thức \(A(x) \cdot B(x)\) với mạch có
+  \(2^{20}\) ràng buộc cần NTT bậc \(\geq 2^{21}\) --- thỏa mãn với
+  \(2^{32}\).
+\item
+  BLS12-381 (chuẩn công nghiệp) có \(r\) two-adicity = 32; hệ thống này
+  đạt \(\geq 33\), \textbf{vượt chuẩn BLS12-381}.
+\end{itemize}
+
+Giá trị 32 đạt được \textbf{không cần rejection sampling} nhờ ràng buộc
+\(T \equiv 0 \pmod{2^{11}}\) (vì
+\(v_2(r-1) = 3 \cdot v_2(T) \geq 3 \times 11 = 33 \geq 32\)).
+
+\subsection{\texorpdfstring{\texttt{min\_base\_two\_adicity\ =\ 32} ---
+Two-adicity tối thiểu của
+\(p - 1\)}{min\_base\_two\_adicity = 32 --- Two-adicity tối thiểu của p - 1}}\label{min_base_two_adicity-32-two-adicity-tux1ed1i-thiux1ec3u-cux1ee7a-p---1}
+
+Tương tự, tham số này ràng buộc \textbf{cấu trúc NTT-friendly của trường
+cơ sở \(\mathbb{F}_p\)}:
+
+\[2^{32} \mid (p - 1) \quad \Longleftrightarrow \quad p = d \cdot 2^{32} + 1\]
+
+Đây cũng là yêu cầu của thuật toán Miller trong phép ghép cặp: các biểu
+thức trung gian (line evaluations) được tính trong \(\mathbb{F}_{p^k}\)
+và có thể được tăng tốc bằng NTT nếu \(p\) có cấu trúc NTT. Ngoài ra:
+
+\begin{itemize}
+\tightlist
+\item
+  \(p = d \cdot 2^{32} + 1\) kháng TNFS tốt hơn \(p\) tùy ý (xem §3.3),
+  do cấu trúc \(p-1\) không có nhân tử nhỏ ngẫu nhiên mà thuật toán rây
+  có thể khai thác.
+\item
+  Giá trị này đạt được bằng cách mở rộng lưới nâng \((h_t, h_y)\) trong
+  hàm \texttt{try\_lift\_to\_prime}.
+\end{itemize}
+
+\subsection{Tổng hợp: Đặc trưng đường cong mục
+tiêu}\label{tux1ed5ng-hux1ee3p-ux111ux1eb7c-trux1b0ng-ux111ux1b0ux1eddng-cong-mux1ee5c-tiuxeau}
+
+Từ 7 tham số trên, đường cong được xây dựng có đặc trưng:
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Thuộc tính
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Giá trị
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Ý nghĩa
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Phương trình & \(y^2 = x^3 + b\) & \(D=-3\), \(j=0\), dạng tối giản \\
+Bậc nhúng & \(k = 18\) & Phép ghép cặp trong \(\mathbb{F}_{p^{18}}\) \\
+Kích thước \(r\) & 512 bit & Bảo mật ECDLP 256-bit \\
+Kích thước \(p\) & 1024 bit & Bảo mật DLP \(\geq 250\)-bit \\
+Two-adicity \(r\) & \(\geq 33\) & NTT/FFT trên \(\mathbb{F}_r\) đến bậc
+\(2^{33}\) \\
+Two-adicity \(p\) & \(\geq 32\) & NTT/FFT trên \(\mathbb{F}_p\) đến bậc
+\(2^{32}\) \\
+Dạng \(r\) & \(d \cdot 2^{33} + 1\) & NTT-friendly scalar field \\
+Dạng \(p\) & \(d \cdot 2^{34} + 1\) & NTT-friendly base field (kháng
+TNFS) \\
+\end{longtable}
+
+\section{Thuật toán Cocks-Pinch truyền
+thống}\label{thuux1eadt-touxe1n-cocks-pinch-truyux1ec1n-thux1ed1ng}
+
+\subsection{\texorpdfstring{Vấn đề: Xây dựng ngược từ
+\(r\)}{Vấn đề: Xây dựng ngược từ r}}\label{vux1ea5n-ux111ux1ec1-xuxe2y-dux1ef1ng-ngux1b0ux1ee3c-tux1eeb-r}
+
+Phương pháp CM truyền thống xuất phát từ \(p\) được chọn trước, đòi hỏi
+giải phương trình \(4p = t^2 + |D|v^2\) --- một bài toán biểu diễn số
+nguyên bởi dạng toàn phương (quadratic form) không hề dễ trong không
+gian lớn.
+
+\textbf{Thuật toán Cocks-Pinch (CP)} đảo chiều bài toán: \textbf{bắt đầu
+từ \(r\) rồi xây dựng \(p\)}. Đây là cách tiếp cận tự nhiên hơn khi mục
+tiêu là đảm bảo \(r\) có kích thước an toàn (ví dụ: 512 bit) với bậc
+nhúng \(k\) cho trước.
+
+\subsection{Điều kiện bậc
+nhúng}\label{ux111iux1ec1u-kiux1ec7n-bux1eadc-nhuxfang}
+
+Bậc nhúng \(k\) của đường cong là \textbf{số nguyên dương nhỏ nhất} sao
+cho \(r \mid p^k - 1\), hay tương đương \(p \equiv 1 \pmod{r}\) khi
+\(k=1\), hoặc tổng quát hơn \(p\) là nghiệm của
+\(\Phi_k(x) \equiv 0 \pmod{r}\).
+
+Điều kiện cụ thể: \(r \mid \Phi_k(p)\), trong đó \(\Phi_k\) là đa thức
+cyclotomic. Điều này có nghĩa là tồn tại \(u\) nguyên tố cùng nhau với
+\(k\) sao cho:
+
+\[p \equiv \rho^i \pmod{r} \quad \text{với } \rho \text{ là nghiệm nguyên thủy của } \Phi_k(x) \equiv 0 \pmod{r}\]
+
+\subsection{\texorpdfstring{Thuật toán CP cho
+\(k = 18\)}{Thuật toán CP cho k = 18}}\label{thuux1eadt-touxe1n-cp-cho-k-18}
+
+Với \(k = 18\) và \(D = -3\), bậc nhóm
+\(r = \Phi_{18}(T) = T^6 - T^3 + 1\) với \(T\) nguyên tùy ý. Các bước:
+
+\textbf{Bước 1 --- Sinh \(r\) từ \(T\):}
+
+\[r = \Phi_{18}(T) = T^6 - T^3 + 1\]
+
+Kiểm tra tính nguyên tố của \(r\) bằng thuật toán Miller-Rabin.
+
+\textbf{Bước 2 --- Tính \(\sqrt{-D} \pmod{r}\):}
+
+Cần \(\beta = \sqrt{-3} \pmod{r}\). Do \(r \equiv 1 \pmod{3}\) (do cấu
+trúc của \(\Phi_{18}\)), phần tử này luôn tồn tại. Dùng thuật toán
+Tonelli--Shanks.
+
+\textbf{Bước 3 --- Tính \(t_0, y_0\) modulo \(r\):}
+
+Với mỗi \(i\) thỏa \(\gcd(i, k) = 1\) và \(1 \leq i < k\):
+
+\[t_0 = T^i + 1 \pmod{r}, \quad y_0 = \frac{t_0 - 2}{\beta} \pmod{r}\]
+
+\textbf{Bước 4 --- Nâng (lift) lên số nguyên:}
+
+Tìm \(t, y \in \mathbb{Z}\) với \(t \equiv t_0 \pmod{r}\),
+\(y \equiv y_0 \pmod{r}\) sao cho:
+
+\[p = \frac{t^2 + 3y^2}{4}\]
+
+là số nguyên và là số nguyên tố. Để làm điều này, thử các dịch chuyển
+nhỏ:
+
+\[t = t_0 + h_t \cdot r, \quad y = y_0 + h_y \cdot r, \quad h_t, h_y \in \{-20, \ldots, 20\}\]
+
+cho đến khi \(\frac{t^2 + 3y^2}{4}\) là số nguyên tố đúng kích thước mục
+tiêu.
+
+Trong cài đặt (\texttt{cocks\_pinch.rs}), hàm
+\texttt{try\_lift\_to\_prime} thực hiện tìm kiếm này:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ControlFlowTok{for}\NormalTok{ ht }\KeywordTok{in} \OperatorTok{{-}}\NormalTok{half\_range}\OperatorTok{..=}\NormalTok{half\_range }\OperatorTok{\{}
+    \ControlFlowTok{for}\NormalTok{ hy }\KeywordTok{in} \OperatorTok{{-}}\NormalTok{half\_range}\OperatorTok{..=}\NormalTok{half\_range }\OperatorTok{\{}
+        \KeywordTok{let}\NormalTok{ t }\OperatorTok{=}\NormalTok{ apply\_lift(lp}\OperatorTok{.}\NormalTok{t0}\OperatorTok{,}\NormalTok{ r}\OperatorTok{,}\NormalTok{ ht }\KeywordTok{as} \DataTypeTok{i32}\NormalTok{)}\OperatorTok{;}
+        \KeywordTok{let}\NormalTok{ y }\OperatorTok{=}\NormalTok{ apply\_lift(lp}\OperatorTok{.}\NormalTok{y0}\OperatorTok{,}\NormalTok{ r}\OperatorTok{,}\NormalTok{ hy }\KeywordTok{as} \DataTypeTok{i32}\NormalTok{)}\OperatorTok{;}
+        \CommentTok{// p = (t² + 3y²) / 4}
+        \KeywordTok{let}\NormalTok{ numerator }\OperatorTok{=}\NormalTok{ t² }\OperatorTok{+}\NormalTok{ 3y²}\OperatorTok{;}
+        \ControlFlowTok{if}\NormalTok{ numerator }\OperatorTok{\%} \DecValTok{4} \OperatorTok{!=} \DecValTok{0} \OperatorTok{\{} \ControlFlowTok{continue}\OperatorTok{;} \OperatorTok{\}}
+        \KeywordTok{let}\NormalTok{ p }\OperatorTok{=}\NormalTok{ numerator }\OperatorTok{/} \DecValTok{4}\OperatorTok{;}
+        \ControlFlowTok{if}\NormalTok{ is\_prime(}\OperatorTok{\&}\NormalTok{p) }\OperatorTok{\{} \ControlFlowTok{return} \ConstantTok{Some}\NormalTok{(CurveParams }\OperatorTok{\{}\NormalTok{ p}\OperatorTok{,}\NormalTok{ r}\OperatorTok{,}\NormalTok{ t}\OperatorTok{,}\NormalTok{ y}\OperatorTok{,} \OperatorTok{..} \OperatorTok{\}}\NormalTok{)}\OperatorTok{;} \OperatorTok{\}}
+    \OperatorTok{\}}
+\OperatorTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Phân tích độ phức tạp trung
+bình}\label{phuxe2n-tuxedch-ux111ux1ed9-phux1ee9c-tux1ea1p-trung-buxecnh}
+
+Mật độ số nguyên tố lân cận \(N\) là khoảng \(1/\ln N\), tức
+\(1/1024\ln 2 \approx 1/709\). Với lưới \((h_t, h_y) \in [-20, 20]^2\)
+tạo ra \(41 \times 41 = 1681\) ứng viên \(p\) mỗi lần, tỉ lệ thành công
+mỗi lần sinh \(r\) là khoảng \(1681/709 \approx 2.4\) ứng viên \(p\)
+nguyên tố. Trong thực tế, thường cần khoảng \textbf{100--500 lần sinh
+\(r\)} để tìm được bộ tham số hợp lệ.
+
+\section{Thuật toán Cocks-Pinch Cải
+tiến}\label{thuux1eadt-touxe1n-cocks-pinch-cux1ea3i-tiux1ebfn}
+
+\subsection{Động lực: Tấn công rây trường số tháp
+(TNFS)}\label{ux111ux1ed9ng-lux1ef1c-tux1ea5n-cuxf4ng-ruxe2y-trux1b0ux1eddng-sux1ed1-thuxe1p-tnfs}
+
+Bảo mật của phép ghép cặp phụ thuộc vào độ khó của \textbf{bài toán
+logarit rời rạc} (DLP) trên trường mở rộng \(\mathbb{F}_{p^k}\). Năm
+2016, Barbulescu và Duquesne chỉ ra rằng thuật toán \textbf{Tower Number
+Field Sieve (TNFS)} --- một biến thể của NFS --- có thể giảm đáng kể độ
+phức tạp tấn công DLP trên \(\mathbb{F}_{p^k}\) khi \(k\) composite và
+\(p\) có cấu trúc đặc biệt. Điều này \textbf{phá vỡ ước lượng bảo mật
+ban đầu} của các đường cong như BN256 (từ \textasciitilde128 bit xuống
+còn \textasciitilde100 bit hiệu quả).
+
+Để kháng lại TNFS, cần đảm bảo trường cơ sở của đường cong có
+\textbf{cấu trúc tốt} ở cả hai trường: trường vô hướng \(\mathbb{F}_r\)
+(phục vụ tính toán ZK proof) và trường cơ sở \(\mathbb{F}_p\) (phục vụ
+phép ghép cặp).
+
+\subsection{Yêu cầu NTT-friendly}\label{yuxeau-cux1ea7u-ntt-friendly}
+
+Một số nguyên tố \(q\) được gọi là \textbf{NTT-friendly} (hoặc
+FFT-friendly) nếu \(q - 1\) chia hết cho một lũy thừa đủ lớn của 2, tức
+là:
+
+\[2^s \mid (q - 1) \quad \text{với } s \text{ đủ lớn}\]
+
+Số \(s\) được gọi là \textbf{số hạng hai-adicity} (two-adicity) của
+\(q\). Ý nghĩa: trường \(\mathbb{F}_q\) chứa một căn nguyên thủy
+\(2^s\)-th của đơn vị, cho phép áp dụng \textbf{Biến đổi Lý thuyết số
+(NTT)} --- tức FFT trên trường hữu hạn --- để nhân đa thức bậc cao trong
+\(O(n \log n)\) thay vì \(O(n^2)\).
+
+Đây là yếu tố \emph{quyết định} hiệu năng trong: - Sinh chứng minh ZK
+(Groth16, PLONK): tính \(H(x) = (A(x) \cdot B(x) - C(x)) / Z(x)\) - Các
+cam kết đa thức (KZG, FRI) - Thuật toán MSM (Multi-scalar
+multiplication) biến thể NTT
+
+\textbf{Tương quan với TNFS:} Một trường \(\mathbb{F}_p\) với
+two-adicity cao có \(p-1 = d \cdot 2^s\), nghĩa là
+\(p = d \cdot 2^s + 1\). Cấu trúc này khiến cho tháp trường (tower field
+extension) \(\mathbb{F}_{p^k}\) có đặc điểm tốt hơn từ góc độ kháng
+TNFS: các thuật toán rây cần khai thác cấu trúc phân tích của \(p-1\) để
+tìm quan hệ, do đó khi \(p-1\) có cấu trúc \textbf{không phân tích tùy
+tiện} mà theo dạng chuẩn \(d \cdot 2^s + 1\), sự khai thác thông tin này
+trở nên khó hơn.
+
+\subsection{\texorpdfstring{Cải tiến 1: NTT-friendly \(r\) qua ràng buộc
+\(T\)}{Cải tiến 1: NTT-friendly r qua ràng buộc T}}\label{cux1ea3i-tiux1ebfn-1-ntt-friendly-r-qua-ruxe0ng-buux1ed9c-t}
+
+\textbf{Nhận xét then chốt:} Vì \(r = \Phi_{18}(T) = T^6 - T^3 + 1\), ta
+có:
+
+\[r - 1 = T^3(T^3 - 1)\]
+
+Nếu \(T \equiv 0 \pmod{2^k}\), thì \(T^3 \equiv 0 \pmod{2^{3k}}\), và do
+đó:
+
+\[v_2(r-1) = v_2(T^3(T^3 - 1)) = 3k\]
+
+(vì \(T^3 \equiv 0 \pmod{2^{3k}}\) và \(T^3 - 1 \equiv -1 \pmod{2}\) là
+lẻ).
+
+\textbf{Kết luận:} Để đảm bảo \(\text{two-adicity}(r-1) \geq s\), chỉ
+cần \textbf{chọn \(T \equiv 0 \pmod{2^{\lceil s/3 \rceil}}\)}. Đây là
+ràng buộc \emph{không cần rejection sampling} --- mọi \(T\) thỏa mãn
+điều kiện này đều cho \(r\) với two-adicity ít nhất \(s\).
+
+Trong cài đặt:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{// Chọn T là bội số của 2\^{}ceil(s/3): đảm bảo two\_adicity(r{-}1) \textgreater{}= s}
+\KeywordTok{let}\NormalTok{ t\_align }\OperatorTok{=}\NormalTok{ min\_scalar\_two\_adicity}\OperatorTok{.}\NormalTok{div\_ceil(}\DecValTok{3}\NormalTok{)}\OperatorTok{;}
+\KeywordTok{let}\NormalTok{ step }\OperatorTok{=} \PreprocessorTok{U1024::}\NormalTok{ONE}\OperatorTok{.}\NormalTok{shl(t\_align }\KeywordTok{as} \DataTypeTok{usize}\NormalTok{)}\OperatorTok{;}
+\CommentTok{// t\_val luôn là bội số của step}
+\KeywordTok{let}\NormalTok{ t\_val }\OperatorTok{=}\NormalTok{ t\_base }\OperatorTok{+} \PreprocessorTok{U1024::}\NormalTok{rand(}\OperatorTok{\&}\NormalTok{t\_steps) }\OperatorTok{*}\NormalTok{ step}\OperatorTok{;}
+\KeywordTok{let}\NormalTok{ r }\OperatorTok{=}\NormalTok{ cyclotomic\_phi18(}\OperatorTok{\&}\NormalTok{t\_val)}\OperatorTok{;}
+\CommentTok{// Đảm bảo r thỏa mãn: two\_adicity(r{-}1) = 3 * v₂(T) \textgreater{}= s}
+\end{Highlighting}
+\end{Shaded}
+
+Với \texttt{min\_scalar\_two\_adicity\ =\ 32}, ta cần
+\(\lceil 32/3 \rceil = 11\), tức \(T \equiv 0 \pmod{2^{11}}\). Điều này
+\textbf{không làm giảm không gian tham số} đáng kể --- vẫn còn
+\(2^{85}/2^{11} = 2^{74}\) ứng viên \(T\) trong dải hợp lệ.
+
+\subsection{\texorpdfstring{Cải tiến 2: NTT-friendly \(p\) qua mở rộng
+lưới
+nâng}{Cải tiến 2: NTT-friendly p qua mở rộng lưới nâng}}\label{cux1ea3i-tiux1ebfn-2-ntt-friendly-p-qua-mux1edf-rux1ed9ng-lux1b0ux1edbi-nuxe2ng}
+
+Sau khi có \(t_0, y_0 \pmod{r}\), tham số \(p\) được xác định bởi:
+
+\[p = \frac{(t_0 + h_t r)^2 + 3(y_0 + h_y r)^2}{4}\]
+
+Vì \(r \equiv 0 \pmod{2^{3k}}\) (do \(T \equiv 0 \pmod{2^k}\)), các bit
+thấp hơn \(3k\) của \(p-1\) chỉ phụ thuộc vào \(t_0, y_0\) (cố định cho
+mỗi \(r\)). Tuy nhiên, các bit từ vị trí \(3k\) trở lên bị ảnh hưởng bởi
+\(h_t, h_y\).
+
+Để đạt \(\text{two-adicity}(p-1) \geq s_p > 3k\), ta cần mở rộng lưới
+\((h_t, h_y)\) ra ngoài phạm vi \(\pm 20\) mặc định:
+
+\[\text{extra} = \max(0,\, s_p - 3k), \quad \text{half\_range} = 20 + 2^{\text{extra}}\]
+
+Điều này đảm bảo có đủ ứng viên \(h_t, h_y\) để \textbf{bao phủ mọi tổ
+hợp bit từ vị trí \(3k\) đến \(s_p\)} trong \(p-1\).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{struct}\NormalTok{ LiftParams}\OperatorTok{\textless{}}\OtherTok{\textquotesingle{}a}\OperatorTok{\textgreater{}} \OperatorTok{\{}
+\NormalTok{    t0}\OperatorTok{:} \OperatorTok{\&}\OtherTok{\textquotesingle{}a}\NormalTok{ U1024}\OperatorTok{,}
+\NormalTok{    y0}\OperatorTok{:} \OperatorTok{\&}\OtherTok{\textquotesingle{}a}\NormalTok{ U1024}\OperatorTok{,}
+\NormalTok{    target\_p\_bits}\OperatorTok{:} \DataTypeTok{usize}\OperatorTok{,}
+\NormalTok{    min\_base\_two\_adicity}\OperatorTok{:} \DataTypeTok{u32}\OperatorTok{,}  \CommentTok{// s\_p}
+\NormalTok{    r\_two\_adicity}\OperatorTok{:} \DataTypeTok{u32}\OperatorTok{,}         \CommentTok{// 3k}
+\OperatorTok{\}}
+
+\CommentTok{// Mở rộng lưới tìm kiếm tỉ lệ với khoảng cách giữa s\_p và 3k}
+\KeywordTok{let}\NormalTok{ extra }\OperatorTok{=}\NormalTok{ lp}\OperatorTok{.}\NormalTok{min\_base\_two\_adicity}
+    \OperatorTok{.}\NormalTok{saturating\_sub(lp}\OperatorTok{.}\NormalTok{r\_two\_adicity)}
+    \OperatorTok{.}\NormalTok{min(}\DecValTok{10}\NormalTok{)}\OperatorTok{;} \CommentTok{// giới hạn để lưới không bùng nổ}
+\KeywordTok{let}\NormalTok{ half\_range }\OperatorTok{=} \DecValTok{20i64} \OperatorTok{+}\NormalTok{ (}\DecValTok{1i64} \OperatorTok{\textless{}\textless{}}\NormalTok{ extra)}\OperatorTok{;}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Phân tích hiệu năng của thuật toán cải
+tiến}\label{phuxe2n-tuxedch-hiux1ec7u-nux103ng-cux1ee7a-thuux1eadt-touxe1n-cux1ea3i-tiux1ebfn}
+
+Bảng dưới so sánh thuật toán CP gốc và CP Cải tiến với cùng mục tiêu
+\((r \approx 2^{512}, p \approx 2^{1024}, k = 18)\):
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Tham số
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+CP Truyền thống
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+CP Cải tiến (\(s_r = 32, s_p = 32\))
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Ràng buộc trên \(T\) & Không có & \(T \equiv 0 \pmod{2^{11}}\) \\
+two-adicity của \(r-1\) & Ngẫu nhiên (\textasciitilde1-3) & \(\geq 33\)
+(đảm bảo) \\
+two-adicity của \(p-1\) & Ngẫu nhiên (\textasciitilde1) & \(\geq 32\)
+(với lưới mở rộng) \\
+Lưới \((h_t, h_y)\) & \([-20, 20]^2\) & \([-21, 21]^2\) (khi
+\(s_p \leq 3k\)) \\
+Chi phí mỗi lần thử & \textasciitilde50ms & \textasciitilde50ms \\
+Số lần thử trung bình & \textasciitilde100--500 &
+\textasciitilde3.000--6.000 \\
+Thời gian thực tế & \textasciitilde2--10 giây & \textasciitilde30--60
+giây \\
+\(r\) hỗ trợ NTT? & Không & Có (bậc \(2^{33}\)) \\
+\(p\) hỗ trợ NTT? & Không & Có (bậc \(2^{34}\)) \\
+\end{longtable}
+
+\emph{Kết quả thực nghiệm điển hình:}
+
+\begin{verbatim}
+r two-adicity: 2^33 | (r-1)  →  r = d·2^33 + 1, NTT đến bậc 2^33
+p two-adicity: 2^34 | (p-1)  →  p = d·2^34 + 1, NTT đến bậc 2^34
+Thời gian tổng: 32.81s
+\end{verbatim}
+
+\subsection{So sánh với BLS12-381}\label{so-suxe1nh-vux1edbi-bls12-381}
+
+Đường cong BLS12-381 --- chuẩn công nghiệp hiện tại trong ZK proof ---
+có: - \(r\) two-adicity = \textbf{32} (đủ cho ZK circuits đến \(2^{32}\)
+ràng buộc) - \(p\) two-adicity = \textbf{32}
+
+Đường cong được xây dựng trong luận văn này đạt \textbf{33--34}, tức là
+\textbf{vượt BLS12-381 về cấu trúc NTT} trong khi kích thước khóa lớn
+hơn (\(p \approx 2^{1024}\) so với \(p \approx 2^{381}\)), cung cấp mức
+bảo mật hậu lượng tử cao hơn trong ngữ cảnh phép ghép cặp.
+
+\subsection{Giới hạn và hướng mở
+rộng}\label{giux1edbi-hux1ea1n-vuxe0-hux1b0ux1edbng-mux1edf-rux1ed9ng}
+
+Thuật toán cải tiến vẫn có giới hạn thực tế:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Two-adicity tối đa đạt được}: Khi \(s_p > 3k + 10\), lưới
+  \((h_t, h_y)\) phải có \(\text{half\_range} > 2^{10} = 1024\), số lần
+  lặp vượt \(10^6\) mỗi ứng viên \(r\), khiến tìm kiếm không thực tế.
+  Nếu cần \(s_p\) cực cao (\textgreater50), cần dùng họ đường cong
+  chuyên dụng thiết kế từ đầu như Pasta curves (Pallas/Vesta).
+\item
+  \textbf{Tỉ số \(\rho\)}: Thuật toán CP vốn cho tỉ số
+  \(\rho = \log p / \log r \approx 2\), không tối ưu bằng các họ đường
+  cong chuyên biệt như BN256 (\(\rho = 1\)). Đây là sự đánh đổi cố hữu
+  của phương pháp CP.
+\item
+  \textbf{Chỉ \(k=18\) và \(D=-3\)} được cài đặt trong hệ thống hiện
+  tại. Mở rộng sang \(k = 12, 24\) đòi hỏi thay đổi đa thức cyclotomic
+  và công thức CM.
+\end{itemize}
+
+\FloatBarrier

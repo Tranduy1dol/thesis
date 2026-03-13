@@ -1,0 +1,388 @@
+% UET Thesis Pandoc LaTeX Template
+% Customized for University of Engineering and Technology, VNU
+
+\clearpage
+\phantomsection
+
+\setcounter{chapter}{2}
+\addcontentsline{toc}{chapter}{Cơ sở toán học}
+\chapter[]{Cơ sở toán học}
+
+Chương này trình bày các khái niệm toán học nền tảng được sử dụng trong
+toàn bộ luận văn: cấu trúc trường hữu hạn, đường cong elliptic Short
+Weierstrass và các phép toán nhóm trên nó, cùng với các kỹ thuật số học
+tối ưu (Montgomery, Fermat) được cài đặt trực tiếp trong thư viện
+\texttt{curve1024}.
+
+\section{\texorpdfstring{Trường hữu hạn
+\(\mathbb{F}_p\)}{Trường hữu hạn \textbackslash mathbb\{F\}\_p}}\label{trux1b0ux1eddng-hux1eefu-hux1ea1n-mathbbf_p}
+
+\subsection{Định nghĩa}\label{ux111ux1ecbnh-nghux129a}
+
+\textbf{Trường số nguyên tố} \(\mathbb{F}_p\) là tập
+\(\{0, 1, \ldots, p-1\}\) với phép cộng và nhân lấy modulo \(p\), trong
+đó \(p\) là số nguyên tố. Đây là trường hữu hạn nhỏ nhất có đặc số
+\(p\).
+
+Các tính chất quan trọng:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Đóng kín}: kết quả của mọi phép toán đều thuộc
+  \(\mathbb{F}_p\).
+\item
+  \textbf{Nghịch đảo nhân}: mọi phần tử \(a \neq 0\) có nghịch đảo
+  \(a^{-1}\) sao cho \(a \cdot a^{-1} \equiv 1 \pmod{p}\).
+\item
+  \textbf{Theo Định lý nhỏ Fermat}: \(a^{p-1} \equiv 1 \pmod{p}\) với
+  mọi \(a \neq 0\), do đó \(a^{-1} = a^{p-2} \pmod{p}\).
+\end{itemize}
+
+\subsection{\texorpdfstring{Cài đặt: \texttt{PrimeFieldConfig} và
+\texttt{PrimeFieldElement}}{Cài đặt: PrimeFieldConfig và PrimeFieldElement}}\label{cuxe0i-ux111ux1eb7t-primefieldconfig-vuxe0-primefieldelement}
+
+Trong thư viện \texttt{curve1024}, trường \(\mathbb{F}_p\) được biểu
+diễn qua trait \texttt{PrimeFieldConfig} (mang các hằng số tĩnh) và
+struct \texttt{PrimeFieldElement\textless{}C\textgreater{}} (phần tử
+trường):
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{pub} \KeywordTok{trait}\NormalTok{ PrimeFieldConfig }\OperatorTok{\{}
+    \KeywordTok{const}\NormalTok{ MODULUS}\OperatorTok{:}\NormalTok{ U1024}\OperatorTok{;}  \CommentTok{// p: số nguyên tố trường}
+    \KeywordTok{const}\NormalTok{ R2}\OperatorTok{:}\NormalTok{      U1024}\OperatorTok{;}  \CommentTok{// R² mod p, dùng cho Montgomery}
+    \KeywordTok{const}\NormalTok{ N\_PRIME}\OperatorTok{:}\NormalTok{ U1024}\OperatorTok{;}  \CommentTok{// {-}p⁻¹ mod 2\^{}1024, dùng cho REDC}
+\OperatorTok{\}}
+
+\KeywordTok{pub} \KeywordTok{struct}\NormalTok{ PrimeFieldElement}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{:}\NormalTok{ PrimeFieldConfig}\OperatorTok{\textgreater{}} \OperatorTok{\{}
+\NormalTok{    value}\OperatorTok{:}\NormalTok{ U1024}\OperatorTok{,}          \CommentTok{// biểu diễn Montgomery: a·R mod p}
+\OperatorTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Thiết kế này cho phép trình biên dịch mở inline toàn bộ hằng số tại thời
+gian biên dịch (zero-cost abstraction): hai trường khác nhau
+\(\mathbb{F}_p\) và \(\mathbb{F}_r\) dùng chung code nhưng có tham số
+riêng biệt không thể nhầm lẫn.
+
+\subsection{Các phép toán cơ
+bản}\label{cuxe1c-phuxe9p-touxe1n-cux1a1-bux1ea3n}
+
+\textbf{Cộng và trừ} thực hiện bằng cộng/trừ số nguyên rồi hiệu chỉnh
+modulo:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{// Cộng: (a + b) mod p}
+\KeywordTok{fn}\NormalTok{ add(}\KeywordTok{self}\OperatorTok{,}\NormalTok{ rhs}\OperatorTok{:} \DataTypeTok{Self}\NormalTok{) }\OperatorTok{{-}\textgreater{}} \DataTypeTok{Self} \OperatorTok{\{}
+    \KeywordTok{let}\NormalTok{ (sum}\OperatorTok{,}\NormalTok{ carry) }\OperatorTok{=} \KeywordTok{self}\OperatorTok{.}\NormalTok{value}\OperatorTok{.}\NormalTok{carrying\_add(}\OperatorTok{\&}\NormalTok{rhs}\OperatorTok{.}\NormalTok{value)}\OperatorTok{;}
+    \KeywordTok{let}\NormalTok{ (sub}\OperatorTok{,}\NormalTok{ borrow) }\OperatorTok{=}\NormalTok{ sum}\OperatorTok{.}\NormalTok{borrowing\_sub(}\OperatorTok{\&}\PreprocessorTok{C::}\NormalTok{MODULUS)}\OperatorTok{;}
+    \CommentTok{// Chọn kết quả không cần phép chia}
+\NormalTok{    conditional\_select(sum}\OperatorTok{,}\NormalTok{ sub}\OperatorTok{,}\NormalTok{ carry }\OperatorTok{||} \OperatorTok{!}\NormalTok{borrow)}
+\OperatorTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Phép cộng không cần phép chia đầy đủ --- chỉ cần một phép trừ có điều
+kiện. Chi phí: \(O(n)\) với \(n\) là số limb (16 limb × 64 bit = 1024
+bit).
+
+\textbf{Nhân} dùng phép nhân Montgomery (xem §2.4).
+
+\textbf{Nghịch đảo} dùng lũy thừa Fermat: \(a^{-1} = a^{p-2} \pmod{p}\),
+thực hiện bởi hàm \texttt{pow} với phép nhân bình phương liên tiếp
+(square-and-multiply):
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{pub} \KeywordTok{fn}\NormalTok{ inv(}\OperatorTok{\&}\KeywordTok{self}\NormalTok{) }\OperatorTok{{-}\textgreater{}} \DataTypeTok{Self} \OperatorTok{\{}
+    \KeywordTok{self}\OperatorTok{.}\NormalTok{pow(}\PreprocessorTok{C::}\NormalTok{MODULUS }\OperatorTok{{-}} \DecValTok{2}\NormalTok{)  }\CommentTok{// a\^{}(p{-}2) mod p}
+\OperatorTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\section{Đường cong elliptic Short
+Weierstrass}\label{ux111ux1b0ux1eddng-cong-elliptic-short-weierstrass}
+
+\subsection{Định nghĩa}\label{ux111ux1ecbnh-nghux129a-1}
+
+Trên \(\mathbb{F}_p\) với \(p > 3\), \textbf{đường cong elliptic dạng
+Short Weierstrass} là tập hợp:
+
+\[E(\mathbb{F}_p) = \{(x, y) \in \mathbb{F}_p \times \mathbb{F}_p \mid y^2 = x^3 + ax + b\} \cup \{\mathcal{O}\}\]
+
+trong đó \(\mathcal{O}\) là \textbf{điểm vô cực} (point at infinity) ---
+phần tử đặc biệt không thuộc mặt phẳng affine, đóng vai trò phần tử đơn
+vị của nhóm.
+
+\textbf{Điều kiện không suy biến:} Biệt thức
+\(\Delta = -16(4a^3 + 27b^2) \neq 0\), đảm bảo đường cong không có điểm
+kỳ dị (cusp hay node). Kiểm tra này được thực hiện ngầm qua quá trình
+CM: với \(D = -3\), luôn có \(a = 0\) và điều kiện thu gọn thành
+\(b \neq 0\).
+
+\subsection{Cấu trúc nhóm}\label{cux1ea5u-truxfac-nhuxf3m}
+
+Tập \(E(\mathbb{F}_p)\) tạo thành một \textbf{nhóm Abel hữu hạn} với
+phép cộng điểm. Bậc của nhóm \(\#E(\mathbb{F}_p) = p + 1 - t\) (định lý
+Hasse), trong đó \(|t| \leq 2\sqrt{p}\) là vết Frobenius.
+
+Trong cài đặt:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{pub} \KeywordTok{struct}\NormalTok{ AffinePoint}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{:}\NormalTok{ SWCurveConfig}\OperatorTok{\textgreater{}} \OperatorTok{\{}
+    \KeywordTok{pub}\NormalTok{ x}\OperatorTok{:}\NormalTok{           FieldElement}\OperatorTok{\textless{}}\PreprocessorTok{C::}\NormalTok{BaseField}\OperatorTok{\textgreater{},}
+    \KeywordTok{pub}\NormalTok{ y}\OperatorTok{:}\NormalTok{           FieldElement}\OperatorTok{\textless{}}\PreprocessorTok{C::}\NormalTok{BaseField}\OperatorTok{\textgreater{},}
+    \KeywordTok{pub}\NormalTok{ is\_infinite}\OperatorTok{:} \DataTypeTok{bool}\OperatorTok{,}
+\OperatorTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\section{Phép cộng điểm (Point
+Addition)}\label{phuxe9p-cux1ed9ng-ux111iux1ec3m-point-addition}
+
+\subsection{Quy tắc hình học}\label{quy-tux1eafc-huxecnh-hux1ecdc}
+
+Phép cộng trên \(E\) được định nghĩa bằng quy tắc ``dây-cung và tiếp
+tuyến'':
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Phần tử đơn vị:} \(P + \mathcal{O} = \mathcal{O} + P = P\) với
+  mọi \(P\).
+\item
+  \textbf{Phần tử nghịch đảo:} \(-( x, y) = (x, -y)\), vì
+  \(P + (-P) = \mathcal{O}\).
+\item
+  \textbf{Cộng hai điểm phân biệt} \(P_1 \neq \pm P_2\): vẽ đường thẳng
+  qua \(P_1, P_2\), điểm giao thứ ba với đường cong là \(R'\), phản
+  chiếu qua trục \(x\) cho \(P_3 = P_1 + P_2 = -R'\).
+\item
+  \textbf{Nhân đôi} \(P + P = 2P\): dùng đường tiếp tuyến tại \(P\).
+\end{itemize}
+
+\subsection{Công thức đại
+số}\label{cuxf4ng-thux1ee9c-ux111ux1ea1i-sux1ed1}
+
+Cho \(P_1 = (x_1, y_1)\) và \(P_2 = (x_2, y_2)\) trên
+\(y^2 = x^3 + ax + b\), điểm tổng \(P_3 = (x_3, y_3)\):
+
+\textbf{Cộng hai điểm phân biệt} (\(P_1 \neq P_2\)):
+\[\lambda = \frac{y_2 - y_1}{x_2 - x_1}, \quad x_3 = \lambda^2 - x_1 - x_2, \quad y_3 = \lambda(x_1 - x_3) - y_1\]
+
+\textbf{Nhân đôi} (\(P_1 = P_2\)):
+\[\lambda = \frac{3x_1^2 + a}{2y_1}, \quad x_3 = \lambda^2 - 2x_1, \quad y_3 = \lambda(x_1 - x_3) - y_1\]
+
+Mỗi công thức cần \textbf{1 phép nghịch đảo} (tính \(\lambda\)), 2--3
+phép nhân, và 4--6 phép cộng/trừ trong \(\mathbb{F}_p\).
+
+\subsection{Cài đặt}\label{cuxe0i-ux111ux1eb7t}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{pub} \KeywordTok{fn}\NormalTok{ add(}\OperatorTok{\&}\KeywordTok{self}\OperatorTok{,}\NormalTok{ rhs}\OperatorTok{:} \OperatorTok{\&}\DataTypeTok{Self}\NormalTok{) }\OperatorTok{{-}\textgreater{}} \DataTypeTok{Self} \OperatorTok{\{}
+    \ControlFlowTok{if} \KeywordTok{self}\OperatorTok{.}\NormalTok{is\_infinite }\OperatorTok{\{} \ControlFlowTok{return} \OperatorTok{*}\NormalTok{rhs}\OperatorTok{;} \OperatorTok{\}}
+    \ControlFlowTok{if}\NormalTok{ rhs}\OperatorTok{.}\NormalTok{is\_infinite  }\OperatorTok{\{} \ControlFlowTok{return} \OperatorTok{*}\KeywordTok{self}\OperatorTok{;} \OperatorTok{\}}
+    \ControlFlowTok{if} \KeywordTok{self}\OperatorTok{.}\NormalTok{neg() }\OperatorTok{==} \OperatorTok{*}\NormalTok{rhs }\OperatorTok{\{} \ControlFlowTok{return} \DataTypeTok{Self}\PreprocessorTok{::}\NormalTok{infinite()}\OperatorTok{;} \OperatorTok{\}}
+    \ControlFlowTok{if} \OperatorTok{*}\KeywordTok{self} \OperatorTok{==} \OperatorTok{*}\NormalTok{rhs  }\OperatorTok{\{} \ControlFlowTok{return} \KeywordTok{self}\OperatorTok{.}\NormalTok{double()}\OperatorTok{;} \OperatorTok{\}}
+
+    \KeywordTok{let}\NormalTok{ lambda }\OperatorTok{=}\NormalTok{ (rhs}\OperatorTok{.}\NormalTok{y }\OperatorTok{{-}} \KeywordTok{self}\OperatorTok{.}\NormalTok{y) }\OperatorTok{*}\NormalTok{ (rhs}\OperatorTok{.}\NormalTok{x }\OperatorTok{{-}} \KeywordTok{self}\OperatorTok{.}\NormalTok{x)}\OperatorTok{.}\NormalTok{inv()}\OperatorTok{;}
+    \KeywordTok{let}\NormalTok{ x3 }\OperatorTok{=}\NormalTok{ lambda}\OperatorTok{.}\NormalTok{square() }\OperatorTok{{-}} \KeywordTok{self}\OperatorTok{.}\NormalTok{x }\OperatorTok{{-}}\NormalTok{ rhs}\OperatorTok{.}\NormalTok{x}\OperatorTok{;}
+    \KeywordTok{let}\NormalTok{ y3 }\OperatorTok{=}\NormalTok{ lambda }\OperatorTok{*}\NormalTok{ (}\KeywordTok{self}\OperatorTok{.}\NormalTok{x }\OperatorTok{{-}}\NormalTok{ x3) }\OperatorTok{{-}} \KeywordTok{self}\OperatorTok{.}\NormalTok{y}\OperatorTok{;}
+    \DataTypeTok{Self}\PreprocessorTok{::}\NormalTok{new(x3}\OperatorTok{,}\NormalTok{ y3)}
+\OperatorTok{\}}
+
+\KeywordTok{pub} \KeywordTok{fn}\NormalTok{ double(}\OperatorTok{\&}\KeywordTok{self}\NormalTok{) }\OperatorTok{{-}\textgreater{}} \DataTypeTok{Self} \OperatorTok{\{}
+    \ControlFlowTok{if} \KeywordTok{self}\OperatorTok{.}\NormalTok{is\_infinite }\OperatorTok{||} \KeywordTok{self}\OperatorTok{.}\NormalTok{y}\OperatorTok{.}\NormalTok{is\_zero() }\OperatorTok{\{} \ControlFlowTok{return} \DataTypeTok{Self}\PreprocessorTok{::}\NormalTok{infinite()}\OperatorTok{;} \OperatorTok{\}}
+    \KeywordTok{let}\NormalTok{ three }\OperatorTok{=} \PreprocessorTok{FieldElement::}\NormalTok{new(}\PreprocessorTok{U1024::}\NormalTok{from(}\DecValTok{3}\NormalTok{))}\OperatorTok{;}
+    \KeywordTok{let}\NormalTok{ two   }\OperatorTok{=} \PreprocessorTok{FieldElement::}\NormalTok{new(}\PreprocessorTok{U1024::}\NormalTok{from(}\DecValTok{2}\NormalTok{))}\OperatorTok{;}
+    \KeywordTok{let}\NormalTok{ lambda }\OperatorTok{=}\NormalTok{ (three }\OperatorTok{*} \KeywordTok{self}\OperatorTok{.}\NormalTok{x}\OperatorTok{.}\NormalTok{square() }\OperatorTok{+} \PreprocessorTok{C::}\NormalTok{COEFF\_A) }\OperatorTok{*}\NormalTok{ (two }\OperatorTok{*} \KeywordTok{self}\OperatorTok{.}\NormalTok{y)}\OperatorTok{.}\NormalTok{inv()}\OperatorTok{;}
+    \KeywordTok{let}\NormalTok{ x3 }\OperatorTok{=}\NormalTok{ lambda}\OperatorTok{.}\NormalTok{square() }\OperatorTok{{-}} \KeywordTok{self}\OperatorTok{.}\NormalTok{x }\OperatorTok{{-}} \KeywordTok{self}\OperatorTok{.}\NormalTok{x}\OperatorTok{;}
+    \KeywordTok{let}\NormalTok{ y3 }\OperatorTok{=}\NormalTok{ lambda }\OperatorTok{*}\NormalTok{ (}\KeywordTok{self}\OperatorTok{.}\NormalTok{x }\OperatorTok{{-}}\NormalTok{ x3) }\OperatorTok{{-}} \KeywordTok{self}\OperatorTok{.}\NormalTok{y}\OperatorTok{;}
+    \DataTypeTok{Self}\PreprocessorTok{::}\NormalTok{new(x3}\OperatorTok{,}\NormalTok{ y3)}
+\OperatorTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Hàm \texttt{new} gọi \texttt{assert!(point.is\_on\_curve())} để đảm bảo
+mọi điểm kết quả đều hợp lệ --- bắt lỗi nhanh trong quá trình phát
+triển.
+
+\section{Phép nhân vô hướng (Scalar
+Multiplication)}\label{phuxe9p-nhuxe2n-vuxf4-hux1b0ux1edbng-scalar-multiplication}
+
+\subsection{Thuật toán
+Double-and-Add}\label{thuux1eadt-touxe1n-double-and-add}
+
+Phép nhân vô hướng \([k]P = P + P + \cdots + P\) (\(k\) lần) được tính
+hiệu quả bằng \textbf{Double-and-Add} (tương tự binary exponentiation),
+với độ phức tạp \(O(\log k)\) thay vì \(O(k)\):
+
+\begin{verbatim}
+Input: P ∈ E(F_p), k ∈ [0, r-1]
+Output: [k]P
+
+R ← O (điểm vô cực)
+B ← P
+for i = 0 to 1023:
+    if bit i của k bằng 1:
+        R ← R + B
+    B ← 2B
+return R
+\end{verbatim}
+
+Với \(k \approx 2^{512}\) (1024 bit), thuật toán thực hiện tối đa 1024
+lần nhân đôi và trung bình 512 lần cộng điểm.
+
+\subsection{Cài đặt}\label{cuxe0i-ux111ux1eb7t-1}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{pub} \KeywordTok{fn}\NormalTok{ mul(}\OperatorTok{\&}\KeywordTok{self}\OperatorTok{,}\NormalTok{ scalar}\OperatorTok{:} \OperatorTok{\&}\NormalTok{U1024) }\OperatorTok{{-}\textgreater{}} \DataTypeTok{Self} \OperatorTok{\{}
+    \KeywordTok{let} \KeywordTok{mut}\NormalTok{ result }\OperatorTok{=} \DataTypeTok{Self}\PreprocessorTok{::}\NormalTok{infinite()}\OperatorTok{;}
+    \KeywordTok{let} \KeywordTok{mut}\NormalTok{ base   }\OperatorTok{=} \OperatorTok{*}\KeywordTok{self}\OperatorTok{;}
+    \ControlFlowTok{for}\NormalTok{ i }\KeywordTok{in} \DecValTok{0}\OperatorTok{..}\DecValTok{1024} \OperatorTok{\{}
+        \KeywordTok{let}\NormalTok{ limb\_idx }\OperatorTok{=}\NormalTok{ i }\OperatorTok{/} \DecValTok{64}\OperatorTok{;}
+        \KeywordTok{let}\NormalTok{ bit\_idx  }\OperatorTok{=}\NormalTok{ i }\OperatorTok{\%} \DecValTok{64}\OperatorTok{;}
+        \ControlFlowTok{if}\NormalTok{ (scalar}\OperatorTok{.}\DecValTok{0}\NormalTok{[limb\_idx] }\OperatorTok{\textgreater{}\textgreater{}}\NormalTok{ bit\_idx) }\OperatorTok{\&} \DecValTok{1} \OperatorTok{==} \DecValTok{1} \OperatorTok{\{}
+\NormalTok{            result }\OperatorTok{=}\NormalTok{ result}\OperatorTok{.}\NormalTok{add(}\OperatorTok{\&}\NormalTok{base)}\OperatorTok{;}
+        \OperatorTok{\}}
+\NormalTok{        base }\OperatorTok{=}\NormalTok{ base}\OperatorTok{.}\NormalTok{double()}\OperatorTok{;}
+    \OperatorTok{\}}
+\NormalTok{    result}
+\OperatorTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Mỗi lần gọi \texttt{mul} thực hiện đúng 1024 lần \texttt{double} và tối
+đa 1024 lần \texttt{add}. Chi phí tính toán chủ yếu đến từ phép nghịch
+đảo trong \(\mathbb{F}_p\) (mỗi lần \texttt{add}/\texttt{double} cần 1
+nghịch đảo, tức \(p^{p-2}\) --- một lũy thừa 1024-bit).
+
+\subsection{Tầm quan trọng}\label{tux1ea7m-quan-trux1ecdng}
+
+Phép nhân vô hướng là hàm cốt lõi của mọi sơ đồ mật mã ECC:
+
+\begin{longtable}[]{@{}lll@{}}
+\toprule\noalign{}
+Thao tác & Ký hiệu & Ứng dụng \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Sinh khóa công khai & \(Q = [d]G\) & Từ khóa riêng \(d\) \\
+Cam kết ký (Schnorr/ECDSA) & \(R = [k]G\) & Nonce commitment \\
+Xác minh Schnorr & \([s]G\) và \([e]Q\) & Hai lần nhân vô hướng \\
+Xác minh ECDSA & \([u_1]G + [u_2]Q\) & Hai lần nhân vô hướng \\
+\end{longtable}
+
+\section{Tối ưu số học: Phép nhân
+Montgomery}\label{tux1ed1i-ux1b0u-sux1ed1-hux1ecdc-phuxe9p-nhuxe2n-montgomery}
+
+\subsection{Vấn đề}\label{vux1ea5n-ux111ux1ec1}
+
+Phép nhân thông thường \(a \cdot b \pmod{p}\) đòi hỏi một phép chia đầy
+đủ để lấy số dư --- rất đắt với số 1024-bit. Montgomery đề xuất thực
+hiện phép nhân trong \textbf{không gian Montgomery} để tránh phép chia.
+
+\subsection{Biến đổi
+Montgomery}\label{biux1ebfn-ux111ux1ed5i-montgomery}
+
+Chọn \(R = 2^{1024}\) (cơ số nguyên tố cùng nhau với \(p\)).
+\textbf{Dạng Montgomery} của \(a\) là \(\hat{a} = a \cdot R \pmod{p}\).
+
+Phép nhân Montgomery (\textbf{REDC}) tính
+\(\hat{a} \cdot \hat{b} \cdot R^{-1} \pmod{p}\) từ \(\hat{a}\) và
+\(\hat{b}\), chỉ dùng phép chia cho \(R\) (shift phải 1024 bit --- rất
+rẻ) thay vì chia cho \(p\).
+
+\begin{longtable}[]{@{}lll@{}}
+\toprule\noalign{}
+Phép tính & Thông thường & Montgomery \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\(a \cdot b \pmod{p}\) & cần chia cho \(p\) & shift + trừ có điều
+kiện \\
+Chi phí & \(O(n^2)\) + chia & \(O(n^2)\) không chia \\
+\end{longtable}
+
+\textbf{Quy trình REDC} (với ba hằng số biên dịch: \(R^2 \bmod p\),
+\(-p^{-1} \bmod R\)): 1. Nhân
+\(\text{lo}, \text{hi} = \hat{a} \cdot \hat{b}\) 2.
+\(m = \text{lo} \cdot N' \bmod R\) với \(N' = -p^{-1} \bmod R\) 3.
+\(t = (\text{hi}, \text{lo}) + m \cdot p\) (chỉ giữ phần trên \(R\)) 4.
+Nếu \(t \geq p\): \(t \leftarrow t - p\)
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{fn}\NormalTok{ reduce(lo}\OperatorTok{:} \OperatorTok{\&}\NormalTok{U1024}\OperatorTok{,}\NormalTok{ hi}\OperatorTok{:} \OperatorTok{\&}\NormalTok{U1024) }\OperatorTok{{-}\textgreater{}}\NormalTok{ U1024 }\OperatorTok{\{}
+    \KeywordTok{let}\NormalTok{ (m}\OperatorTok{,}\NormalTok{ \_)       }\OperatorTok{=}\NormalTok{ lo}\OperatorTok{.}\NormalTok{widening\_mul(}\OperatorTok{\&}\PreprocessorTok{C::}\NormalTok{N\_PRIME)}\OperatorTok{;}   \CommentTok{// m = lo · N\textquotesingle{} mod R}
+    \KeywordTok{let}\NormalTok{ (mn\_lo}\OperatorTok{,}\NormalTok{ mn\_hi) }\OperatorTok{=}\NormalTok{ m}\OperatorTok{.}\NormalTok{widening\_mul(}\OperatorTok{\&}\PreprocessorTok{C::}\NormalTok{MODULUS)}\OperatorTok{;}  \CommentTok{// m · p}
+    \KeywordTok{let}\NormalTok{ (\_}\OperatorTok{,}\NormalTok{ carry\_lo)  }\OperatorTok{=}\NormalTok{ lo}\OperatorTok{.}\NormalTok{carrying\_add(}\OperatorTok{\&}\NormalTok{mn\_lo)}\OperatorTok{;}
+    \KeywordTok{let}\NormalTok{ (t}\OperatorTok{,}\NormalTok{ carry\_hi)  }\OperatorTok{=}\NormalTok{ hi}\OperatorTok{.}\NormalTok{carrying\_add(}\OperatorTok{\&}\NormalTok{mn\_hi)}\OperatorTok{;}
+    \CommentTok{// Bước hiệu chỉnh cuối: trừ p nếu cần}
+    \KeywordTok{let}\NormalTok{ (sub}\OperatorTok{,}\NormalTok{ borrow) }\OperatorTok{=}\NormalTok{ t}\OperatorTok{.}\NormalTok{borrowing\_sub(}\OperatorTok{\&}\PreprocessorTok{C::}\NormalTok{MODULUS)}\OperatorTok{;}
+    \ControlFlowTok{if}\NormalTok{ carry\_hi }\OperatorTok{||}\NormalTok{ carry\_lo }\OperatorTok{\{}\NormalTok{ sub }\OperatorTok{\}} \ControlFlowTok{else} \ControlFlowTok{if} \OperatorTok{!}\NormalTok{borrow }\OperatorTok{\{}\NormalTok{ sub }\OperatorTok{\}} \ControlFlowTok{else} \OperatorTok{\{}\NormalTok{ t }\OperatorTok{\}}
+\OperatorTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Chuyển đổi vào/ra không gian
+Montgomery}\label{chuyux1ec3n-ux111ux1ed5i-vuxe0ora-khuxf4ng-gian-montgomery}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Chuyển vào:} \texttt{PrimeFieldElement::new(a)} tính
+  \(a \cdot R^2 \cdot R^{-1} = a \cdot R \pmod{p}\).
+\item
+  \textbf{Chuyển ra:} \texttt{to\_u1024()} gọi
+  \texttt{reduce(value,\ 0)} = \(\hat{a} \cdot R^{-1} = a \pmod{p}\).
+\end{itemize}
+
+Trong thực tế, hầu hết tính toán diễn ra trong không gian Montgomery ---
+chỉ chuyển ra khi cần so sánh hay xuất kết quả, giúp loại bỏ hoàn toàn
+phép chia trong vòng lặp tính toán chính.
+
+\section{Lũy thừa nhanh
+(Square-and-Multiply)}\label{lux169y-thux1eeba-nhanh-square-and-multiply}
+
+Hàm \texttt{pow} thực hiện lũy thừa \(a^e \pmod{p}\) bằng phương pháp
+\textbf{square-and-multiply} với bảo vệ timing side-channel qua
+\texttt{conditional\_select}:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{pub} \KeywordTok{fn}\NormalTok{ pow(}\OperatorTok{\&}\KeywordTok{self}\OperatorTok{,}\NormalTok{ exp}\OperatorTok{:}\NormalTok{ U1024) }\OperatorTok{{-}\textgreater{}} \DataTypeTok{Self} \OperatorTok{\{}
+    \KeywordTok{let} \KeywordTok{mut}\NormalTok{ res  }\OperatorTok{=} \DataTypeTok{Self}\PreprocessorTok{::}\NormalTok{one()}\OperatorTok{;}
+    \KeywordTok{let} \KeywordTok{mut}\NormalTok{ base }\OperatorTok{=} \OperatorTok{*}\KeywordTok{self}\OperatorTok{;}
+    \ControlFlowTok{for}\NormalTok{ i }\KeywordTok{in} \DecValTok{0}\OperatorTok{..}\DecValTok{16} \OperatorTok{\{}           \CommentTok{// 16 limb × 64 bit = 1024 bit}
+        \KeywordTok{let} \KeywordTok{mut}\NormalTok{ limb }\OperatorTok{=}\NormalTok{ exp}\OperatorTok{.}\DecValTok{0}\NormalTok{[i]}\OperatorTok{;}
+        \ControlFlowTok{for}\NormalTok{ \_ }\KeywordTok{in} \DecValTok{0}\OperatorTok{..}\DecValTok{64} \OperatorTok{\{}
+            \KeywordTok{let}\NormalTok{ bit     }\OperatorTok{=}\NormalTok{ (limb }\OperatorTok{\&} \DecValTok{1}\NormalTok{) }\KeywordTok{as} \DataTypeTok{u8}\OperatorTok{;}
+            \KeywordTok{let}\NormalTok{ product }\OperatorTok{=}\NormalTok{ res }\OperatorTok{*}\NormalTok{ base}\OperatorTok{;}
+            \CommentTok{// Chọn res hoặc product dựa trên bit, không dùng nhánh if}
+\NormalTok{            res  }\OperatorTok{=} \DataTypeTok{Self}\PreprocessorTok{::}\NormalTok{conditional\_select(}\OperatorTok{\&}\NormalTok{res}\OperatorTok{,} \OperatorTok{\&}\NormalTok{product}\OperatorTok{,}\NormalTok{ bit}\OperatorTok{.}\NormalTok{into())}\OperatorTok{;}
+\NormalTok{            base }\OperatorTok{=}\NormalTok{ base}\OperatorTok{.}\NormalTok{square()}\OperatorTok{;}
+\NormalTok{            limb }\OperatorTok{\textgreater{}\textgreater{}=} \DecValTok{1}\OperatorTok{;}
+        \OperatorTok{\}}
+    \OperatorTok{\}}
+\NormalTok{    res}
+\OperatorTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\texttt{conditional\_select} từ crate \texttt{subtle} đảm bảo cả hai
+nhánh thực hiện cùng số lệnh, loại bỏ thông tin qua thời gian thực thi
+(constant-time execution).
+
+Nghịch đảo \(a^{-1} = a^{p-2}\) dùng \texttt{pow} với \(e = p - 2\):
+1024 lần bình phương và \textasciitilde512 lần nhân (trung bình), tổng
+\(\approx 1536\) phép nhân Montgomery.
+
+\FloatBarrier

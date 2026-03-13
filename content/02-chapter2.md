@@ -1,16 +1,13 @@
 ---
 title: Cơ sở toán học
 chapter: 2
-toc-title: CƠ SỞ TOÁN HỌC
 ---
-
-# Chương 2: Cơ sở toán học
 
 Chương này trình bày các khái niệm toán học nền tảng được sử dụng trong toàn bộ luận văn: cấu trúc trường hữu hạn, đường cong elliptic Short Weierstrass và các phép toán nhóm trên nó, cùng với các kỹ thuật số học tối ưu (Montgomery, Fermat) được cài đặt trực tiếp trong thư viện `curve1024`.
 
-## Trường hữu hạn $\mathbb{F}_p$
+# Trường hữu hạn $\mathbb{F}_p$
 
-### Định nghĩa
+## Định nghĩa
 
 **Trường số nguyên tố** $\mathbb{F}_p$ là tập $\{0, 1, \ldots, p-1\}$ với phép cộng và nhân lấy modulo $p$, trong đó $p$ là số nguyên tố. Đây là trường hữu hạn nhỏ nhất có đặc số $p$.
 
@@ -20,7 +17,7 @@ Các tính chất quan trọng:
 - **Nghịch đảo nhân**: mọi phần tử $a \neq 0$ có nghịch đảo $a^{-1}$ sao cho $a \cdot a^{-1} \equiv 1 \pmod{p}$.
 - **Theo Định lý nhỏ Fermat**: $a^{p-1} \equiv 1 \pmod{p}$ với mọi $a \neq 0$, do đó $a^{-1} = a^{p-2} \pmod{p}$.
 
-### Cài đặt: `PrimeFieldConfig` và `PrimeFieldElement`
+## Cài đặt: `PrimeFieldConfig` và `PrimeFieldElement`
 
 Trong thư viện `curve1024`, trường $\mathbb{F}_p$ được biểu diễn qua trait `PrimeFieldConfig` (mang các hằng số tĩnh) và struct `PrimeFieldElement<C>` (phần tử trường):
 
@@ -38,7 +35,7 @@ pub struct PrimeFieldElement<C: PrimeFieldConfig> {
 
 Thiết kế này cho phép trình biên dịch mở inline toàn bộ hằng số tại thời gian biên dịch (zero-cost abstraction): hai trường khác nhau $\mathbb{F}_p$ và $\mathbb{F}_r$ dùng chung code nhưng có tham số riêng biệt không thể nhầm lẫn.
 
-### Các phép toán cơ bản
+## Các phép toán cơ bản
 
 **Cộng và trừ** thực hiện bằng cộng/trừ số nguyên rồi hiệu chỉnh modulo:
 
@@ -64,9 +61,9 @@ pub fn inv(&self) -> Self {
 }
 ```
 
-## Đường cong elliptic Short Weierstrass
+# Đường cong elliptic Short Weierstrass
 
-### Định nghĩa
+## Định nghĩa
 
 Trên $\mathbb{F}_p$ với $p > 3$, **đường cong elliptic dạng Short Weierstrass** là tập hợp:
 
@@ -76,7 +73,7 @@ trong đó $\mathcal{O}$ là **điểm vô cực** (point at infinity) — phầ
 
 **Điều kiện không suy biến:** Biệt thức $\Delta = -16(4a^3 + 27b^2) \neq 0$, đảm bảo đường cong không có điểm kỳ dị (cusp hay node). Kiểm tra này được thực hiện ngầm qua quá trình CM: với $D = -3$, luôn có $a = 0$ và điều kiện thu gọn thành $b \neq 0$.
 
-### Cấu trúc nhóm
+## Cấu trúc nhóm
 
 Tập $E(\mathbb{F}_p)$ tạo thành một **nhóm Abel hữu hạn** với phép cộng điểm. Bậc của nhóm $\#E(\mathbb{F}_p) = p + 1 - t$ (định lý Hasse), trong đó $|t| \leq 2\sqrt{p}$ là vết Frobenius.
 
@@ -90,9 +87,9 @@ pub struct AffinePoint<C: SWCurveConfig> {
 }
 ```
 
-## Phép cộng điểm (Point Addition)
+# Phép cộng điểm (Point Addition)
 
-### Quy tắc hình học
+## Quy tắc hình học
 
 Phép cộng trên $E$ được định nghĩa bằng quy tắc "dây-cung và tiếp tuyến":
 
@@ -101,7 +98,7 @@ Phép cộng trên $E$ được định nghĩa bằng quy tắc "dây-cung và t
 - **Cộng hai điểm phân biệt** $P_1 \neq \pm P_2$: vẽ đường thẳng qua $P_1, P_2$, điểm giao thứ ba với đường cong là $R'$, phản chiếu qua trục $x$ cho $P_3 = P_1 + P_2 = -R'$.
 - **Nhân đôi** $P + P = 2P$: dùng đường tiếp tuyến tại $P$.
 
-### Công thức đại số
+## Công thức đại số
 
 Cho $P_1 = (x_1, y_1)$ và $P_2 = (x_2, y_2)$ trên $y^2 = x^3 + ax + b$, điểm tổng $P_3 = (x_3, y_3)$:
 
@@ -113,7 +110,7 @@ $$\lambda = \frac{3x_1^2 + a}{2y_1}, \quad x_3 = \lambda^2 - 2x_1, \quad y_3 = \
 
 Mỗi công thức cần **1 phép nghịch đảo** (tính $\lambda$), 2–3 phép nhân, và 4–6 phép cộng/trừ trong $\mathbb{F}_p$.
 
-### Cài đặt
+## Cài đặt
 
 ```rust
 pub fn add(&self, rhs: &Self) -> Self {
@@ -141,9 +138,9 @@ pub fn double(&self) -> Self {
 
 Hàm `new` gọi `assert!(point.is_on_curve())` để đảm bảo mọi điểm kết quả đều hợp lệ — bắt lỗi nhanh trong quá trình phát triển.
 
-## Phép nhân vô hướng (Scalar Multiplication)
+# Phép nhân vô hướng (Scalar Multiplication)
 
-### Thuật toán Double-and-Add
+## Thuật toán Double-and-Add
 
 Phép nhân vô hướng $[k]P = P + P + \cdots + P$ ($k$ lần) được tính hiệu quả bằng **Double-and-Add** (tương tự binary exponentiation), với độ phức tạp $O(\log k)$ thay vì $O(k)$:
 
@@ -162,7 +159,7 @@ return R
 
 Với $k \approx 2^{512}$ (1024 bit), thuật toán thực hiện tối đa 1024 lần nhân đôi và trung bình 512 lần cộng điểm.
 
-### Cài đặt
+## Cài đặt
 
 ```rust
 pub fn mul(&self, scalar: &U1024) -> Self {
@@ -182,7 +179,7 @@ pub fn mul(&self, scalar: &U1024) -> Self {
 
 Mỗi lần gọi `mul` thực hiện đúng 1024 lần `double` và tối đa 1024 lần `add`. Chi phí tính toán chủ yếu đến từ phép nghịch đảo trong $\mathbb{F}_p$ (mỗi lần `add`/`double` cần 1 nghịch đảo, tức $p^{p-2}$ — một lũy thừa 1024-bit).
 
-### Tầm quan trọng
+## Tầm quan trọng
 
 Phép nhân vô hướng là hàm cốt lõi của mọi sơ đồ mật mã ECC:
 
@@ -193,13 +190,13 @@ Phép nhân vô hướng là hàm cốt lõi của mọi sơ đồ mật mã ECC
 | Xác minh Schnorr | $[s]G$ và $[e]Q$ | Hai lần nhân vô hướng |
 | Xác minh ECDSA | $[u_1]G + [u_2]Q$ | Hai lần nhân vô hướng |
 
-## Tối ưu số học: Phép nhân Montgomery
+# Tối ưu số học: Phép nhân Montgomery
 
-### Vấn đề
+## Vấn đề
 
 Phép nhân thông thường $a \cdot b \pmod{p}$ đòi hỏi một phép chia đầy đủ để lấy số dư — rất đắt với số 1024-bit. Montgomery đề xuất thực hiện phép nhân trong **không gian Montgomery** để tránh phép chia.
 
-### Biến đổi Montgomery
+## Biến đổi Montgomery
 
 Chọn $R = 2^{1024}$ (cơ số nguyên tố cùng nhau với $p$). **Dạng Montgomery** của $a$ là $\hat{a} = a \cdot R \pmod{p}$.
 
@@ -228,14 +225,14 @@ fn reduce(lo: &U1024, hi: &U1024) -> U1024 {
 }
 ```
 
-### Chuyển đổi vào/ra không gian Montgomery
+## Chuyển đổi vào/ra không gian Montgomery
 
 - **Chuyển vào:** `PrimeFieldElement::new(a)` tính $a \cdot R^2 \cdot R^{-1} = a \cdot R \pmod{p}$.
 - **Chuyển ra:** `to_u1024()` gọi `reduce(value, 0)` = $\hat{a} \cdot R^{-1} = a \pmod{p}$.
 
 Trong thực tế, hầu hết tính toán diễn ra trong không gian Montgomery — chỉ chuyển ra khi cần so sánh hay xuất kết quả, giúp loại bỏ hoàn toàn phép chia trong vòng lặp tính toán chính.
 
-## Lũy thừa nhanh (Square-and-Multiply)
+# Lũy thừa nhanh (Square-and-Multiply)
 
 Hàm `pow` thực hiện lũy thừa $a^e \pmod{p}$ bằng phương pháp **square-and-multiply** với bảo vệ timing side-channel qua `conditional_select`:
 

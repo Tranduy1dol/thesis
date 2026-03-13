@@ -1,7 +1,6 @@
 ---
 title: "Giới thiệu bài toán"
 chapter: 1
-toc-title: "GIỚI THIỆU BÀI TOÁN"
 ---
 
 # Giới thiệu bài toán

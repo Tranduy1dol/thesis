@@ -1,0 +1,87 @@
+% UET Thesis Pandoc LaTeX Template
+% Customized for University of Engineering and Technology, VNU
+
+\clearpage
+\phantomsection
+
+\setcounter{chapter}{1}
+\addcontentsline{toc}{chapter}{Giới thiệu bài toán}
+\chapter[]{Giới thiệu bài toán}
+
+\section{Giới thiệu bài toán}\label{giux1edbi-thiux1ec7u-buxe0i-touxe1n}
+
+Đoạn giới thiệu chương: trình bày mục đích, nội dung của chương này.
+
+\subsection{Mục lớn trong
+chương}\label{mux1ee5c-lux1edbn-trong-chux1b0ux1a1ng}
+
+abcabc
+
+\subsubsection{Mục nhỏ trong
+chương}\label{mux1ee5c-nhux1ecf-trong-chux1b0ux1a1ng}
+
+List item sẽ như thế này:
+
+\begin{itemize}
+\tightlist
+\item
+  \emph{gạch đầu dòng 1}: Nội dung của gạch đầu dòng 1.
+\item
+  \emph{gạch đầu dòng 2}: \ldots{}
+\item
+  \emph{gạch đầu dòng 3}: \ldots{}
+\end{itemize}
+
+\subsubsection{Chèn hình ảnh}\label{chuxe8n-huxecnh-ux1ea3nh}
+
+Các hình ảnh để trong thư mục \texttt{/figures}:
+
+Hình ảnh bình thường:
+
+\begin{figure}
+\centering
+\includegraphics[width=1\textwidth,height=\textheight]{../figures/three-tier-architecture.png}
+\caption{Caption của ảnh 1}\label{fig:architecture}
+\end{figure}
+
+\subsubsection{Trích dẫn}\label{truxedch-dux1eabn}
+
+Các mục trích dẫn viết trong file \texttt{references.bib}, khi muốn
+trích dẫn thì viết như này {[}1{]}
+
+\subsubsection{Bảng biểu}\label{bux1ea3ng-biux1ec3u}
+
+\begin{longtable}[]{@{}lllll@{}}
+\caption{Caption của bảng \{\#tbl:comparison\}}\tabularnewline
+\toprule\noalign{}
+Tính năng & Hệ thống & Đối thủ 1 & Đối thủ 2 & Đối thủ 3 \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Tính năng & Hệ thống & Đối thủ 1 & Đối thủ 2 & Đối thủ 3 \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Tính năng 1 & x & x & x & x \\
+Tính năng 2 & x & x & x & x \\
+Tính năng 3 & x & x & x & x \\
+Tính năng 4 & x & x & x & x \\
+\end{longtable}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+Đoạn kết luận chương: tóm tắt lại nội dung của chương này, dẫn dắt vào
+nội dung chương tiếp theo.
+
+\phantomsection\label{refs}
+\begin{CSLReferences}{0}{0}
+\bibitem[\citeproctext]{ref-Cockburn2005}
+\CSLLeftMargin{{[}1{]} }%
+\CSLRightInline{A. Cockburn, {``What's hexagonal architecture?''}
+\emph{Medium}. Available:
+\url{https://alistair.cockburn.us/hexagonal-architecture}}
+
+\end{CSLReferences}
+
+\FloatBarrier

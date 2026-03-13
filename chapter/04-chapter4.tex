@@ -1,0 +1,492 @@
+% UET Thesis Pandoc LaTeX Template
+% Customized for University of Engineering and Technology, VNU
+
+\clearpage
+\phantomsection
+
+\setcounter{chapter}{4}
+\addcontentsline{toc}{chapter}{Sơ đồ chữ ký --- Cài đặt và Đánh giá}
+\chapter[]{Sơ đồ chữ ký --- Cài đặt và Đánh giá}
+
+Chương này trình bày ba sơ đồ chữ ký số được xây dựng trên nền tảng
+đường cong elliptic đã sinh ở Chương 3: \textbf{Schnorr},
+\textbf{ECDSA}, và \textbf{chữ ký tổng hợp BLS}. Với mỗi sơ đồ, chúng ta
+đi qua lý thuyết cốt lõi, phân tích cấu trúc dữ liệu và cài đặt thực tế
+(bằng Rust), rồi kết thúc bằng đánh giá so sánh toàn diện dựa trên kết
+quả thực nghiệm.
+
+\section{Cơ sở chung: Cặp khóa và Hàm
+băm}\label{cux1a1-sux1edf-chung-cux1eb7p-khuxf3a-vuxe0-huxe0m-bux103m}
+
+\subsection{Cặp khóa (KeyPair)}\label{cux1eb7p-khuxf3a-keypair}
+
+Mọi sơ đồ chữ ký đều dùng chung cấu trúc cặp khóa:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{pub} \KeywordTok{struct}\NormalTok{ KeyPair}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{:}\NormalTok{ SWCurveConfig}\OperatorTok{\textgreater{}} \OperatorTok{\{}
+    \KeywordTok{pub}\NormalTok{ private\_key}\OperatorTok{:}\NormalTok{ U1024}\OperatorTok{,}        \CommentTok{// d ∈ [1, r{-}1], bí mật}
+    \KeywordTok{pub}\NormalTok{ public\_key}\OperatorTok{:}\NormalTok{  AffinePoint}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{\textgreater{},} \CommentTok{// Q = [d]G, công khai}
+\OperatorTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Khóa riêng} \texttt{d}: một số nguyên ngẫu nhiên trong
+  \([1, r-1]\), sinh bởi CSPRNG (\texttt{U1024::rand}).
+\item
+  \textbf{Khóa công khai} \texttt{Q\ =\ {[}d{]}G}: tính bằng phép nhân
+  vô hướng. Với \(r \approx 2^{512}\), tính \(Q\) từ \(d\) là tính khả
+  thi (mili giây), nhưng bài toán ngược (tính \(d\) từ \(Q\)) là ECDLP
+  --- độ phức tạp \(O(2^{256})\).
+\end{itemize}
+
+Cặp khóa được lưu/đọc từ file nhị phân 128 byte (big-endian) với quyền
+\texttt{0600} trên Unix:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{impl}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{:}\NormalTok{ SWCurveConfig}\OperatorTok{\textgreater{}}\NormalTok{ KeyPair}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{\textgreater{}} \OperatorTok{\{}
+    \KeywordTok{pub} \KeywordTok{fn}\NormalTok{ generate() }\OperatorTok{{-}\textgreater{}} \DataTypeTok{Self} \OperatorTok{\{}
+        \KeywordTok{let}\NormalTok{ private\_key }\OperatorTok{=} \PreprocessorTok{U1024::}\NormalTok{rand(}\OperatorTok{\&}\PreprocessorTok{C::}\NormalTok{ORDER)}\OperatorTok{;}
+        \KeywordTok{let}\NormalTok{ public\_key  }\OperatorTok{=} \PreprocessorTok{C::}\NormalTok{generator()}\OperatorTok{.}\NormalTok{mul(}\OperatorTok{\&}\NormalTok{private\_key)}\OperatorTok{;}
+        \DataTypeTok{Self} \OperatorTok{\{}\NormalTok{ private\_key}\OperatorTok{,}\NormalTok{ public\_key }\OperatorTok{\}}
+    \OperatorTok{\}}
+    \KeywordTok{pub} \KeywordTok{fn}\NormalTok{ save(}\OperatorTok{\&}\KeywordTok{self}\OperatorTok{,}\NormalTok{ path}\OperatorTok{:} \OperatorTok{\&}\DataTypeTok{str}\NormalTok{) }\OperatorTok{{-}\textgreater{}} \PreprocessorTok{io::}\DataTypeTok{Result}\OperatorTok{\textless{}}\NormalTok{()}\OperatorTok{\textgreater{}} \OperatorTok{\{}
+        \PreprocessorTok{fs::}\NormalTok{write(path}\OperatorTok{,} \KeywordTok{self}\OperatorTok{.}\NormalTok{private\_key}\OperatorTok{.}\NormalTok{to\_be\_bytes())}\OperatorTok{?;}
+        \PreprocessorTok{fs::}\NormalTok{set\_permissions(path}\OperatorTok{,} \PreprocessorTok{Permissions::}\NormalTok{from\_mode(}\DecValTok{0o600}\NormalTok{))}\OperatorTok{?;}
+        \ConstantTok{Ok}\NormalTok{(())}
+    \OperatorTok{\}}
+\OperatorTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Hàm băm mở rộng}\label{huxe0m-bux103m-mux1edf-rux1ed9ng}
+
+Vì \(r \approx 2^{512}\) và SHA-256 chỉ cho 256 bit, hệ thống dùng
+\textbf{4 lần SHA-256} với tiền tố khác nhau để sinh 1024 bit, rồi cắt
+lấy 512 bit thấp khi cần:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{pub} \KeywordTok{fn}\NormalTok{ hash\_message(message}\OperatorTok{:} \OperatorTok{\&}\NormalTok{[}\DataTypeTok{u8}\NormalTok{]) }\OperatorTok{{-}\textgreater{}}\NormalTok{ U1024 }\OperatorTok{\{}
+    \KeywordTok{let} \KeywordTok{mut}\NormalTok{ buf }\OperatorTok{=}\NormalTok{ [}\DecValTok{0u8}\OperatorTok{;} \DecValTok{128}\NormalTok{]}\OperatorTok{;}
+    \ControlFlowTok{for}\NormalTok{ i }\KeywordTok{in} \DecValTok{0}\OperatorTok{..}\DecValTok{4} \OperatorTok{\{}
+        \KeywordTok{let} \KeywordTok{mut}\NormalTok{ h }\OperatorTok{=} \PreprocessorTok{Sha256::}\NormalTok{new()}\OperatorTok{;}
+\NormalTok{        h}\OperatorTok{.}\NormalTok{update([i }\KeywordTok{as} \DataTypeTok{u8}\NormalTok{])}\OperatorTok{;}
+\NormalTok{        h}\OperatorTok{.}\NormalTok{update(message)}\OperatorTok{;}
+\NormalTok{        buf[i}\OperatorTok{*}\DecValTok{32}\OperatorTok{..}\NormalTok{(i}\OperatorTok{+}\DecValTok{1}\NormalTok{)}\OperatorTok{*}\DecValTok{32}\NormalTok{]}\OperatorTok{.}\NormalTok{copy\_from\_slice(}\OperatorTok{\&}\NormalTok{h}\OperatorTok{.}\NormalTok{finalize())}\OperatorTok{;}
+    \OperatorTok{\}}
+    \PreprocessorTok{U1024::}\NormalTok{from\_be\_bytes(}\OperatorTok{\&}\NormalTok{buf)}
+\OperatorTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Cấu trúc này tương đương với \textbf{SHA-1024} tùy chỉnh, đảm bảo đầu ra
+đủ lớn để tránh đụng độ có nghĩa với độ bảo mật \(r \approx 2^{512}\).
+
+\section{Chữ ký Schnorr}\label{chux1eef-kuxfd-schnorr}
+
+\subsection{Lý thuyết}\label{luxfd-thuyux1ebft}
+
+Schnorr là sơ đồ chữ ký Sigma-protocol dựa trên giả thuyết logarit rời
+rạc (DL). Nó được ưa chuộng vì độ đơn giản của chứng minh bảo mật (trong
+mô hình Oracle ngẫu nhiên) và hỗ trợ tổng hợp tự nhiên.
+
+\textbf{Ký:} Cho khóa riêng \(d \in [1, r-1]\) và thông điệp \(m\): 1.
+Chọn ngẫu nhiên \(k \xleftarrow{R} [1, r-1]\) 2. Tính điểm \(R = [k]G\)
+3. Tính thách thức \(e = H(R_x \| R_y \| m) \pmod{r}\) 4. Tính
+\(s = k + e \cdot d \pmod{r}\) 5. Chữ ký: \(\sigma = (R, s)\)
+
+\textbf{Xác minh:} Cho khóa công khai \(Q\) và chữ ký \((R, s)\): 1.
+Tính \(e = H(R_x \| R_y \| m)\) 2. Kiểm tra \([s]G = R + [e]Q\)
+
+Tính đúng đắn: \([s]G = [k + ed]G = [k]G + [e][d]G = R + [e]Q\) ✓
+
+\subsection{Cấu trúc dữ liệu}\label{cux1ea5u-truxfac-dux1eef-liux1ec7u}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{pub} \KeywordTok{struct}\NormalTok{ SchnorrSignature}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{:}\NormalTok{ SWCurveConfig}\OperatorTok{\textgreater{}} \OperatorTok{\{}
+    \KeywordTok{pub}\NormalTok{ r\_point}\OperatorTok{:}\NormalTok{ AffinePoint}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{\textgreater{},}  \CommentTok{// R = [k]G  (điểm 256 byte: 2×128 byte tọa độ)}
+    \KeywordTok{pub}\NormalTok{ s}\OperatorTok{:}\NormalTok{       U1024}\OperatorTok{,}           \CommentTok{// s ∈ [0, r{-}1], 128 byte}
+\OperatorTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Kích thước chữ ký: \(2 \times 128 + 128 = \mathbf{384}\) byte (R gồm hai
+tọa độ \(x, y\) mỗi tọa độ 128 byte, cộng thêm \(s\) 128 byte).
+
+\subsection{Cài đặt}\label{cuxe0i-ux111ux1eb7t}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{pub} \KeywordTok{fn}\NormalTok{ sign(private\_key}\OperatorTok{:} \OperatorTok{\&}\NormalTok{U1024}\OperatorTok{,}\NormalTok{ message}\OperatorTok{:} \OperatorTok{\&}\NormalTok{[}\DataTypeTok{u8}\NormalTok{]) }\OperatorTok{{-}\textgreater{}} \DataTypeTok{Self} \OperatorTok{\{}
+    \KeywordTok{let}\NormalTok{ k }\OperatorTok{=} \PreprocessorTok{U1024::}\NormalTok{rand(}\OperatorTok{\&}\PreprocessorTok{C::}\NormalTok{ORDER)}\OperatorTok{;}
+    \KeywordTok{let}\NormalTok{ r\_point }\OperatorTok{=} \PreprocessorTok{C::}\NormalTok{generator()}\OperatorTok{.}\NormalTok{mul(}\OperatorTok{\&}\NormalTok{k)}\OperatorTok{;}
+    \KeywordTok{let}\NormalTok{ e       }\OperatorTok{=} \DataTypeTok{Self}\PreprocessorTok{::}\NormalTok{challenge\_hash(}\OperatorTok{\&}\NormalTok{r\_point}\OperatorTok{,}\NormalTok{ message)}\OperatorTok{;} \CommentTok{// H(Rx‖Ry‖m) mod r}
+    \KeywordTok{let}\NormalTok{ s       }\OperatorTok{=}\NormalTok{ (k\_field }\OperatorTok{+}\NormalTok{ e }\OperatorTok{*}\NormalTok{ d\_field)}\OperatorTok{.}\NormalTok{to\_u1024()}\OperatorTok{;}     \CommentTok{// s = k + e·d mod r}
+    \DataTypeTok{Self} \OperatorTok{\{}\NormalTok{ r\_point}\OperatorTok{,}\NormalTok{ s }\OperatorTok{\}}
+\OperatorTok{\}}
+
+\KeywordTok{pub} \KeywordTok{fn}\NormalTok{ verify(}\OperatorTok{\&}\KeywordTok{self}\OperatorTok{,}\NormalTok{ public\_key}\OperatorTok{:} \OperatorTok{\&}\NormalTok{AffinePoint}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{\textgreater{},}\NormalTok{ message}\OperatorTok{:} \OperatorTok{\&}\NormalTok{[}\DataTypeTok{u8}\NormalTok{]) }\OperatorTok{{-}\textgreater{}} \DataTypeTok{bool} \OperatorTok{\{}
+    \KeywordTok{let}\NormalTok{ e  }\OperatorTok{=} \DataTypeTok{Self}\PreprocessorTok{::}\NormalTok{challenge\_hash(}\OperatorTok{\&}\KeywordTok{self}\OperatorTok{.}\NormalTok{r\_point}\OperatorTok{,}\NormalTok{ message)}\OperatorTok{;}
+    \KeywordTok{let}\NormalTok{ v1 }\OperatorTok{=} \PreprocessorTok{C::}\NormalTok{generator()}\OperatorTok{.}\NormalTok{mul(}\OperatorTok{\&}\KeywordTok{self}\OperatorTok{.}\NormalTok{s)}\OperatorTok{;}              \CommentTok{// [s]G}
+    \KeywordTok{let}\NormalTok{ v2 }\OperatorTok{=} \KeywordTok{self}\OperatorTok{.}\NormalTok{r\_point}\OperatorTok{.}\NormalTok{add(}\OperatorTok{\&}\NormalTok{public\_key}\OperatorTok{.}\NormalTok{mul(}\OperatorTok{\&}\NormalTok{e}\OperatorTok{.}\NormalTok{to\_u1024()))}\OperatorTok{;} \CommentTok{// R + [e]Q}
+\NormalTok{    v1 }\OperatorTok{==}\NormalTok{ v2}
+\OperatorTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Hàm \texttt{challenge\_hash} nối \(R_x, R_y, m\) rồi gọi
+\texttt{hash\_message}, đảm bảo thách thức phụ thuộc vào toàn bộ ngữ
+cảnh --- tránh tấn công forgery kiểu Pohlig-Hellman trên nonce.
+
+\subsection{Bảo mật}\label{bux1ea3o-mux1eadt}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Unforgeability (EUF-CMA):} Chứng minh được trong Random Oracle
+  Model dưới giả thuyết DL. Kẻ tấn công cần giải ECDLP hoặc bẻ hàm băm.
+\item
+  \textbf{Nguy cơ nonce tái sử dụng:} Nếu \(k\) bị tái sử dụng cho hai
+  thông điệp khác nhau, kẻ công phá có thể tính
+  \(d = (s_1 - s_2)/(e_1 - e_2) \pmod{r}\). Cài đặt dùng CSPRNG
+  (\texttt{rand::thread\_rng}) cho mỗi lần ký.
+\end{itemize}
+
+\section{Chữ ký ECDSA}\label{chux1eef-kuxfd-ecdsa}
+
+\subsection{Lý thuyết}\label{luxfd-thuyux1ebft-1}
+
+ECDSA (Elliptic Curve Digital Signature Algorithm) là chuẩn IEEE P1363
+và FIPS 186-4. Nó khác Schnorr ở chỗ \(r\) trong chữ ký là \textbf{tọa
+độ \(x\) của điểm \(R\)} lấy modulo \(n\), thay vì bản thân điểm \(R\).
+
+\textbf{Ký:} Cho khóa riêng \(d\) và thông điệp \(m\): 1.
+\(k \xleftarrow{R} [1, r-1]\) 2. \(R = [k]G\) 3.
+\(r_{\text{sig}} = R_x \pmod{n}\) (nếu \(r_{\text{sig}} = 0\), thử lại)
+4. \(e = H(m)\) 5. \(s = k^{-1}(e + r_{\text{sig}} \cdot d) \pmod{n}\)
+(nếu \(s = 0\), thử lại) 6. Chữ ký: \(\sigma = (r_{\text{sig}}, s)\)
+
+\textbf{Xác minh:} 1. Kiểm tra \(r_{\text{sig}}, s \in [1, n-1]\) 2.
+\(e = H(m)\), \(w = s^{-1} \pmod{n}\) 3. \(u_1 = ew\),
+\(u_2 = r_{\text{sig}} \cdot w\), cả hai tính mod \(n\) 4.
+\(P = [u_1]G + [u_2]Q\) 5. Hợp lệ khi \(P \neq \mathcal{O}\) và
+\(P_x \pmod{n} = r_{\text{sig}}\)
+
+\subsection{Cấu trúc dữ
+liệu}\label{cux1ea5u-truxfac-dux1eef-liux1ec7u-1}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{pub} \KeywordTok{struct}\NormalTok{ EcdsaSignature }\OperatorTok{\{}
+    \KeywordTok{pub}\NormalTok{ r}\OperatorTok{:}\NormalTok{ U1024}\OperatorTok{,}  \CommentTok{// r\_sig = R.x mod n, 128 byte}
+    \KeywordTok{pub}\NormalTok{ s}\OperatorTok{:}\NormalTok{ U1024}\OperatorTok{,}  \CommentTok{// s ∈ [1, n{-}1],     128 byte}
+\OperatorTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Kích thước chữ ký: \(128 + 128 = \mathbf{256}\) byte --- nhỏ hơn Schnorr
+vì không lưu điểm \(R\) đầy đủ.
+
+\subsection{Cài đặt}\label{cuxe0i-ux111ux1eb7t-1}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{pub} \KeywordTok{fn}\NormalTok{ sign}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{:}\NormalTok{ SWCurveConfig}\OperatorTok{\textgreater{}}\NormalTok{(private\_key}\OperatorTok{:} \OperatorTok{\&}\NormalTok{U1024}\OperatorTok{,}\NormalTok{ message}\OperatorTok{:} \OperatorTok{\&}\NormalTok{[}\DataTypeTok{u8}\NormalTok{]) }\OperatorTok{{-}\textgreater{}} \DataTypeTok{Self} \OperatorTok{\{}
+    \KeywordTok{let}\NormalTok{ k     }\OperatorTok{=} \PreprocessorTok{U1024::}\NormalTok{rand(}\OperatorTok{\&}\PreprocessorTok{C::}\NormalTok{ORDER)}\OperatorTok{;}
+    \KeywordTok{let}\NormalTok{ r\_pt  }\OperatorTok{=} \PreprocessorTok{C::}\NormalTok{generator()}\OperatorTok{.}\NormalTok{mul(}\OperatorTok{\&}\NormalTok{k)}\OperatorTok{;}
+    \KeywordTok{let}\NormalTok{ e     }\OperatorTok{=} \PreprocessorTok{FieldElem::}\OperatorTok{\textless{}}\PreprocessorTok{C::}\NormalTok{ScalarField}\OperatorTok{\textgreater{}}\PreprocessorTok{::}\NormalTok{new(hash\_message(message))}\OperatorTok{;}
+    \KeywordTok{let}\NormalTok{ r     }\OperatorTok{=} \PreprocessorTok{FieldElem::}\OperatorTok{\textless{}}\PreprocessorTok{C::}\NormalTok{ScalarField}\OperatorTok{\textgreater{}}\PreprocessorTok{::}\NormalTok{new(r\_pt}\OperatorTok{.}\NormalTok{x}\OperatorTok{.}\NormalTok{to\_u1024())}\OperatorTok{;}
+    \KeywordTok{let}\NormalTok{ k\_inv }\OperatorTok{=} \PreprocessorTok{FieldElem::}\OperatorTok{\textless{}}\PreprocessorTok{C::}\NormalTok{ScalarField}\OperatorTok{\textgreater{}}\PreprocessorTok{::}\NormalTok{new(k)}\OperatorTok{.}\NormalTok{inv()}\OperatorTok{;}
+    \KeywordTok{let}\NormalTok{ d     }\OperatorTok{=} \PreprocessorTok{FieldElem::}\OperatorTok{\textless{}}\PreprocessorTok{C::}\NormalTok{ScalarField}\OperatorTok{\textgreater{}}\PreprocessorTok{::}\NormalTok{new(}\OperatorTok{*}\NormalTok{private\_key)}\OperatorTok{;}
+    \KeywordTok{let}\NormalTok{ s     }\OperatorTok{=}\NormalTok{ k\_inv }\OperatorTok{*}\NormalTok{ (e }\OperatorTok{+}\NormalTok{ r }\OperatorTok{*}\NormalTok{ d)}\OperatorTok{;}
+    \DataTypeTok{Self} \OperatorTok{\{}\NormalTok{ r}\OperatorTok{:}\NormalTok{ r}\OperatorTok{.}\NormalTok{to\_u1024()}\OperatorTok{,}\NormalTok{ s}\OperatorTok{:}\NormalTok{ s}\OperatorTok{.}\NormalTok{to\_u1024() }\OperatorTok{\}}
+\OperatorTok{\}}
+
+\KeywordTok{pub} \KeywordTok{fn}\NormalTok{ verify}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{:}\NormalTok{ SWCurveConfig}\OperatorTok{\textgreater{}}\NormalTok{(}\OperatorTok{\&}\KeywordTok{self}\OperatorTok{,}\NormalTok{ public\_key}\OperatorTok{:} \OperatorTok{\&}\NormalTok{AffinePoint}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{\textgreater{},}\NormalTok{ message}\OperatorTok{:} \OperatorTok{\&}\NormalTok{[}\DataTypeTok{u8}\NormalTok{]) }\OperatorTok{{-}\textgreater{}} \DataTypeTok{bool} \OperatorTok{\{}
+    \CommentTok{// Kiểm tra r, s ∈ [1, n{-}1]}
+    \ControlFlowTok{if} \KeywordTok{self}\OperatorTok{.}\NormalTok{r}\OperatorTok{.}\NormalTok{is\_zero() }\OperatorTok{||} \KeywordTok{self}\OperatorTok{.}\NormalTok{s}\OperatorTok{.}\NormalTok{is\_zero() }\OperatorTok{\{} \ControlFlowTok{return} \ConstantTok{false}\OperatorTok{;} \OperatorTok{\}}
+    \ControlFlowTok{if} \KeywordTok{self}\OperatorTok{.}\NormalTok{r }\OperatorTok{\textgreater{}=} \PreprocessorTok{C::}\NormalTok{ORDER }\OperatorTok{||} \KeywordTok{self}\OperatorTok{.}\NormalTok{s }\OperatorTok{\textgreater{}=} \PreprocessorTok{C::}\NormalTok{ORDER }\OperatorTok{\{} \ControlFlowTok{return} \ConstantTok{false}\OperatorTok{;} \OperatorTok{\}}
+
+    \KeywordTok{let}\NormalTok{ e }\OperatorTok{=} \PreprocessorTok{FieldElem::}\NormalTok{new(hash\_message(message))}\OperatorTok{;}
+    \KeywordTok{let}\NormalTok{ w }\OperatorTok{=} \PreprocessorTok{FieldElem::}\NormalTok{new(}\KeywordTok{self}\OperatorTok{.}\NormalTok{s)}\OperatorTok{.}\NormalTok{inv()}\OperatorTok{;}      \CommentTok{// w = s⁻¹}
+    \KeywordTok{let}\NormalTok{ u1 }\OperatorTok{=}\NormalTok{ (e }\OperatorTok{*}\NormalTok{ w)}\OperatorTok{.}\NormalTok{to\_u1024()}\OperatorTok{;}
+    \KeywordTok{let}\NormalTok{ u2 }\OperatorTok{=}\NormalTok{ (}\PreprocessorTok{FieldElem::}\NormalTok{new(}\KeywordTok{self}\OperatorTok{.}\NormalTok{r) }\OperatorTok{*}\NormalTok{ w)}\OperatorTok{.}\NormalTok{to\_u1024()}\OperatorTok{;}
+
+    \KeywordTok{let}\NormalTok{ p }\OperatorTok{=} \PreprocessorTok{C::}\NormalTok{generator()}\OperatorTok{.}\NormalTok{mul(}\OperatorTok{\&}\NormalTok{u1)}\OperatorTok{.}\NormalTok{add(}\OperatorTok{\&}\NormalTok{public\_key}\OperatorTok{.}\NormalTok{mul(}\OperatorTok{\&}\NormalTok{u2))}\OperatorTok{;}
+    \OperatorTok{!}\NormalTok{p}\OperatorTok{.}\NormalTok{is\_infinite }\OperatorTok{\&\&} \PreprocessorTok{FieldElem::}\OperatorTok{\textless{}}\PreprocessorTok{C::}\NormalTok{ScalarField}\OperatorTok{\textgreater{}}\PreprocessorTok{::}\NormalTok{new(p}\OperatorTok{.}\NormalTok{x}\OperatorTok{.}\NormalTok{to\_u1024())}\OperatorTok{.}\NormalTok{to\_u1024() }\OperatorTok{==} \KeywordTok{self}\OperatorTok{.}\NormalTok{r}
+\OperatorTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{So sánh Schnorr và
+ECDSA}\label{so-suxe1nh-schnorr-vuxe0-ecdsa}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Tiêu chí
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Schnorr
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+ECDSA
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Chuẩn hóa & ISO/IEC 14888-3 & FIPS 186-4, IEEE P1363 \\
+Kích thước chữ ký & 384 byte (\(2 \times 128 + 128\)) & 256 byte
+(\(2 \times 128\)) \\
+Phép nhân vô hướng ký & 1 & 1 \\
+Phép nhân vô hướng xác minh & 2 (tuần tự) & 2 (tuần tự) \\
+Bảo mật chứng minh & RO Model, DL & Heuristic, DL + hash \\
+Hỗ trợ tổng hợp & Có (MuSig, FROST) & Không \\
+Rủi ro nonce tái sử dụng & Lộ khóa riêng & Lộ khóa riêng \\
+\end{longtable}
+
+\section{Chữ ký tổng hợp
+BLS}\label{chux1eef-kuxfd-tux1ed5ng-hux1ee3p-bls}
+
+\subsection{Lý thuyết (tổng
+quan)}\label{luxfd-thuyux1ebft-tux1ed5ng-quan}
+
+Chữ ký BLS (Boneh-Lynn-Shacham, 2001) là sơ đồ \textbf{tổng hợp phi
+tương tác}: \(n\) người ký với \(n\) khóa riêng khác nhau có thể tạo ra
+\textbf{một chữ ký duy nhất} đại diện cho tất cả, và xác minh chỉ cần
+một phép ghép cặp thay vì \(n\) phép.
+
+\textbf{Nền tảng:} Dùng phép ghép cặp song tuyến
+\(e: \mathbb{G}_1 \times \mathbb{G}_2 \to \mathbb{G}_T\) với: -
+\(\mathbb{G}_1 = E(\mathbb{F}_p)\),
+\(\mathbb{G}_2 = E'(\mathbb{F}_{p^2})\) (hoặc tương đương) -
+\(\mathbb{G}_T \subset \mathbb{F}_{p^k}^*\)
+
+\textbf{Ký:} Người thứ \(i\) với khóa riêng \(d_i\):
+\[\sigma_i = [d_i] H(m) \in \mathbb{G}_1\] trong đó
+\(H: \{0,1\}^* \to \mathbb{G}_1\) là hàm băm lên nhóm điểm.
+
+\textbf{Tổng hợp:} \(\sigma = \sigma_1 + \sigma_2 + \cdots + \sigma_n\)
+(phép cộng điểm, không cần tương tác)
+
+\textbf{Xác minh tổng hợp:}
+\[e(\sigma, G_2) = e(H(m), Q_1 + Q_2 + \cdots + Q_n)\] trong đó
+\(Q_i = [d_i]G_2\) là khóa công khai của người \(i\).
+
+Tính đúng đắn:
+\[e\!\left(\sum_i [d_i]H(m),\, G_2\right) = e\!\left(H(m),\, \sum_i [d_i]G_2\right) = e(H(m), \sum Q_i) \checkmark\]
+
+\subsection{Vai trò của đường cong
+KSS18}\label{vai-truxf2-cux1ee7a-ux111ux1b0ux1eddng-cong-kss18}
+
+Đường cong được xây dựng trong luận văn này (họ Kachisa-Schaefer-Scott
+với \(k = 18\)) cung cấp nền tảng để cài đặt BLS:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{\(\mathbb{G}_1 \subset E(\mathbb{F}_p)\)}: nhóm điểm trên
+  trường cơ sở, kích thước \(r\).
+\item
+  \textbf{\(\mathbb{G}_T \subset \mathbb{F}_{p^{18}}^*\)}: nhóm đích của
+  phép ghép cặp, bậc \(r\), kích thước trường 18432 bit --- đủ để kháng
+  cả NFS lẫn TNFS.
+\end{itemize}
+
+Phép ghép cặp Optimal Ate (trên KSS18) chạy vòng lặp Miller với
+\(O(\log r)\) bước, mỗi bước thực hiện phép tính trong
+\(\mathbb{F}_{p^{18}}\). Cấu trúc NTT-friendly của \(p\)
+(\(\text{two-adicity}(p-1) \geq 32\)) giúp tăng tốc các phép nhân trong
+tháp trường.
+
+\begin{quote}
+\textbf{Lưu ý:} Cài đặt phép ghép cặp đầy đủ (vòng lặp Miller + phép lũy
+thừa lần cuối) nằm ngoài phạm vi của luận văn này và là hướng phát triển
+tiếp theo. Chương này tập trung vào Schnorr và ECDSA trên
+\(\mathbb{G}_1\).
+\end{quote}
+
+\section{\texorpdfstring{Cài đặt hệ thống ký
+(\texttt{curve1024-sig})}{Cài đặt hệ thống ký (curve1024-sig)}}\label{cuxe0i-ux111ux1eb7t-hux1ec7-thux1ed1ng-kuxfd-curve1024-sig}
+
+Binary \texttt{curve1024-sig} cung cấp giao diện dòng lệnh kiểu GPG cho
+toàn bộ vòng đời khóa:
+
+\begin{verbatim}
+curve1024-sig keygen [-o <file>]
+curve1024-sig sign   -f <file> [-k <key>] [--scheme schnorr|ecdsa]
+curve1024-sig verify -f <file> [-k <pub>]
+curve1024-sig export-pub [-k <priv>] [-o <pub>]
+\end{verbatim}
+
+Các tham số được đọc từ \texttt{config/curve1024.toml} thông qua
+\texttt{build.rs} để sinh hằng số tĩnh --- đảm bảo zero-cost abstraction
+và không có chi phí khởi tạo runtime.
+
+\section{Đánh giá}\label{ux111uxe1nh-giuxe1}
+
+\subsection{Cấu hình thực
+nghiệm}\label{cux1ea5u-huxecnh-thux1ef1c-nghiux1ec7m}
+
+Đường cong 1024 được dùng trong tất cả các đánh giá:
+
+\begin{longtable}[]{@{}ll@{}}
+\toprule\noalign{}
+Tham số & Giá trị \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Trường cơ sở \(p\) & 1024 bit, \texttt{two\_adicity(p-1)\ =\ 34} \\
+Bậc nhóm \(r\) & 512 bit, \texttt{two\_adicity(r-1)\ =\ 33} \\
+Bậc nhúng \(k\) & 18 \\
+Phương trình & \(y^2 = x^3 + 5\) (\(b = 5\), \(a = 0\)) \\
+Phép nhân vô hướng & Double-and-add, 1024 bit \\
+\end{longtable}
+
+\subsection{\texorpdfstring{Kết quả benchmark (Criterion,
+\texttt{-\/-release})}{Kết quả benchmark (Criterion, -\/-release)}}\label{kux1ebft-quux1ea3-benchmark-criterion---release}
+
+Kết quả đo trên phần cứng thông thường (không có hướng dẫn đặc thù như
+AVX-512):
+
+\begin{longtable}[]{@{}ll@{}}
+\toprule\noalign{}
+Phép đo & Thời gian trung bình \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Sinh cặp khóa (\texttt{KeyPair::generate}) & \textasciitilde500 ms \\
+Schnorr ký (\texttt{sign}) & \textasciitilde500 ms \\
+Schnorr xác minh (\texttt{verify}) & \textasciitilde1.0 s \\
+ECDSA ký (\texttt{sign}) & \textasciitilde500 ms \\
+ECDSA xác minh (\texttt{verify}) & \textasciitilde1.0 s \\
+Nhân vô hướng \([k]G\), \(k = 2\) & \textasciitilde1 ms \\
+\end{longtable}
+
+Hiệu năng chủ yếu bị chi phối bởi \textbf{phép nhân vô hướng 1024-bit}
+dùng Double-and-add với 1024 vòng lặp trong cài đặt chưa tối ưu (debug
+build: \textasciitilde60s/call, release build: \textasciitilde500ms/call
+nhờ tối ưu LLVM).
+
+\subsection{Phân tích kích thước tham số và mức bảo
+mật}\label{phuxe2n-tuxedch-kuxedch-thux1b0ux1edbc-tham-sux1ed1-vuxe0-mux1ee9c-bux1ea3o-mux1eadt}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Sơ đồ
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Khóa riêng
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Khóa công khai
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Chữ ký
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Bảo mật ECDLP
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Bảo mật DLP \(F_{p^k}\)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Schnorr/ECDSA trên secp256k1 & 32 B & 64 B & 64 B & 128 bit & --- \\
+Schnorr/ECDSA trên P-384 & 48 B & 96 B & 96 B & 192 bit & --- \\
+\textbf{Schnorr trên Curve1024} & \textbf{128 B} & \textbf{256 B} &
+\textbf{384 B} & \textbf{256 bit} & \textbf{≥250 bit} \\
+\textbf{ECDSA trên Curve1024} & \textbf{128 B} & \textbf{256 B} &
+\textbf{256 B} & \textbf{256 bit} & \textbf{≥250 bit} \\
+\end{longtable}
+
+Curve1024 cung cấp \textbf{mức bảo mật 256 bit} trên cả hai bài toán,
+tương đương AES-256 và phù hợp với yêu cầu bảo mật hậu lượng tử kinh
+điển (lưu ý: bản thân ECC không kháng máy tính lượng tử Shor, nhưng kích
+thước 1024-bit cung cấp biên an toàn lớn hơn đáng kể so với p-256 hay
+secp256k1 trong các kịch bản cổ điển).
+
+\subsection{So sánh với các đường cong
+chuẩn}\label{so-suxe1nh-vux1edbi-cuxe1c-ux111ux1b0ux1eddng-cong-chuux1ea9n}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Đường cong
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\(|p|\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\(|r|\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\(k\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+two-adicity \(r\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Bảo mật
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+secp256k1 & 256 & 256 & --- & 1 & 128 bit \\
+P-384 & 384 & 384 & --- & 1 & 192 bit \\
+BLS12-381 & 381 & 255 & 12 & 32 & 128 bit \\
+\textbf{Curve1024 (luận văn)} & \textbf{1024} & \textbf{512} &
+\textbf{18} & \textbf{33} & \textbf{256 bit} \\
+\end{longtable}
+
+Curve1024 là đường cong pairing-friendly duy nhất trong bảng đạt
+two-adicity \(\geq 32\) trên \textbf{cả hai trường} \(\mathbb{F}_r\) và
+\(\mathbb{F}_p\), cung cấp nền tảng NTT đầy đủ cho các ứng dụng ZK proof
+tương lai.
+
+\subsection{Hướng tối ưu hóa tiếp
+theo}\label{hux1b0ux1edbng-tux1ed1i-ux1b0u-huxf3a-tiux1ebfp-theo}
+
+Hiệu năng hiện tại chưa tối ưu do:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Double-and-add tuần tự}: thay bằng \textbf{Sliding Window}
+  (\(w = 4\)) hoặc \textbf{NAF (Non-Adjacent Form)} giảm
+  \textasciitilde30\% số lần cộng điểm.
+\item
+  \textbf{Tọa độ Jacobian}: thay tọa độ Affine bằng Jacobian/Projective
+  giảm số lần nghịch đảo (phép chia mod \(p\) rất đắt) --- mỗi phép cộng
+  Affine cần 1 nghịch đảo, Jacobian chỉ cần khi chuyển về Affine ở bước
+  cuối.
+\item
+  \textbf{Montgomery ladder}: loại bỏ timing side-channel trong phép
+  nhân vô hướng.
+\item
+  \textbf{AVX-512 / SIMD}: các phép nhân 64×64 bit trong Montgomery có
+  thể vector hóa trên phần cứng hiện đại.
+\item
+  \textbf{Phép nhân đa vô hướng song song (MSM)}: cho xác minh Schnorr
+  (\([s]G + [e]Q\)), dùng Pippenger's algorithm cắt \textasciitilde50\%
+  công việc so với hai lần nhân vô hướng riêng biệt.
+\end{enumerate}
+
+\FloatBarrier

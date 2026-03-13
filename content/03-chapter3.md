@@ -1,22 +1,19 @@
 ---
 title: Phương pháp xây dựng đường cong elliptic
 chapter: 3
-toc-title: PHƯƠNG PHÁP XÂY DỰNG ĐƯỜNG CONG ELLIPTIC
 ---
-
-# Chương 3: Phương pháp xây dựng đường cong elliptic thân thiện với phép ghép cặp
 
 Chương này trình bày trọng tâm lý thuyết của luận văn: các phương pháp xây dựng đường cong elliptic có bậc nhúng (embedding degree) xác định, phục vụ cho các ứng dụng mật mã dựa trên phép ghép cặp (pairing-based cryptography). Chúng ta sẽ đi từ nền tảng lý thuyết của Phương pháp Nhân phức (CM) và Đa thức lớp Hilbert, đến thuật toán Cocks-Pinch truyền thống, và cuối cùng là thuật toán Cocks-Pinch Cải tiến được đề xuất trong luận văn này, với khả năng sinh tham số trường cơ sở có cấu trúc NTT-friendly nhằm kháng lại tấn công rây trường số tháp (Tower Number Field Sieve - TNFS).
 
-## Phương pháp Nhân phức (Complex Multiplication Method)
+# Phương pháp Nhân phức (Complex Multiplication Method)
 
-### Ý tưởng cốt lõi
+## Ý tưởng cốt lõi
 
 Phương pháp Nhân phức (CM) là công cụ nền tảng để **xây dựng đường cong elliptic có số điểm định trước**. Thay vì chọn ngẫu nhiên các hệ số $a, b$ rồi đếm điểm, CM đi ngược lại: bắt đầu từ bậc nhóm mong muốn $\#E(\mathbb{F}_p) = p + 1 - t$ rồi suy ngược ra phương trình đường cong.
 
 Ý tưởng xuất phát từ lý thuyết số học phức: mỗi đường cong elliptic $E$ sở hữu một **vành nội cấu** (endomorphism ring) $\text{End}(E)$. Với đường cong thông thường (không siêu dị), vành này đẳng cấu với một **thứ tự trong trường số** $\mathbb{Q}(\sqrt{D})$, trong đó $D < 0$ là số nguyên âm gọi là **biệt thức CM**. Giá trị $D$ đặc trưng hoàn toàn cho "loại" đường cong về mặt số học phức.
 
-### Điều kiện CM và phương trình Diophantine
+## Điều kiện CM và phương trình Diophantine
 
 Để tồn tại một đường cong elliptic trên $\mathbb{F}_p$ có vết Frobenius $t$ và biệt thức CM là $D$, điều kiện cần và đủ là phương trình Diophantine sau phải có nghiệm nguyên:
 
@@ -26,7 +23,7 @@ trong đó $p$ là đặc số trường, $t$ là vết Frobenius, $v$ là một
 
 Ví dụ: Với $D = -3$ (biệt thức của secp256k1, BLS12-381), phương trình trở thành $4p = t^2 + 3v^2$.
 
-### Đa thức lớp Hilbert $H_D(x)$
+## Đa thức lớp Hilbert $H_D(x)$
 
 Khi đã có $D$, bước tiếp theo là tính **Đa thức lớp Hilbert** (Hilbert class polynomial) $H_D(x)$. Đây là đa thức hệ số nguyên được xây dựng từ lý thuyết số học phức mà nghiệm phức của nó chính là các **$j$-invariant** của tất cả đường cong elliptic phức $\mathbb{C}/\mathcal{O}$ với thứ tự CM là $\mathcal{O}$.
 
@@ -42,7 +39,7 @@ Bậc của $H_D(x)$ bằng **số lớp** (class number) $h(D)$ — một bất
 
 Với $|D| = 3$ và $|D| = 4$, đa thức này bậc 1, nên **$j$-invariant được xác định ngay lập tức**: $j = 0$ và $j = 1728$ tương ứng. Đây là lý do tại sao secp256k1 ($j=0$, $D=-3$) và nhiều đường cong BLS có dạng đơn giản $y^2 = x^3 + b$.
 
-### Quy trình CM đầy đủ
+## Quy trình CM đầy đủ
 
 Cho bộ tham số $(p, t, D)$ thỏa mãn $4p = t^2 + |D|v^2$:
 
@@ -54,7 +51,7 @@ Cho bộ tham số $(p, t, D)$ thỏa mãn $4p = t^2 + |D|v^2$:
 3. **Kiểm tra xoắn (Twist test)**: Đường cong $E: y^2 = x^3 + ax + b$ và đường cong xoắn $E': y^2 = x^3 + a\delta^2 x + b\delta^3$ (với $\delta$ là phần tử không phải thặng dư bậc hai) có tổng số điểm $\#E + \#E' = 2(p+1)$. Ta cần chọn đúng đường cong có $r \mid \#E$.
 4. **Tìm điểm sinh (Generator)**: Nhân ngẫu nhiên một điểm trên đường cong với hệ số cofactor $h = \#E / r$ để tìm điểm sinh $G$ có bậc chính xác là $r$.
 
-### Trường hợp $D = -3$: Xoắn sextic
+## Trường hợp $D = -3$: Xoắn sextic
 
 Với $D = -3$, tình huống phức tạp hơn vì đường cong $y^2 = x^3 + b$ có **6 xoắn** (sextic twists) thay vì chỉ 2. Sáu vết Frobenius khả dĩ là:
 
@@ -77,7 +74,7 @@ let candidates = [
 // Tìm bậc nào chia hết cho r, rồi tìm b tương ứng
 ```
 
-## Tham số đầu vào của hệ thống
+# Tham số đầu vào của hệ thống
 
 Trước khi đi vào chi tiết thuật toán, phần này giải thích ý nghĩa và cơ sở lựa chọn của 7 tham số đầu vào trong cài đặt thực tế (`cocks_pinch.rs`):
 
@@ -91,7 +88,7 @@ let min_scalar_two_adicity = 32u32;
 let min_base_two_adicity   = 32u32;
 ```
 
-### `k = 18` — Bậc nhúng (Embedding Degree)
+## `k = 18` — Bậc nhúng (Embedding Degree)
 
 Bậc nhúng $k$ xác định **trường mở rộng** $\mathbb{F}_{p^k}$ nơi phép ghép cặp Weil/Tate được tính toán. Giá trị $k = 18$ được chọn vì:
 
@@ -99,7 +96,7 @@ Bậc nhúng $k$ xác định **trường mở rộng** $\mathbb{F}_{p^k}$ nơi 
 - **Hỗ trợ Đa thức Cyclotomic bậc 18:** $\Phi_{18}(T) = T^6 - T^3 + 1$ cho phép sinh $r$ hiệu quả, có cấu trúc NTT-friendly tự nhiên khi $T \equiv 0 \pmod{2^k}$ (xem §3.3.1).
 - **Thực tế:** $k = 18$ là bậc nhúng phổ biến trong họ đường cong KSS18, phù hợp với mức bảo mật hậu lượng tử cao hơn các đường cong BLS12 (dùng trong Ethereum 2.0).
 
-### `d = 3` — Biệt thức CM ($|D|$)
+## `d = 3` — Biệt thức CM ($|D|$)
 
 Biệt thức CM $D = -3$ được chọn vì những ưu điểm nổi bật:
 
@@ -107,14 +104,14 @@ Biệt thức CM $D = -3$ được chọn vì những ưu điểm nổi bật:
 - **Phổ biến trong thực tế:** secp256k1 (Bitcoin), BLS12-381 (Ethereum), và nhiều đường cong quan trọng khác đều dùng $D = -3$.
 - **Điều kiện CM đơn giản:** Phương trình $4p = t^2 + 3v^2$ dễ giải hơn với hầu hết các giá trị $(t, v)$ nguyên, tăng xác suất tìm được $p$ nguyên tố trong lưới nâng.
 
-### `target_r_bits = 512` — Kích thước bậc nhóm $r$
+## `target_r_bits = 512` — Kích thước bậc nhóm $r$
 
 Tham số này xác định **mức bảo mật** của bài toán logarit rời rạc trên đường cong (ECDLP):
 
 - Với $r \approx 2^{512}$, thuật toán Pollard-rho tốt nhất cần $\approx 2^{256}$ phép tính, đạt mức bảo mật **256-bit** — vượt tiêu chuẩn NIST SP 800-57 cho ứng dụng đến năm 2030+ và phù hợp với kịch bản hậu lượng tử (post-quantum).
 - Đây cũng là kích thước của **khóa riêng** (private key scalar) và **kích thước chữ ký** trong các giao thức Schnorr và ECDSA trên đường cong này.
 
-### `target_p_bits = 1024` — Kích thước trường cơ sở $p$
+## `target_p_bits = 1024` — Kích thước trường cơ sở $p$
 
 Kích thước trường cơ sở tác động đến hai yếu tố:
 
@@ -122,11 +119,11 @@ Kích thước trường cơ sở tác động đến hai yếu tố:
 - **Hiệu năng:** Kích thước 1024 bit làm cho mỗi phép nhân trường tốn gấp đôi so với 512 bit về mặt thời gian CPU, nhưng vẫn trong giới hạn thực tế với phép nhân Montgomery đa độ chính xác.
 - **Tỉ số $\rho$:** $\rho = \log_2 p / \log_2 r = 1024/512 = 2$. Đây là tỉ số điển hình của Cocks-Pinch (so với $\rho = 1.5$ của BLS12 hay $\rho = 1$ của BN).
 
-### `max_attempts = 100_000` — Số lần thử tối đa
+## `max_attempts = 100_000` — Số lần thử tối đa
 
 Giới hạn vòng lặp tìm kiếm an toàn. Trong thực nghiệm, thuật toán CP cải tiến thường tìm được kết quả trong **100–6000 lần thử** (tùy cấu hình NTT), do đó `100_000` là giới hạn rất thoải mái đảm bảo không bao giờ bị timeout trong điều kiện bình thường. Nếu vượt giới hạn này (không bao giờ xảy ra trong thực tế), hệ thống báo lỗi thay vì chạy mãi mãi.
 
-### `min_scalar_two_adicity = 32` — Two-adicity tối thiểu của $r - 1$
+## `min_scalar_two_adicity = 32` — Two-adicity tối thiểu của $r - 1$
 
 Tham số này ràng buộc **cấu trúc NTT-friendly của trường vô hướng $\mathbb{F}_r$**:
 
@@ -139,7 +136,7 @@ $$2^{32} \mid (r - 1) \quad \Longleftrightarrow \quad r = d \cdot 2^{32} + 1 \te
 
 Giá trị 32 đạt được **không cần rejection sampling** nhờ ràng buộc $T \equiv 0 \pmod{2^{11}}$ (vì $v_2(r-1) = 3 \cdot v_2(T) \geq 3 \times 11 = 33 \geq 32$).
 
-### `min_base_two_adicity = 32` — Two-adicity tối thiểu của $p - 1$
+## `min_base_two_adicity = 32` — Two-adicity tối thiểu của $p - 1$
 
 Tương tự, tham số này ràng buộc **cấu trúc NTT-friendly của trường cơ sở $\mathbb{F}_p$**:
 
@@ -150,7 +147,7 @@ $$2^{32} \mid (p - 1) \quad \Longleftrightarrow \quad p = d \cdot 2^{32} + 1$$
 - $p = d \cdot 2^{32} + 1$ kháng TNFS tốt hơn $p$ tùy ý (xem §3.3), do cấu trúc $p-1$ không có nhân tử nhỏ ngẫu nhiên mà thuật toán rây có thể khai thác.
 - Giá trị này đạt được bằng cách mở rộng lưới nâng $(h_t, h_y)$ trong hàm `try_lift_to_prime`.
 
-### Tổng hợp: Đặc trưng đường cong mục tiêu
+## Tổng hợp: Đặc trưng đường cong mục tiêu
 
 Từ 7 tham số trên, đường cong được xây dựng có đặc trưng:
 
@@ -165,16 +162,15 @@ Từ 7 tham số trên, đường cong được xây dựng có đặc trưng:
 | Dạng $r$ | $d \cdot 2^{33} + 1$ | NTT-friendly scalar field |
 | Dạng $p$ | $d \cdot 2^{34} + 1$ | NTT-friendly base field (kháng TNFS) |
 
-## Thuật toán Cocks-Pinch truyền thống
+# Thuật toán Cocks-Pinch truyền thống
 
-
-### Vấn đề: Xây dựng ngược từ $r$
+## Vấn đề: Xây dựng ngược từ $r$
 
 Phương pháp CM truyền thống xuất phát từ $p$ được chọn trước, đòi hỏi giải phương trình $4p = t^2 + |D|v^2$ — một bài toán biểu diễn số nguyên bởi dạng toàn phương (quadratic form) không hề dễ trong không gian lớn.
 
 **Thuật toán Cocks-Pinch (CP)** đảo chiều bài toán: **bắt đầu từ $r$ rồi xây dựng $p$**. Đây là cách tiếp cận tự nhiên hơn khi mục tiêu là đảm bảo $r$ có kích thước an toàn (ví dụ: 512 bit) với bậc nhúng $k$ cho trước.
 
-### Điều kiện bậc nhúng
+## Điều kiện bậc nhúng
 
 Bậc nhúng $k$ của đường cong là **số nguyên dương nhỏ nhất** sao cho $r \mid p^k - 1$, hay tương đương $p \equiv 1 \pmod{r}$ khi $k=1$, hoặc tổng quát hơn $p$ là nghiệm của $\Phi_k(x) \equiv 0 \pmod{r}$.
 
@@ -182,7 +178,7 @@ Bậc nhúng $k$ của đường cong là **số nguyên dương nhỏ nhất** 
 
 $$p \equiv \rho^i \pmod{r} \quad \text{với } \rho \text{ là nghiệm nguyên thủy của } \Phi_k(x) \equiv 0 \pmod{r}$$
 
-### Thuật toán CP cho $k = 18$
+## Thuật toán CP cho $k = 18$
 
 Với $k = 18$ và $D = -3$, bậc nhóm $r = \Phi_{18}(T) = T^6 - T^3 + 1$ với $T$ nguyên tùy ý. Các bước:
 
@@ -230,19 +226,19 @@ for ht in -half_range..=half_range {
 }
 ```
 
-### Phân tích độ phức tạp trung bình
+## Phân tích độ phức tạp trung bình
 
 Mật độ số nguyên tố lân cận $N$ là khoảng $1/\ln N$, tức $1/1024\ln 2 \approx 1/709$. Với lưới $(h_t, h_y) \in [-20, 20]^2$ tạo ra $41 \times 41 = 1681$ ứng viên $p$ mỗi lần, tỉ lệ thành công mỗi lần sinh $r$ là khoảng $1681/709 \approx 2.4$ ứng viên $p$ nguyên tố. Trong thực tế, thường cần khoảng **100–500 lần sinh $r$** để tìm được bộ tham số hợp lệ.
 
-## Thuật toán Cocks-Pinch Cải tiến
+# Thuật toán Cocks-Pinch Cải tiến
 
-### Động lực: Tấn công rây trường số tháp (TNFS)
+## Động lực: Tấn công rây trường số tháp (TNFS)
 
 Bảo mật của phép ghép cặp phụ thuộc vào độ khó của **bài toán logarit rời rạc** (DLP) trên trường mở rộng $\mathbb{F}_{p^k}$. Năm 2016, Barbulescu và Duquesne chỉ ra rằng thuật toán **Tower Number Field Sieve (TNFS)** — một biến thể của NFS — có thể giảm đáng kể độ phức tạp tấn công DLP trên $\mathbb{F}_{p^k}$ khi $k$ composite và $p$ có cấu trúc đặc biệt. Điều này **phá vỡ ước lượng bảo mật ban đầu** của các đường cong như BN256 (từ ~128 bit xuống còn ~100 bit hiệu quả).
 
 Để kháng lại TNFS, cần đảm bảo trường cơ sở của đường cong có **cấu trúc tốt** ở cả hai trường: trường vô hướng $\mathbb{F}_r$ (phục vụ tính toán ZK proof) và trường cơ sở $\mathbb{F}_p$ (phục vụ phép ghép cặp).
 
-### Yêu cầu NTT-friendly
+## Yêu cầu NTT-friendly
 
 Một số nguyên tố $q$ được gọi là **NTT-friendly** (hoặc FFT-friendly) nếu $q - 1$ chia hết cho một lũy thừa đủ lớn của 2, tức là:
 
@@ -257,7 +253,7 @@ Số $s$ được gọi là **số hạng hai-adicity** (two-adicity) của $q$.
 
 **Tương quan với TNFS:** Một trường $\mathbb{F}_p$ với two-adicity cao có $p-1 = d \cdot 2^s$, nghĩa là $p = d \cdot 2^s + 1$. Cấu trúc này khiến cho tháp trường (tower field extension) $\mathbb{F}_{p^k}$ có đặc điểm tốt hơn từ góc độ kháng TNFS: các thuật toán rây cần khai thác cấu trúc phân tích của $p-1$ để tìm quan hệ, do đó khi $p-1$ có cấu trúc **không phân tích tùy tiện** mà theo dạng chuẩn $d \cdot 2^s + 1$, sự khai thác thông tin này trở nên khó hơn.
 
-### Cải tiến 1: NTT-friendly $r$ qua ràng buộc $T$
+## Cải tiến 1: NTT-friendly $r$ qua ràng buộc $T$
 
 **Nhận xét then chốt:** Vì $r = \Phi_{18}(T) = T^6 - T^3 + 1$, ta có:
 
@@ -285,7 +281,7 @@ let r = cyclotomic_phi18(&t_val);
 
 Với `min_scalar_two_adicity = 32`, ta cần $\lceil 32/3 \rceil = 11$, tức $T \equiv 0 \pmod{2^{11}}$. Điều này **không làm giảm không gian tham số** đáng kể — vẫn còn $2^{85}/2^{11} = 2^{74}$ ứng viên $T$ trong dải hợp lệ.
 
-### Cải tiến 2: NTT-friendly $p$ qua mở rộng lưới nâng
+## Cải tiến 2: NTT-friendly $p$ qua mở rộng lưới nâng
 
 Sau khi có $t_0, y_0 \pmod{r}$, tham số $p$ được xác định bởi:
 
@@ -315,7 +311,7 @@ let extra = lp.min_base_two_adicity
 let half_range = 20i64 + (1i64 << extra);
 ```
 
-### Phân tích hiệu năng của thuật toán cải tiến
+## Phân tích hiệu năng của thuật toán cải tiến
 
 Bảng dưới so sánh thuật toán CP gốc và CP Cải tiến với cùng mục tiêu $(r \approx 2^{512}, p \approx 2^{1024}, k = 18)$:
 
@@ -338,7 +334,7 @@ p two-adicity: 2^34 | (p-1)  →  p = d·2^34 + 1, NTT đến bậc 2^34
 Thời gian tổng: 32.81s
 ```
 
-### So sánh với BLS12-381
+## So sánh với BLS12-381
 
 Đường cong BLS12-381 — chuẩn công nghiệp hiện tại trong ZK proof — có:
 - $r$ two-adicity = **32** (đủ cho ZK circuits đến $2^{32}$ ràng buộc)
@@ -346,7 +342,7 @@ Thời gian tổng: 32.81s
 
 Đường cong được xây dựng trong luận văn này đạt **33–34**, tức là **vượt BLS12-381 về cấu trúc NTT** trong khi kích thước khóa lớn hơn ($p \approx 2^{1024}$ so với $p \approx 2^{381}$), cung cấp mức bảo mật hậu lượng tử cao hơn trong ngữ cảnh phép ghép cặp.
 
-### Giới hạn và hướng mở rộng
+## Giới hạn và hướng mở rộng
 
 Thuật toán cải tiến vẫn có giới hạn thực tế:
 

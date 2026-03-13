@@ -4,19 +4,17 @@
 \clearpage
 \phantomsection
 
+$if(unnumbered)$
+\addcontentsline{toc}{chapter}{$if(toc-title)$$toc-title$$else$$title$$endif$}
+\chapter*{$title$}
+$else$
 $if(chapter)$
 \setcounter{chapter}{$chapter$}
 \addcontentsline{toc}{chapter}{$if(toc-title)$$toc-title$$else$$title$$endif$}
-$endif$
-
-$if(chapter)$
-$if(chapter.eq.0)$
-\chapter*{$title$}
-$else$
 \chapter[$toc-title$]{$title$}
-$endif$
 $else$
 \chapter{$title$}
+$endif$
 $endif$
 
 $body$
