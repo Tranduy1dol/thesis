@@ -1,9 +1,10 @@
 ---
-title: Sơ đồ chữ ký — Cài đặt và Đánh giá
+title: Sơ đồ chữ ký số
 chapter: 4
+toc-title: SƠ ĐỒ CHỮ KÝ SỐ
 ---
 
-Chương này trình bày ba sơ đồ chữ ký số được xây dựng trên nền tảng đường cong elliptic đã sinh ở Chương 3: **Schnorr**, **ECDSA**, và **chữ ký tổng hợp BLS**. Với mỗi sơ đồ, chúng ta đi qua lý thuyết cốt lõi, phân tích cấu trúc dữ liệu và cài đặt thực tế (bằng Rust), rồi kết thúc bằng đánh giá so sánh toàn diện dựa trên kết quả thực nghiệm.
+Chương này trình bày ba sơ đồ chữ ký số được xây dựng trên nền tảng đường cong elliptic đã sinh ở Chương 3: **Schnorr**, **ECDSA**, và **chữ ký tổng hợp BLS**. Với mỗi sơ đồ, chúng ta đi qua lý thuyết cốt lõi, phân tích cấu trúc dữ liệu và cài đặt thực tế bằng Rust. Kết quả đo hiệu năng và phân tích bảo mật được trình bày riêng tại **Chương 5**.
 
 
 # Cặp khóa (KeyPair)
@@ -231,64 +232,3 @@ curve1024-sig export-pub [-k <priv>] [-o <pub>]
 ```
 
 Các tham số được đọc từ `config/curve1024.toml` thông qua `build.rs` để sinh hằng số tĩnh — đảm bảo zero-cost abstraction và không có chi phí khởi tạo runtime.
-
-# Đánh giá
-
-## Cấu hình thực nghiệm
-
-Đường cong 1024 được dùng trong tất cả các đánh giá:
-
-| Tham số | Giá trị |
-|---|---|
-| Trường cơ sở $p$ | 1024 bit, `two_adicity(p-1) = 34` |
-| Bậc nhóm $r$ | 512 bit, `two_adicity(r-1) = 33` |
-| Bậc nhúng $k$ | 18 |
-| Phương trình | $y^2 = x^3 + 5$ ($b = 5$, $a = 0$) |
-| Phép nhân vô hướng | Double-and-add, 1024 bit |
-
-## Kết quả benchmark (Criterion, `--release`)
-
-Kết quả đo trên phần cứng thông thường (không có hướng dẫn đặc thù như AVX-512):
-
-| Phép đo | Thời gian trung bình |
-|---|---|
-| Sinh cặp khóa (`KeyPair::generate`) | ~500 ms |
-| Schnorr ký (`sign`) | ~500 ms |
-| Schnorr xác minh (`verify`) | ~1.0 s |
-| ECDSA ký (`sign`) | ~500 ms |
-| ECDSA xác minh (`verify`) | ~1.0 s |
-| Nhân vô hướng $[k]G$, $k = 2$ | ~1 ms |
-
-Hiệu năng chủ yếu bị chi phối bởi **phép nhân vô hướng 1024-bit** dùng Double-and-add với 1024 vòng lặp trong cài đặt chưa tối ưu (debug build: ~60s/call, release build: ~500ms/call nhờ tối ưu LLVM).
-
-## Phân tích kích thước tham số và mức bảo mật
-
-| Sơ đồ | Khóa riêng | Khóa công khai | Chữ ký | Bảo mật ECDLP | Bảo mật DLP $F_{p^k}$ |
-|---|---|---|---|---|---|
-| Schnorr/ECDSA trên secp256k1 | 32 B | 64 B | 64 B | 128 bit | — |
-| Schnorr/ECDSA trên P-384 | 48 B | 96 B | 96 B | 192 bit | — |
-| **Schnorr trên Curve1024** | **128 B** | **256 B** | **384 B** | **256 bit** | **>=250 bit** |
-| **ECDSA trên Curve1024** | **128 B** | **256 B** | **256 B** | **256 bit** | **>=250 bit** |
-
-Curve1024 cung cấp **mức bảo mật 256 bit** trên cả hai bài toán, tương đương AES-256 và phù hợp với yêu cầu bảo mật hậu lượng tử kinh điển (lưu ý: bản thân ECC không kháng máy tính lượng tử Shor, nhưng kích thước 1024-bit cung cấp biên an toàn lớn hơn đáng kể so với p-256 hay secp256k1 trong các kịch bản cổ điển).
-
-## So sánh với các đường cong chuẩn
-
-| Đường cong | $|p|$ | $|r|$ | $k$ | two-adicity $r$ | Bảo mật |
-|---|---|---|---|---|---|
-| secp256k1 | 256 | 256 | — | 1 | 128 bit |
-| P-384 | 384 | 384 | — | 1 | 192 bit |
-| BLS12-381 | 381 | 255 | 12 | 32 | 128 bit |
-| **Curve1024 (luận văn)** | **1024** | **512** | **18** | **33** | **256 bit** |
-
-Curve1024 là đường cong pairing-friendly duy nhất trong bảng đạt two-adicity $\geq 32$ trên **cả hai trường** $\mathbb{F}_r$ và $\mathbb{F}_p$, cung cấp nền tảng NTT đầy đủ cho các ứng dụng ZK proof tương lai.
-
-## Hướng tối ưu hóa tiếp theo
-
-Hiệu năng hiện tại chưa tối ưu do:
-
-1. **Double-and-add tuần tự**: thay bằng **Sliding Window** ($w = 4$) hoặc **NAF (Non-Adjacent Form)** giảm ~30% số lần cộng điểm.
-2. **Tọa độ Jacobian**: thay tọa độ Affine bằng Jacobian/Projective giảm số lần nghịch đảo (phép chia mod $p$ rất đắt) — mỗi phép cộng Affine cần 1 nghịch đảo, Jacobian chỉ cần khi chuyển về Affine ở bước cuối.
-3. **Montgomery ladder**: loại bỏ timing side-channel trong phép nhân vô hướng.
-4. **AVX-512 / SIMD**: các phép nhân 64x64 bit trong Montgomery có thể vector hóa trên phần cứng hiện đại.
-5. **Phép nhân đa vô hướng song song (MSM)**: cho xác minh Schnorr ($[s]G + [e]Q$), dùng Pippenger's algorithm cắt ~50% công việc so với hai lần nhân vô hướng riêng biệt.

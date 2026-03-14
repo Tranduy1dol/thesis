@@ -5,20 +5,494 @@
 \phantomsection
 
 \setcounter{chapter}{5}
-\chapter[CÀI ĐẶT VÀ ĐÁNH GIÁ]{Cài đặt và đánh giá}
+\chapter[CÀI ĐẶT VÀ ĐÁNH GIÁ]{Cài đặt và Đánh giá}
 
-Đoạn giới thiệu chương\ldots{}
+Chương này trình bày kết quả thực nghiệm toàn diện của hệ thống: tham số
+đường cong được sinh ra, kết quả kiểm thử đơn vị và tích hợp, đo hiệu
+năng thực tế với Criterion, và phân tích so sánh mức độ bảo mật với các
+đường cong chuẩn trên thị trường.
 
-\subsection{Mục 5.1}\label{mux1ee5c-5.1}
+\subsection{Tham số đường cong được sinh
+ra}\label{tham-sux1ed1-ux111ux1b0ux1eddng-cong-ux111ux1b0ux1ee3c-sinh-ra}
 
-Nội dung\ldots{}
+Sau khi chạy thuật toán Cocks-Pinch cải tiến với các đầu vào \(k=18\),
+\(d=3\), \texttt{target\_r\_bits=512}, \texttt{target\_p\_bits=1024},
+\texttt{min\_scalar\_two\_adicity=32},
+\texttt{min\_base\_two\_adicity=32}, hệ thống sinh ra đường cong với các
+tham số được lưu trong \texttt{config/curve1024.toml}:
 
-\subsection{Mục 5.2}\label{mux1ee5c-5.2}
+\subsubsection{Trường cơ sở và trường vô
+hướng}\label{trux1b0ux1eddng-cux1a1-sux1edf-vuxe0-trux1b0ux1eddng-vuxf4-hux1b0ux1edbng}
 
-Nội dung\ldots{}
+\begin{longtable}[]{@{}ll@{}}
+\toprule\noalign{}
+Tham số & Giá trị \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Kích thước \(p\) & 1024 bit \\
+Kích thước \(r\) & 512 bit \\
+two-adicity \((p-1)\) & \textbf{34} --- NTT đến bậc \(2^{34}\) \\
+two-adicity \((r-1)\) & \textbf{33} --- NTT đến bậc \(2^{33}\) \\
+Bậc nhúng \(k\) & \textbf{18} \\
+CM discriminant \(D\) & \(-3\) (họ KSS) \\
+\end{longtable}
 
-\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+Hai trường đều thỏa điều kiện NTT-friendly
+(\(\text{two-adicity} \geq 32\)), đảm bảo có thể thực hiện biến đổi NTT
+hiệu quả trong các ứng dụng ZK proof.
 
-Kết luận chương.
+\subsubsection{Phương trình đường
+cong}\label{phux1b0ux1a1ng-truxecnh-ux111ux1b0ux1eddng-cong}
+
+\[y^2 = x^3 + 5 \pmod{p}\]
+
+Hệ số \(a = 0\), \(b = 5\) (Short Weierstrass). Với \(a = 0\), công thức
+nhân đôi điểm đơn giản hóa rõ rệt: \[\lambda = \frac{3x_1^2}{2y_1}\]
+không cần tính \(a\) tại mỗi bước --- tiết kiệm 1 phép nhân trường mỗi
+lần \texttt{double()}.
+
+\subsubsection{Điểm sinh}\label{ux111iux1ec3m-sinh}
+
+Điểm sinh \(G = (x, y) \in E(\mathbb{F}_p)\) với:
+
+\begin{verbatim}
+x = 0x07ba566379f7fa8d4ecd750604d301b18502c40e2f424c0733acb5111f37a3d
+     e59db085670df8316de6129f2ad09f6b86af70e33165c363cfe12c4370c371d
+     21e15315b6c6fc1c0f90311464d68b5d3f567ca49915e36f7090f005d5227cf
+     e790c35156512fb95a2097d808b54ea1adaf226816c6aa27a0bb870bf4b9d1a10a8
+
+y = 0x9487acd554d3ef9e9a2a6ceaddb12532e14d5ee1a9a2ee38be3fcbfa3211998
+     b1c38a460b9f2594685164785cc3eef1de1b99ce7b6357f30f585a7d3bdd18f
+     676dd22f2f264a76815a83a882f746f9fbd7e8835784e0f6e5e84313e3b89f5
+     4e64805a0a77013c9464e3f401342c493785f1e861f1fd9de922042dc5448e7e776
+\end{verbatim}
+
+Điểm \(G\) được xác minh qua kiểm thử
+\texttt{test\_generator\_is\_on\_curve} và
+\texttt{test\_generator\_order\_is\_r}.
+
+\subsection{Kết quả kiểm
+thử}\label{kux1ebft-quux1ea3-kiux1ec3m-thux1eed}
+
+Toàn bộ bộ kiểm thử gồm \textbf{36 test} chia thành hai lớp: kiểm thử
+đơn vị trong thư viện và kiểm thử tích hợp ngoài crate.
+
+\subsubsection{\texorpdfstring{Kiểm thử đơn vị (17 tests ---
+\texttt{cargo\ test\ -\/-lib})}{Kiểm thử đơn vị (17 tests --- cargo test -\/-lib)}}\label{kiux1ec3m-thux1eed-ux111ux1a1n-vux1ecb-17-tests-cargo-test---lib}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Nhóm
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Test
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Kết quả
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{u1024} & test\_basics, test\_shifts, test\_arithmetic,
+test\_bytes\_and\_rand & OK \\
+\texttt{prime\_field} & test\_basics, test\_arithmetic, test\_pow,
+test\_zero\_one, test\_bytes, test\_from\_montgomery,
+test\_conditionally\_selectable & OK \\
+\texttt{affine} & test\_curve\_point, test\_negation,
+test\_point\_addition, test\_point\_multiplication & OK \\
+\texttt{signature::schnorr} & test\_valid\_schnorr\_signature & OK \\
+\texttt{signature::ecdsa} & test\_valid\_ecdsa\_signature & OK \\
+\end{longtable}
+
+Tổng thời gian: \textbf{95.40 giây} (debug build ---
+\texttt{test\_point\_multiplication} và các test chữ ký chiếm phần lớn
+do phép nhân vô hướng 1024-bit chưa tối ưu trong debug mode).
+
+Bộ kiểm thử đơn vị bao phủ từng lớp số học độc lập: \texttt{u1024} đảm
+bảo tính đúng đắn của số học bignum 1024-bit làm nền cho toàn bộ thư
+viện; \texttt{prime\_field} xác nhận phép nhân Montgomery hoạt động
+chính xác kể cả các trường hợp biên (phần tử 0, phần tử 1, nghịch đảo);
+\texttt{affine} kiểm tra toàn bộ luật nhóm trên điểm affine. Đặc biệt,
+\texttt{test\_conditionally\_selectable} xác nhận rằng phép chọn
+hằng-thời-gian (constant-time) hoạt động đúng --- đây là thuộc tính bảo
+mật quan trọng chống lại timing side-channel attack.
+
+\subsubsection{\texorpdfstring{Kiểm thử tích hợp (19 tests ---
+\texttt{cargo\ test\ -\/-tests})}{Kiểm thử tích hợp (19 tests --- cargo test -\/-tests)}}\label{kiux1ec3m-thux1eed-tuxedch-hux1ee3p-19-tests-cargo-test---tests}
+
+\textbf{Tham số đường cong (\texttt{curve\_params.rs} --- 4 tests,
+0.00s):}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Test
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Mô tả
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Kết quả
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{test\_modulus\_bit\_length} & \(|p| = 1024\) bit & OK \\
+\texttt{test\_order\_bit\_length} & \(|r| = 512\) bit & OK \\
+\texttt{test\_base\_field\_ntt\_two\_adicity} &
+two-adicity\((p-1) \geq 32\) & OK \\
+\texttt{test\_scalar\_field\_ntt\_two\_adicity} &
+two-adicity\((r-1) \geq 32\) & OK \\
+\end{longtable}
+
+\textbf{Luật nhóm (\texttt{group\_law.rs} --- 6 tests, 18.34s):}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Test
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Mô tả
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Kết quả
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{test\_generator\_is\_on\_curve} & \(G\) nằm trên đường cong &
+OK \\
+\texttt{test\_generator\_order\_is\_r} & \([r]G = \mathcal{O}\) & OK \\
+\texttt{test\_point\_double\_equals\_add\_self} & \(2G = G + G\) & OK \\
+\texttt{test\_identity\_element} & \(G + \mathcal{O} = G\),
+\(\mathcal{O} + G = G\) & OK \\
+\texttt{test\_point\_negation} & \(G + (-G) = \mathcal{O}\) & OK \\
+\texttt{test\_scalar\_mul\_matches\_repeated\_add} & \(G + 2G = [3]G\) &
+OK \\
+\end{longtable}
+
+\textbf{Bảo mật MOV (\texttt{attack\_mov.rs} --- 2 tests, 0.00s):}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Test
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Mô tả
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Kết quả
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{test\_mov\_attack\_resistance} & \(k=18 > 6\),
+\(|F_{p^{18}}| = 18432\) bit & OK \\
+\texttt{test\_mov\_weak\_curve\_simulation} & Mô phỏng đường cong yếu
+\(k=1\) & OK \\
+\end{longtable}
+
+\textbf{Bảo mật Anomalous (\texttt{attack\_anomalous.rs} --- 2 tests,
+0.00s):}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Test
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Mô tả
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Kết quả
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{test\_anomalous\_attack\_resistance} & \(r \neq p\),
+\(|p| > |r|\) & OK \\
+\texttt{test\_anomalous\_weak\_curve\_simulation} & Mô phỏng đường cong
+\(t=1\) & OK \\
+\end{longtable}
+
+\textbf{Chữ ký (\texttt{signatures.rs} --- 5 tests, 128.83s):}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Test
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Mô tả
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Kết quả
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{test\_schnorr\_sign\_verify\_roundtrip} & Ký + xác minh đúng
+khóa & OK \\
+\texttt{test\_schnorr\_rejects\_wrong\_message} & Từ chối thông điệp bị
+sửa & OK \\
+\texttt{test\_schnorr\_rejects\_wrong\_key} & Từ chối khóa sai & OK \\
+\texttt{test\_ecdsa\_sign\_verify\_roundtrip} & Ký + xác minh đúng khóa
+& OK \\
+\texttt{test\_ecdsa\_rejects\_wrong\_message} & Từ chối thông điệp bị
+sửa & OK \\
+\end{longtable}
+
+\textbf{Tổng kết: 36/36 test PASSED, 0 FAILED.}
+
+Kết quả 36/36 không chỉ đơn thuần là con số --- mỗi nhóm test trả lời
+một câu hỏi bảo mật cụ thể. Nhóm \texttt{curve\_params} xác nhận đường
+cong đạt đủ kích thước bit để chống brute-force (ECDLP 256-bit) và đủ
+two-adicity để ứng dụng NTT. Nhóm \texttt{group\_law} chứng minh cài đặt
+phép cộng điểm và nhân vô hướng \textbf{toán học đúng} --- vi phạm bất
+kỳ tính chất nào (\(2G \neq G+G\), \([r]G \neq \mathcal{O}\)) sẽ khiến
+mọi sơ đồ chữ ký xây dựng trên nó sụp đổ. Nhóm \texttt{attack\_mov} và
+\texttt{attack\_anomalous} xác nhận đường cong \textbf{kháng được hai
+tấn công đã biết} có thể đưa bài toán ECDLP về bài toán DLP dễ hơn trong
+trường hữu hạn mở rộng hoặc nhóm cộng tính số nguyên. Nhóm
+\texttt{signatures} khép lại vòng kiểm tra end-to-end: hệ thống ký đúng
+và từ chối sai --- đây là yêu cầu tối thiểu của bất kỳ sơ đồ chữ ký số
+nào đưa vào sử dụng thực tế.
+
+\subsection{\texorpdfstring{Kết quả đo hiệu năng (Criterion,
+\texttt{-\/-release})}{Kết quả đo hiệu năng (Criterion, -\/-release)}}\label{kux1ebft-quux1ea3-ux111o-hiux1ec7u-nux103ng-criterion---release}
+
+Benchmark chạy với \texttt{cargo\ bench} (release build, tối ưu LLVM
+O3), 10 mẫu mỗi phép đo, phần cứng thông thường không có AVX-512.
+
+\subsubsection{Sinh khóa}\label{sinh-khuxf3a}
+
+\begin{longtable}[]{@{}llll@{}}
+\toprule\noalign{}
+Phép đo & Min & Mean & Max \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{KeyPair::generate} & 1.629 s & \textbf{1.687 s} & 1.757 s \\
+\end{longtable}
+
+Sinh khóa = 1 phép nhân vô hướng \([d]G\) với \(d \approx 2^{512}\) bit.
+
+Thời gian sinh khóa \textbf{\textasciitilde1.69 giây} trong cài đặt chưa
+tối ưu là chấp nhận được về mặt thực tế: sinh khóa là thao tác một lần
+(hoặc rất ít lần) trong vòng đời của một cặp khóa. So sánh, secp256k1
+sinh khóa trong \textasciitilde0.1 ms --- nhanh hơn
+\textasciitilde16.000 lần do độ dài scalar ngắn hơn và có thư viện tối
+ưu nhiều năm. Curve1024 đánh đổi tốc độ lấy mức bảo mật 256-bit thay vì
+128-bit, phù hợp với kịch bản yêu cầu bảo mật dài hạn.
+
+\subsubsection{Chữ ký}\label{chux1eef-kuxfd}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.2000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Phép đo
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Min
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Mean
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Max
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Ghi chú
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{ECDSA/sign} & 1.524 s & \textbf{1.606 s} & 1.711 s & 1 phép nhân
+vô hướng \\
+\texttt{ECDSA/verify} & 2.847 s & \textbf{3.140 s} & 3.459 s & 2 phép
+nhân vô hướng \\
+\texttt{Schnorr/sign} & 1.473 s & \textbf{1.551 s} & 1.641 s & 1 phép
+nhân vô hướng \\
+\texttt{Schnorr/verify} & 2.656 s & \textbf{2.831 s} & 3.025 s & 2 phép
+nhân vô hướng \\
+\end{longtable}
+
+Quan sát: - \textbf{Ký \textasciitilde{} 1.55--1.61 s} (1 phép nhân vô
+hướng): Schnorr nhanh hơn ECDSA \textasciitilde3\% do không cần nghịch
+đảo \(k^{-1}\). - \textbf{Xác minh \textasciitilde{} 2.83--3.14 s} (2
+phép nhân vô hướng tuần tự): chi phí gần gấp đôi ký, đúng với dự kiến lý
+thuyết.
+
+Nhìn vào các con số tuyệt đối, hiệu năng hiện tại phù hợp với
+\textbf{các kịch bản ký ngoại tuyến (offline signing)} như ký tài liệu,
+ký gói phần mềm, hoặc ký giao dịch trong hệ thống tài chính có độ trễ
+chấp nhận được vài giây. Hệ thống chưa phù hợp cho ký thời gian thực tốc
+độ cao (ví dụ: TLS handshake hàng nghìn kết nối/giây) ở cài đặt hiện
+tại. Tuy nhiên, đây là kết quả của \textbf{phép nhân vô hướng
+Double-and-add thuần túy chưa tối ưu} --- áp dụng tọa độ Jacobian và
+Sliding Window (xem §5.5) ước tính giảm thời gian ký xuống còn
+\textbf{300--500 ms}, và với AVX-512 có thể xuống dưới \textbf{100 ms}.
+Khoảng cách với secp256k1 (\textasciitilde0.2 ms) phần lớn xuất phát từ
+scalar dài gấp 2 lần và không có tăng tốc phần cứng, chứ không phải từ
+thuật toán sai.
+
+\subsubsection{\texorpdfstring{Phép nhân vô hướng
+\([k]G\)}{Phép nhân vô hướng {[}k{]}G}}\label{phuxe9p-nhuxe2n-vuxf4-hux1b0ux1edbng-kg}
+
+\begin{longtable}[]{@{}llll@{}}
+\toprule\noalign{}
+Scalar \(k\) & Min & Mean & Max \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\(k = 1\) & 1.061 s & \textbf{1.124 s} & 1.205 s \\
+\(k = 2\) & 1.190 s & \textbf{1.329 s} & 1.489 s \\
+\(k = 3\) & 1.143 s & \textbf{1.184 s} & 1.225 s \\
+\(k = 4\) & 1.167 s & \textbf{1.240 s} & 1.321 s \\
+\end{longtable}
+
+Phép nhân vô hướng là \textbf{bottleneck} chi phối toàn bộ hệ thống. Với
+Double-and-add trên 1024 bit, mỗi lần nhân thực hiện đúng 1024 lần
+\texttt{double} và trung bình 512 lần \texttt{add}. Mỗi
+\texttt{add}/\texttt{double} cần 1 nghịch đảo trong \(\mathbb{F}_p\) (=
+\(a^{p-2}\), \textasciitilde1536 phép nhân Montgomery).
+
+Điều đáng chú ý là \textbf{thời gian nhân vô hướng khá ổn định}
+(\textasciitilde1.1--1.3 s) bất kể giá trị cụ thể của scalar \(k\), phản
+ánh tính chất của Double-and-add: số vòng lặp cố định là 1024, tương ứng
+với kích thước bit của trường vô hướng --- không phụ thuộc vào giá trị
+scalar. Đây cũng là nguyên nhân khiến cài đặt hiện tại \textbf{không có
+timing side-channel rõ ràng theo giá trị scalar} (dù
+\texttt{std::hint::black\_box} và \texttt{conditional\_select} là lớp
+bảo vệ chính thức). Sự biến thiên nhỏ quan sát được (±10--15\%) là nhiễu
+do CPU scheduling và cache behavior, không phải do dữ liệu.
+
+\subsection{Phân tích bảo mật và so
+sánh}\label{phuxe2n-tuxedch-bux1ea3o-mux1eadt-vuxe0-so-suxe1nh}
+
+\subsubsection{Kích thước tham
+số}\label{kuxedch-thux1b0ux1edbc-tham-sux1ed1}
+
+\begin{longtable}[]{@{}llll@{}}
+\toprule\noalign{}
+Sơ đồ & Khóa riêng & Khóa công khai & Chữ ký \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Schnorr/ECDSA trên secp256k1 & 32 B & 64 B & 64 B \\
+Schnorr/ECDSA trên P-384 & 48 B & 96 B & 96 B \\
+\textbf{Schnorr trên Curve1024} & \textbf{128 B} & \textbf{256 B} &
+\textbf{384 B} \\
+\textbf{ECDSA trên Curve1024} & \textbf{128 B} & \textbf{256 B} &
+\textbf{256 B} \\
+\end{longtable}
+
+\subsubsection{So sánh với đường cong
+chuẩn}\label{so-suxe1nh-vux1edbi-ux111ux1b0ux1eddng-cong-chuux1ea9n}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.1429}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.1429}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.1429}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.1429}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.1429}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.1429}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.1429}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Đường cong
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\(|p|\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\(|r|\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\(k\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+two-adicity \(r\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+two-adicity \(p\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Bảo mật
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+secp256k1 & 256 & 256 & --- & 1 & --- & 128 bit \\
+P-384 & 384 & 384 & --- & 1 & --- & 192 bit \\
+BLS12-381 & 381 & 255 & 12 & 32 & --- & 128 bit \\
+\textbf{Curve1024 (luận văn)} & \textbf{1024} & \textbf{512} &
+\textbf{18} & \textbf{33} & \textbf{34} & \textbf{256 bit} \\
+\end{longtable}
+
+Curve1024 là đường cong pairing-friendly duy nhất trong bảng đạt
+two-adicity \(\geq 32\) trên \textbf{cả hai trường} \(\mathbb{F}_r\) và
+\(\mathbb{F}_p\), cung cấp nền tảng NTT đầy đủ cho ZK proof. Mức bảo mật
+256 bit tương đương AES-256.
+
+So sánh này cho thấy Curve1024 có \textbf{đặc tính thiết kế vượt trội về
+bảo mật dài hạn} so với các đường cong phổ biến hiện nay. BLS12-381 ---
+đường cong pairing-friendly được dùng rộng rãi nhất trong hệ sinh thái
+Ethereum 2.0 và ZK SNARK --- chỉ đạt bảo mật 128-bit và two-adicity 32
+trên trường vô hướng, trong khi không đạt two-adicity cao trên trường cơ
+sở. Curve1024 lấp đầy khoảng trống này: \emph{pairing-friendly},
+\emph{NTT-friendly trên cả hai trường}, và \emph{bảo mật 256-bit}. Đánh
+đổi là tham số lớn hơn (khóa 128 B thay vì 32 B) và hiệu năng chậm hơn ở
+cài đặt chưa tối ưu --- đây là sự đánh đổi hợp lý cho các ứng dụng đặt
+bảo mật dài hạn lên hàng đầu.
+
+\subsection{Hướng tối ưu hóa tiếp
+theo}\label{hux1b0ux1edbng-tux1ed1i-ux1b0u-huxf3a-tiux1ebfp-theo}
+
+Hiệu năng hiện tại (\textasciitilde1.5 s/ký, release) có thể cải thiện
+đáng kể thông qua:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Sliding Window / NAF}: giảm \textasciitilde30\% số lần cộng
+  điểm so với Double-and-add.
+\item
+  \textbf{Tọa độ Jacobian/Projective}: loại bỏ 1 phép nghịch đảo per
+  \texttt{add}/\texttt{double} --- nghịch đảo đắt gấp
+  \textasciitilde200x so với nhân Montgomery. Chỉ cần 1 nghịch đảo duy
+  nhất khi chuyển về Affine ở bước cuối.
+\item
+  \textbf{Montgomery ladder}: constant-time scalar multiplication, loại
+  bỏ timing side-channel hoàn toàn.
+\item
+  \textbf{AVX-512 / SIMD}: vector hóa phép nhân 64×64-bit limb trong
+  Montgomery trên phần cứng x86-64 hiện đại.
+\item
+  \textbf{Multi-Scalar Multiplication (MSM --- Pippenger)}: cho xác minh
+  Schnorr \([s]G + [e]Q\), giảm \textasciitilde50\% công việc so với 2
+  phép nhân tuần tự.
+\end{enumerate}
+
+Ước tính kết hợp Jacobian + Sliding Window có thể đưa thời gian ký xuống
+dưới \textbf{500 ms} mà không thay đổi logic bảo mật.
 
 \FloatBarrier

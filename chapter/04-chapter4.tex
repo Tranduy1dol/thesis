@@ -5,17 +5,16 @@
 \phantomsection
 
 \setcounter{chapter}{4}
-\chapter[Sơ đồ chữ ký --- Cài đặt và Đánh giá]{Sơ đồ chữ ký --- Cài đặt
-và Đánh giá}
+\chapter[SƠ ĐỒ CHỮ KÝ SỐ]{Sơ đồ chữ ký số}
 
 Chương này trình bày ba sơ đồ chữ ký số được xây dựng trên nền tảng
 đường cong elliptic đã sinh ở Chương 3: \textbf{Schnorr},
 \textbf{ECDSA}, và \textbf{chữ ký tổng hợp BLS}. Với mỗi sơ đồ, chúng ta
 đi qua lý thuyết cốt lõi, phân tích cấu trúc dữ liệu và cài đặt thực tế
-(bằng Rust), rồi kết thúc bằng đánh giá so sánh toàn diện dựa trên kết
-quả thực nghiệm.
+bằng Rust. Kết quả đo hiệu năng và phân tích bảo mật được trình bày
+riêng tại \textbf{Chương 5}.
 
-\subsection{Cặp khóa (KeyPair)}\label{cux1eb7p-khuxf3a-keypair}
+\section{Cặp khóa (KeyPair)}\label{cux1eb7p-khuxf3a-keypair}
 
 Mọi sơ đồ chữ ký đều dùng chung cấu trúc cặp khóa:
 
@@ -327,163 +326,5 @@ curve1024-sig export-pub [-k <priv>] [-o <pub>]
 Các tham số được đọc từ \texttt{config/curve1024.toml} thông qua
 \texttt{build.rs} để sinh hằng số tĩnh --- đảm bảo zero-cost abstraction
 và không có chi phí khởi tạo runtime.
-
-\section{Đánh giá}\label{ux111uxe1nh-giuxe1}
-
-\subsection{Cấu hình thực
-nghiệm}\label{cux1ea5u-huxecnh-thux1ef1c-nghiux1ec7m}
-
-Đường cong 1024 được dùng trong tất cả các đánh giá:
-
-\begin{longtable}[]{@{}ll@{}}
-\toprule\noalign{}
-Tham số & Giá trị \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-Trường cơ sở \(p\) & 1024 bit, \texttt{two\_adicity(p-1)\ =\ 34} \\
-Bậc nhóm \(r\) & 512 bit, \texttt{two\_adicity(r-1)\ =\ 33} \\
-Bậc nhúng \(k\) & 18 \\
-Phương trình & \(y^2 = x^3 + 5\) (\(b = 5\), \(a = 0\)) \\
-Phép nhân vô hướng & Double-and-add, 1024 bit \\
-\end{longtable}
-
-\subsection{\texorpdfstring{Kết quả benchmark (Criterion,
-\texttt{-\/-release})}{Kết quả benchmark (Criterion, -\/-release)}}\label{kux1ebft-quux1ea3-benchmark-criterion---release}
-
-Kết quả đo trên phần cứng thông thường (không có hướng dẫn đặc thù như
-AVX-512):
-
-\begin{longtable}[]{@{}ll@{}}
-\toprule\noalign{}
-Phép đo & Thời gian trung bình \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-Sinh cặp khóa (\texttt{KeyPair::generate}) & \textasciitilde500 ms \\
-Schnorr ký (\texttt{sign}) & \textasciitilde500 ms \\
-Schnorr xác minh (\texttt{verify}) & \textasciitilde1.0 s \\
-ECDSA ký (\texttt{sign}) & \textasciitilde500 ms \\
-ECDSA xác minh (\texttt{verify}) & \textasciitilde1.0 s \\
-Nhân vô hướng \([k]G\), \(k = 2\) & \textasciitilde1 ms \\
-\end{longtable}
-
-Hiệu năng chủ yếu bị chi phối bởi \textbf{phép nhân vô hướng 1024-bit}
-dùng Double-and-add với 1024 vòng lặp trong cài đặt chưa tối ưu (debug
-build: \textasciitilde60s/call, release build: \textasciitilde500ms/call
-nhờ tối ưu LLVM).
-
-\subsection{Phân tích kích thước tham số và mức bảo
-mật}\label{phuxe2n-tuxedch-kuxedch-thux1b0ux1edbc-tham-sux1ed1-vuxe0-mux1ee9c-bux1ea3o-mux1eadt}
-
-\begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}@{}}
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Sơ đồ
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Khóa riêng
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Khóa công khai
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Chữ ký
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Bảo mật ECDLP
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Bảo mật DLP \(F_{p^k}\)
-\end{minipage} \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-Schnorr/ECDSA trên secp256k1 & 32 B & 64 B & 64 B & 128 bit & --- \\
-Schnorr/ECDSA trên P-384 & 48 B & 96 B & 96 B & 192 bit & --- \\
-\textbf{Schnorr trên Curve1024} & \textbf{128 B} & \textbf{256 B} &
-\textbf{384 B} & \textbf{256 bit} & \textbf{\textgreater=250 bit} \\
-\textbf{ECDSA trên Curve1024} & \textbf{128 B} & \textbf{256 B} &
-\textbf{256 B} & \textbf{256 bit} & \textbf{\textgreater=250 bit} \\
-\end{longtable}
-
-Curve1024 cung cấp \textbf{mức bảo mật 256 bit} trên cả hai bài toán,
-tương đương AES-256 và phù hợp với yêu cầu bảo mật hậu lượng tử kinh
-điển (lưu ý: bản thân ECC không kháng máy tính lượng tử Shor, nhưng kích
-thước 1024-bit cung cấp biên an toàn lớn hơn đáng kể so với p-256 hay
-secp256k1 trong các kịch bản cổ điển).
-
-\subsection{So sánh với các đường cong
-chuẩn}\label{so-suxe1nh-vux1edbi-cuxe1c-ux111ux1b0ux1eddng-cong-chuux1ea9n}
-
-\begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1667}}@{}}
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Đường cong
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-\(|p|\)
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-\(|r|\)
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-\(k\)
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-two-adicity \(r\)
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Bảo mật
-\end{minipage} \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-secp256k1 & 256 & 256 & --- & 1 & 128 bit \\
-P-384 & 384 & 384 & --- & 1 & 192 bit \\
-BLS12-381 & 381 & 255 & 12 & 32 & 128 bit \\
-\textbf{Curve1024 (luận văn)} & \textbf{1024} & \textbf{512} &
-\textbf{18} & \textbf{33} & \textbf{256 bit} \\
-\end{longtable}
-
-Curve1024 là đường cong pairing-friendly duy nhất trong bảng đạt
-two-adicity \(\geq 32\) trên \textbf{cả hai trường} \(\mathbb{F}_r\) và
-\(\mathbb{F}_p\), cung cấp nền tảng NTT đầy đủ cho các ứng dụng ZK proof
-tương lai.
-
-\subsection{Hướng tối ưu hóa tiếp
-theo}\label{hux1b0ux1edbng-tux1ed1i-ux1b0u-huxf3a-tiux1ebfp-theo}
-
-Hiệu năng hiện tại chưa tối ưu do:
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \textbf{Double-and-add tuần tự}: thay bằng \textbf{Sliding Window}
-  (\(w = 4\)) hoặc \textbf{NAF (Non-Adjacent Form)} giảm
-  \textasciitilde30\% số lần cộng điểm.
-\item
-  \textbf{Tọa độ Jacobian}: thay tọa độ Affine bằng Jacobian/Projective
-  giảm số lần nghịch đảo (phép chia mod \(p\) rất đắt) --- mỗi phép cộng
-  Affine cần 1 nghịch đảo, Jacobian chỉ cần khi chuyển về Affine ở bước
-  cuối.
-\item
-  \textbf{Montgomery ladder}: loại bỏ timing side-channel trong phép
-  nhân vô hướng.
-\item
-  \textbf{AVX-512 / SIMD}: các phép nhân 64x64 bit trong Montgomery có
-  thể vector hóa trên phần cứng hiện đại.
-\item
-  \textbf{Phép nhân đa vô hướng song song (MSM)}: cho xác minh Schnorr
-  (\([s]G + [e]Q\)), dùng Pippenger's algorithm cắt \textasciitilde50\%
-  công việc so với hai lần nhân vô hướng riêng biệt.
-\end{enumerate}
 
 \FloatBarrier
