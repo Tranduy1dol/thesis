@@ -1,10 +1,22 @@
+% Pandoc template for UET thesis frontmatter sections (abstract, acknowledgments, abbreviations)
+% Outputs an unnumbered chapter with TOC entry — mirrors the existing cover/*.tex style.
+
 \clearpage
 \phantomsection
 
-\addcontentsline{toc}{chapter}{Danh sách từ viết tắt}
-\chapter*{Danh sách từ viết tắt}
+\addcontentsline{toc}{chapter}{Danh mục viết tắt}
+\chapter*{Danh mục viết tắt}
 
+\begin{longtable}[]{@{}ll@{}}
+\toprule\noalign{}
+Viết tắt & Giải thích \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+AI & Artificial Intelligence (Trí tuệ nhân tạo) \\
+ML & Machine Learning (Học máy) \\
+API & Application Programming Interface \\
+\end{longtable}
 
-\noindent \textbf{Từ viết tắt}: Từ viết đầy đủ - Giải nghĩa \\
-
-\noindent ...
+\FloatBarrier

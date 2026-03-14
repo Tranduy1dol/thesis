@@ -4,9 +4,9 @@
 \clearpage
 \phantomsection
 
-\addcontentsline{toc}{chapter}{Lời cảm ơn}
-\chapter*{Lời cảm ơn}
+\addcontentsline{toc}{chapter}{$if(toc-title)$$toc-title$$else$$title$$endif$}
+\chapter*{$title$}
 
-Viết lời cảm ơn ở đây\ldots{}
+$body$
 
 \FloatBarrier

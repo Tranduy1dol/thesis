@@ -15,7 +15,7 @@
 \usepackage{amstext, amsmath,latexsym,amsbsy,amssymb, amssymb,amsthm,amsfonts,multicol, nccmath}
 \usepackage[left=3cm,right=2cm,top=2.5cm,bottom=3cm,footskip=40pt]{geometry}
 \usepackage{pdflscape}
-\usepackage{apacite}
+% apacite removed — conflicts with natbib
 \usepackage{tikz}
 \usepackage{array}
 \newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
@@ -54,7 +54,7 @@
 \usepackage{circuitikz}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.16}
-\usepackage[numbers]{natbib}
+% natbib already loaded above with [square,comma,numbers,sort&compress]
 \usepackage{titlesec}
 \usepackage[labelsep=period]{caption}
 \usepackage{subfigure}
@@ -83,8 +83,8 @@
 \cftsetpnumwidth{20pt}
 \titlecontents{chapter}
   [0pt]
-  {}
-  {\fontsize{13.5}{14}\selectfont\MakeUppercase{\chaptername}\ \thecontentslabel.\,\,}
+  {\bfseries}
+  {\fontsize{13.5}{14}\selectfont\chaptername\ \thecontentslabel.\,\,}
   {}
   {\cftdotfill{\cftdotsep}\contentspage} 
 	\renewcommand{\cftsecaftersnum}{.}%
@@ -100,8 +100,6 @@
 \floatname{algorithm}{Thuật toán}
 \makeatletter
 \renewcommand\@biblabel[1]{[#1]}
-\renewcommand\harvardyearleft{\unskip~(}
-\renewcommand\harvardyearright{\unskip )}
 \makeatother
 \renewcommand{\baselinestretch}{1.4}
 \flushbottom
@@ -147,6 +145,18 @@
 \newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
 \newcommand{\WarningTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
 \providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+% pandoc --citeproc emits CSLReferences; define it as a simple list
+\newenvironment{CSLReferences}[2]{%
+  \setlength{\parindent}{0pt}%
+  \setlength{\parskip}{6pt plus 2pt minus 1pt}%
+  \list{}{\setlength{\leftmargin}{0pt}}%
+  \item\relax
+}{\endlist}
+\newcommand{\citeproctext}{}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{\strut #1\strut}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut #1\strut}}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
 
 \begin{document}
 
@@ -242,15 +252,13 @@
 
 \begin{thebibliography}{xx}
 
-\section*{Tiếng Anh}
-
-\harvarditem{Singla et al.}{2025}{Singla2025}
+\bibitem{Singla2025}
 A. Singla, A. Sukharevsky, L. Yee, M. Chui, and B. Hall, ``The State of AI: Global survey,'' {\em McKinsey}, 2025. [Online]. Available: \url{https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-state-of-ai}
 
-\harvarditem{Zhu et al.}{2017}{Zhu2017}
+\bibitem{Zhu2017}
 X. X. Zhu, D. Tuia, L. Mou, G. Xia, L. Zhang, F. Xu and F. Fraundorfer, ``Deep learning in remote sensing: A comprehensive review and list of resources,'' {\em IEEE Geoscience and Remote Sensing Magazine}, 2017, pp.~8--36.
 
-\harvarditem{Cockburn}{2005}{Cockburn2005}
+\bibitem{Cockburn2005}
 A. Cockburn, ``What's Hexagonal Architecture?,'' {\em Medium}, [Online]. Available: \url{https://alistair.cockburn.us/hexagonal-architecture}
 
 \end{thebibliography}

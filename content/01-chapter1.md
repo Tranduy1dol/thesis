@@ -3,7 +3,6 @@ title: "Giới thiệu bài toán"
 chapter: 1
 ---
 
-# Giới thiệu bài toán
 
 Đoạn giới thiệu chương: trình bày mục đích, nội dung của chương này.
 
@@ -25,7 +24,7 @@ Các hình ảnh để trong thư mục `/figures`:
 
 Hình ảnh bình thường:
 
-![Caption của ảnh 1](../figures/three-tier-architecture.png){#fig:architecture width=100%}
+<!-- Thêm hình ảnh vào đây: ![Caption](../figures/ten-file.png){width=100%} -->
 
 ### Trích dẫn
 

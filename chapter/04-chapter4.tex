@@ -5,8 +5,8 @@
 \phantomsection
 
 \setcounter{chapter}{4}
-\addcontentsline{toc}{chapter}{Sơ đồ chữ ký --- Cài đặt và Đánh giá}
-\chapter[]{Sơ đồ chữ ký --- Cài đặt và Đánh giá}
+\chapter[Sơ đồ chữ ký --- Cài đặt và Đánh giá]{Sơ đồ chữ ký --- Cài đặt
+và Đánh giá}
 
 Chương này trình bày ba sơ đồ chữ ký số được xây dựng trên nền tảng
 đường cong elliptic đã sinh ở Chương 3: \textbf{Schnorr},
@@ -15,9 +15,6 @@ Chương này trình bày ba sơ đồ chữ ký số được xây dựng trên
 (bằng Rust), rồi kết thúc bằng đánh giá so sánh toàn diện dựa trên kết
 quả thực nghiệm.
 
-\section{Cơ sở chung: Cặp khóa và Hàm
-băm}\label{cux1a1-sux1edf-chung-cux1eb7p-khuxf3a-vuxe0-huxe0m-bux103m}
-
 \subsection{Cặp khóa (KeyPair)}\label{cux1eb7p-khuxf3a-keypair}
 
 Mọi sơ đồ chữ ký đều dùng chung cấu trúc cặp khóa:
@@ -25,7 +22,7 @@ Mọi sơ đồ chữ ký đều dùng chung cấu trúc cặp khóa:
 \begin{Shaded}
 \begin{Highlighting}[]
 \KeywordTok{pub} \KeywordTok{struct}\NormalTok{ KeyPair}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{:}\NormalTok{ SWCurveConfig}\OperatorTok{\textgreater{}} \OperatorTok{\{}
-    \KeywordTok{pub}\NormalTok{ private\_key}\OperatorTok{:}\NormalTok{ U1024}\OperatorTok{,}        \CommentTok{// d ∈ [1, r{-}1], bí mật}
+    \KeywordTok{pub}\NormalTok{ private\_key}\OperatorTok{:}\NormalTok{ U1024}\OperatorTok{,}        \CommentTok{// d in [1, r{-}1], bí mật}
     \KeywordTok{pub}\NormalTok{ public\_key}\OperatorTok{:}\NormalTok{  AffinePoint}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{\textgreater{},} \CommentTok{// Q = [d]G, công khai}
 \OperatorTok{\}}
 \end{Highlighting}
@@ -103,15 +100,15 @@ Chọn ngẫu nhiên \(k \xleftarrow{R} [1, r-1]\) 2. Tính điểm \(R = [k]G\)
 \textbf{Xác minh:} Cho khóa công khai \(Q\) và chữ ký \((R, s)\): 1.
 Tính \(e = H(R_x \| R_y \| m)\) 2. Kiểm tra \([s]G = R + [e]Q\)
 
-Tính đúng đắn: \([s]G = [k + ed]G = [k]G + [e][d]G = R + [e]Q\) ✓
+Tính đúng đắn: \([s]G = [k + ed]G = [k]G + [e][d]G = R + [e]Q\) {[}ok{]}
 
 \subsection{Cấu trúc dữ liệu}\label{cux1ea5u-truxfac-dux1eef-liux1ec7u}
 
 \begin{Shaded}
 \begin{Highlighting}[]
 \KeywordTok{pub} \KeywordTok{struct}\NormalTok{ SchnorrSignature}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{:}\NormalTok{ SWCurveConfig}\OperatorTok{\textgreater{}} \OperatorTok{\{}
-    \KeywordTok{pub}\NormalTok{ r\_point}\OperatorTok{:}\NormalTok{ AffinePoint}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{\textgreater{},}  \CommentTok{// R = [k]G  (điểm 256 byte: 2×128 byte tọa độ)}
-    \KeywordTok{pub}\NormalTok{ s}\OperatorTok{:}\NormalTok{       U1024}\OperatorTok{,}           \CommentTok{// s ∈ [0, r{-}1], 128 byte}
+    \KeywordTok{pub}\NormalTok{ r\_point}\OperatorTok{:}\NormalTok{ AffinePoint}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{\textgreater{},}  \CommentTok{// R = [k]G  (điểm 256 byte: 2x128 byte tọa độ)}
+    \KeywordTok{pub}\NormalTok{ s}\OperatorTok{:}\NormalTok{       U1024}\OperatorTok{,}           \CommentTok{// s in [0, r{-}1], 128 byte}
 \OperatorTok{\}}
 \end{Highlighting}
 \end{Shaded}
@@ -127,7 +124,7 @@ tọa độ \(x, y\) mỗi tọa độ 128 byte, cộng thêm \(s\) 128 byte).
     \KeywordTok{let}\NormalTok{ k }\OperatorTok{=} \PreprocessorTok{U1024::}\NormalTok{rand(}\OperatorTok{\&}\PreprocessorTok{C::}\NormalTok{ORDER)}\OperatorTok{;}
     \KeywordTok{let}\NormalTok{ r\_point }\OperatorTok{=} \PreprocessorTok{C::}\NormalTok{generator()}\OperatorTok{.}\NormalTok{mul(}\OperatorTok{\&}\NormalTok{k)}\OperatorTok{;}
     \KeywordTok{let}\NormalTok{ e       }\OperatorTok{=} \DataTypeTok{Self}\PreprocessorTok{::}\NormalTok{challenge\_hash(}\OperatorTok{\&}\NormalTok{r\_point}\OperatorTok{,}\NormalTok{ message)}\OperatorTok{;} \CommentTok{// H(Rx‖Ry‖m) mod r}
-    \KeywordTok{let}\NormalTok{ s       }\OperatorTok{=}\NormalTok{ (k\_field }\OperatorTok{+}\NormalTok{ e }\OperatorTok{*}\NormalTok{ d\_field)}\OperatorTok{.}\NormalTok{to\_u1024()}\OperatorTok{;}     \CommentTok{// s = k + e·d mod r}
+    \KeywordTok{let}\NormalTok{ s       }\OperatorTok{=}\NormalTok{ (k\_field }\OperatorTok{+}\NormalTok{ e }\OperatorTok{*}\NormalTok{ d\_field)}\OperatorTok{.}\NormalTok{to\_u1024()}\OperatorTok{;}     \CommentTok{// s = k + e.d mod r}
     \DataTypeTok{Self} \OperatorTok{\{}\NormalTok{ r\_point}\OperatorTok{,}\NormalTok{ s }\OperatorTok{\}}
 \OperatorTok{\}}
 
@@ -185,7 +182,7 @@ liệu}\label{cux1ea5u-truxfac-dux1eef-liux1ec7u-1}
 \begin{Highlighting}[]
 \KeywordTok{pub} \KeywordTok{struct}\NormalTok{ EcdsaSignature }\OperatorTok{\{}
     \KeywordTok{pub}\NormalTok{ r}\OperatorTok{:}\NormalTok{ U1024}\OperatorTok{,}  \CommentTok{// r\_sig = R.x mod n, 128 byte}
-    \KeywordTok{pub}\NormalTok{ s}\OperatorTok{:}\NormalTok{ U1024}\OperatorTok{,}  \CommentTok{// s ∈ [1, n{-}1],     128 byte}
+    \KeywordTok{pub}\NormalTok{ s}\OperatorTok{:}\NormalTok{ U1024}\OperatorTok{,}  \CommentTok{// s in [1, n{-}1],     128 byte}
 \OperatorTok{\}}
 \end{Highlighting}
 \end{Shaded}
@@ -209,12 +206,12 @@ vì không lưu điểm \(R\) đầy đủ.
 \OperatorTok{\}}
 
 \KeywordTok{pub} \KeywordTok{fn}\NormalTok{ verify}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{:}\NormalTok{ SWCurveConfig}\OperatorTok{\textgreater{}}\NormalTok{(}\OperatorTok{\&}\KeywordTok{self}\OperatorTok{,}\NormalTok{ public\_key}\OperatorTok{:} \OperatorTok{\&}\NormalTok{AffinePoint}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{\textgreater{},}\NormalTok{ message}\OperatorTok{:} \OperatorTok{\&}\NormalTok{[}\DataTypeTok{u8}\NormalTok{]) }\OperatorTok{{-}\textgreater{}} \DataTypeTok{bool} \OperatorTok{\{}
-    \CommentTok{// Kiểm tra r, s ∈ [1, n{-}1]}
+    \CommentTok{// Kiểm tra r, s in [1, n{-}1]}
     \ControlFlowTok{if} \KeywordTok{self}\OperatorTok{.}\NormalTok{r}\OperatorTok{.}\NormalTok{is\_zero() }\OperatorTok{||} \KeywordTok{self}\OperatorTok{.}\NormalTok{s}\OperatorTok{.}\NormalTok{is\_zero() }\OperatorTok{\{} \ControlFlowTok{return} \ConstantTok{false}\OperatorTok{;} \OperatorTok{\}}
     \ControlFlowTok{if} \KeywordTok{self}\OperatorTok{.}\NormalTok{r }\OperatorTok{\textgreater{}=} \PreprocessorTok{C::}\NormalTok{ORDER }\OperatorTok{||} \KeywordTok{self}\OperatorTok{.}\NormalTok{s }\OperatorTok{\textgreater{}=} \PreprocessorTok{C::}\NormalTok{ORDER }\OperatorTok{\{} \ControlFlowTok{return} \ConstantTok{false}\OperatorTok{;} \OperatorTok{\}}
 
     \KeywordTok{let}\NormalTok{ e }\OperatorTok{=} \PreprocessorTok{FieldElem::}\NormalTok{new(hash\_message(message))}\OperatorTok{;}
-    \KeywordTok{let}\NormalTok{ w }\OperatorTok{=} \PreprocessorTok{FieldElem::}\NormalTok{new(}\KeywordTok{self}\OperatorTok{.}\NormalTok{s)}\OperatorTok{.}\NormalTok{inv()}\OperatorTok{;}      \CommentTok{// w = s⁻¹}
+    \KeywordTok{let}\NormalTok{ w }\OperatorTok{=} \PreprocessorTok{FieldElem::}\NormalTok{new(}\KeywordTok{self}\OperatorTok{.}\NormalTok{s)}\OperatorTok{.}\NormalTok{inv()}\OperatorTok{;}      \CommentTok{// w = s\^{}\{{-}1\}}
     \KeywordTok{let}\NormalTok{ u1 }\OperatorTok{=}\NormalTok{ (e }\OperatorTok{*}\NormalTok{ w)}\OperatorTok{.}\NormalTok{to\_u1024()}\OperatorTok{;}
     \KeywordTok{let}\NormalTok{ u2 }\OperatorTok{=}\NormalTok{ (}\PreprocessorTok{FieldElem::}\NormalTok{new(}\KeywordTok{self}\OperatorTok{.}\NormalTok{r) }\OperatorTok{*}\NormalTok{ w)}\OperatorTok{.}\NormalTok{to\_u1024()}\OperatorTok{;}
 
@@ -409,9 +406,9 @@ Bảo mật DLP \(F_{p^k}\)
 Schnorr/ECDSA trên secp256k1 & 32 B & 64 B & 64 B & 128 bit & --- \\
 Schnorr/ECDSA trên P-384 & 48 B & 96 B & 96 B & 192 bit & --- \\
 \textbf{Schnorr trên Curve1024} & \textbf{128 B} & \textbf{256 B} &
-\textbf{384 B} & \textbf{256 bit} & \textbf{≥250 bit} \\
+\textbf{384 B} & \textbf{256 bit} & \textbf{\textgreater=250 bit} \\
 \textbf{ECDSA trên Curve1024} & \textbf{128 B} & \textbf{256 B} &
-\textbf{256 B} & \textbf{256 bit} & \textbf{≥250 bit} \\
+\textbf{256 B} & \textbf{256 bit} & \textbf{\textgreater=250 bit} \\
 \end{longtable}
 
 Curve1024 cung cấp \textbf{mức bảo mật 256 bit} trên cả hai bài toán,
@@ -481,7 +478,7 @@ Hiệu năng hiện tại chưa tối ưu do:
   \textbf{Montgomery ladder}: loại bỏ timing side-channel trong phép
   nhân vô hướng.
 \item
-  \textbf{AVX-512 / SIMD}: các phép nhân 64×64 bit trong Montgomery có
+  \textbf{AVX-512 / SIMD}: các phép nhân 64x64 bit trong Montgomery có
   thể vector hóa trên phần cứng hiện đại.
 \item
   \textbf{Phép nhân đa vô hướng song song (MSM)}: cho xác minh Schnorr

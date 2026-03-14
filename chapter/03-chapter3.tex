@@ -5,8 +5,8 @@
 \phantomsection
 
 \setcounter{chapter}{3}
-\addcontentsline{toc}{chapter}{Phương pháp xây dựng đường cong elliptic}
-\chapter[]{Phương pháp xây dựng đường cong elliptic}
+\chapter[Phương pháp xây dựng đường cong elliptic]{Phương pháp xây dựng
+đường cong elliptic}
 
 Chương này trình bày trọng tâm lý thuyết của luận văn: các phương pháp
 xây dựng đường cong elliptic có bậc nhúng (embedding degree) xác định,
@@ -18,10 +18,7 @@ trong luận văn này, với khả năng sinh tham số trường cơ sở có 
 NTT-friendly nhằm kháng lại tấn công rây trường số tháp (Tower Number
 Field Sieve - TNFS).
 
-\section{Phương pháp Nhân phức (Complex Multiplication
-Method)}\label{phux1b0ux1a1ng-phuxe1p-nhuxe2n-phux1ee9c-complex-multiplication-method}
-
-\subsection{Ý tưởng cốt lõi}\label{uxfd-tux1b0ux1edfng-cux1ed1t-luxf5i}
+\section{Ý tưởng cốt lõi}\label{uxfd-tux1b0ux1edfng-cux1ed1t-luxf5i}
 
 Phương pháp Nhân phức (CM) là công cụ nền tảng để \textbf{xây dựng đường
 cong elliptic có số điểm định trước}. Thay vì chọn ngẫu nhiên các hệ số
@@ -537,7 +534,7 @@ Trong cài đặt:
 \CommentTok{// t\_val luôn là bội số của step}
 \KeywordTok{let}\NormalTok{ t\_val }\OperatorTok{=}\NormalTok{ t\_base }\OperatorTok{+} \PreprocessorTok{U1024::}\NormalTok{rand(}\OperatorTok{\&}\NormalTok{t\_steps) }\OperatorTok{*}\NormalTok{ step}\OperatorTok{;}
 \KeywordTok{let}\NormalTok{ r }\OperatorTok{=}\NormalTok{ cyclotomic\_phi18(}\OperatorTok{\&}\NormalTok{t\_val)}\OperatorTok{;}
-\CommentTok{// Đảm bảo r thỏa mãn: two\_adicity(r{-}1) = 3 * v₂(T) \textgreater{}= s}
+\CommentTok{// Đảm bảo r thỏa mãn: two\_adicity(r{-}1) = 3 * v\_2(T) \textgreater{}= s}
 \end{Highlighting}
 \end{Shaded}
 
@@ -626,8 +623,8 @@ giây \\
 \emph{Kết quả thực nghiệm điển hình:}
 
 \begin{verbatim}
-r two-adicity: 2^33 | (r-1)  →  r = d·2^33 + 1, NTT đến bậc 2^33
-p two-adicity: 2^34 | (p-1)  →  p = d·2^34 + 1, NTT đến bậc 2^34
+r two-adicity: 2^33 | (r-1)  →  r = d.2^33 + 1, NTT đến bậc 2^33
+p two-adicity: 2^34 | (p-1)  →  p = d.2^34 + 1, NTT đến bậc 2^34
 Thời gian tổng: 32.81s
 \end{verbatim}
 

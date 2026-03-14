@@ -2,7 +2,6 @@
 title: "Tóm tắt"
 ---
 
-# Tóm tắt
 
 Viết tóm tắt nội dung khóa luận ở đây...
 

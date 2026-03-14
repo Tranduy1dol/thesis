@@ -5,9 +5,8 @@ chapter: 2
 
 Chương này trình bày các khái niệm toán học nền tảng được sử dụng trong toàn bộ luận văn: cấu trúc trường hữu hạn, đường cong elliptic Short Weierstrass và các phép toán nhóm trên nó, cùng với các kỹ thuật số học tối ưu (Montgomery, Fermat) được cài đặt trực tiếp trong thư viện `curve1024`.
 
-# Trường hữu hạn $\mathbb{F}_p$
 
-## Định nghĩa
+# Định nghĩa Trường số nguyên tố
 
 **Trường số nguyên tố** $\mathbb{F}_p$ là tập $\{0, 1, \ldots, p-1\}$ với phép cộng và nhân lấy modulo $p$, trong đó $p$ là số nguyên tố. Đây là trường hữu hạn nhỏ nhất có đặc số $p$.
 
@@ -25,11 +24,11 @@ Trong thư viện `curve1024`, trường $\mathbb{F}_p$ được biểu diễn q
 pub trait PrimeFieldConfig {
     const MODULUS: U1024;  // p: số nguyên tố trường
     const R2:      U1024;  // R² mod p, dùng cho Montgomery
-    const N_PRIME: U1024;  // -p⁻¹ mod 2^1024, dùng cho REDC
+    const N_PRIME: U1024;  // -p^{-1} mod 2^1024, dùng cho REDC
 }
 
 pub struct PrimeFieldElement<C: PrimeFieldConfig> {
-    value: U1024,          // biểu diễn Montgomery: a·R mod p
+    value: U1024,          // biểu diễn Montgomery: a.R mod p
 }
 ```
 
@@ -49,7 +48,7 @@ fn add(self, rhs: Self) -> Self {
 }
 ```
 
-Phép cộng không cần phép chia đầy đủ — chỉ cần một phép trừ có điều kiện. Chi phí: $O(n)$ với $n$ là số limb (16 limb × 64 bit = 1024 bit).
+Phép cộng không cần phép chia đầy đủ — chỉ cần một phép trừ có điều kiện. Chi phí: $O(n)$ với $n$ là số limb (16 limb x 64 bit = 1024 bit).
 
 **Nhân** dùng phép nhân Montgomery (xem §2.4).
 
@@ -145,7 +144,7 @@ Hàm `new` gọi `assert!(point.is_on_curve())` để đảm bảo mọi điểm
 Phép nhân vô hướng $[k]P = P + P + \cdots + P$ ($k$ lần) được tính hiệu quả bằng **Double-and-Add** (tương tự binary exponentiation), với độ phức tạp $O(\log k)$ thay vì $O(k)$:
 
 ```
-Input: P ∈ E(F_p), k ∈ [0, r-1]
+Input: P in E(F_p), k in [0, r-1]
 Output: [k]P
 
 R ← O (điểm vô cực)
@@ -215,8 +214,8 @@ Phép nhân Montgomery (**REDC**) tính $\hat{a} \cdot \hat{b} \cdot R^{-1} \pmo
 
 ```rust
 fn reduce(lo: &U1024, hi: &U1024) -> U1024 {
-    let (m, _)       = lo.widening_mul(&C::N_PRIME);   // m = lo · N' mod R
-    let (mn_lo, mn_hi) = m.widening_mul(&C::MODULUS);  // m · p
+    let (m, _)       = lo.widening_mul(&C::N_PRIME);   // m = lo . N' mod R
+    let (mn_lo, mn_hi) = m.widening_mul(&C::MODULUS);  // m . p
     let (_, carry_lo)  = lo.carrying_add(&mn_lo);
     let (t, carry_hi)  = hi.carrying_add(&mn_hi);
     // Bước hiệu chỉnh cuối: trừ p nếu cần
@@ -240,7 +239,7 @@ Hàm `pow` thực hiện lũy thừa $a^e \pmod{p}$ bằng phương pháp **squa
 pub fn pow(&self, exp: U1024) -> Self {
     let mut res  = Self::one();
     let mut base = *self;
-    for i in 0..16 {           // 16 limb × 64 bit = 1024 bit
+    for i in 0..16 {           // 16 limb x 64 bit = 1024 bit
         let mut limb = exp.0[i];
         for _ in 0..64 {
             let bit     = (limb & 1) as u8;

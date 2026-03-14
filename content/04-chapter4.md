@@ -5,15 +5,14 @@ chapter: 4
 
 Chương này trình bày ba sơ đồ chữ ký số được xây dựng trên nền tảng đường cong elliptic đã sinh ở Chương 3: **Schnorr**, **ECDSA**, và **chữ ký tổng hợp BLS**. Với mỗi sơ đồ, chúng ta đi qua lý thuyết cốt lõi, phân tích cấu trúc dữ liệu và cài đặt thực tế (bằng Rust), rồi kết thúc bằng đánh giá so sánh toàn diện dựa trên kết quả thực nghiệm.
 
-# Cơ sở chung: Cặp khóa và Hàm băm
 
-## Cặp khóa (KeyPair)
+# Cặp khóa (KeyPair)
 
 Mọi sơ đồ chữ ký đều dùng chung cấu trúc cặp khóa:
 
 ```rust
 pub struct KeyPair<C: SWCurveConfig> {
-    pub private_key: U1024,        // d ∈ [1, r-1], bí mật
+    pub private_key: U1024,        // d in [1, r-1], bí mật
     pub public_key:  AffinePoint<C>, // Q = [d]G, công khai
 }
 ```
@@ -74,14 +73,14 @@ Schnorr là sơ đồ chữ ký Sigma-protocol dựa trên giả thuyết logari
 1. Tính $e = H(R_x \| R_y \| m)$
 2. Kiểm tra $[s]G = R + [e]Q$
 
-Tính đúng đắn: $[s]G = [k + ed]G = [k]G + [e][d]G = R + [e]Q$ ✓
+Tính đúng đắn: $[s]G = [k + ed]G = [k]G + [e][d]G = R + [e]Q$ [ok]
 
 ## Cấu trúc dữ liệu
 
 ```rust
 pub struct SchnorrSignature<C: SWCurveConfig> {
-    pub r_point: AffinePoint<C>,  // R = [k]G  (điểm 256 byte: 2×128 byte tọa độ)
-    pub s:       U1024,           // s ∈ [0, r-1], 128 byte
+    pub r_point: AffinePoint<C>,  // R = [k]G  (điểm 256 byte: 2x128 byte tọa độ)
+    pub s:       U1024,           // s in [0, r-1], 128 byte
 }
 ```
 
@@ -94,7 +93,7 @@ pub fn sign(private_key: &U1024, message: &[u8]) -> Self {
     let k = U1024::rand(&C::ORDER);
     let r_point = C::generator().mul(&k);
     let e       = Self::challenge_hash(&r_point, message); // H(Rx‖Ry‖m) mod r
-    let s       = (k_field + e * d_field).to_u1024();     // s = k + e·d mod r
+    let s       = (k_field + e * d_field).to_u1024();     // s = k + e.d mod r
     Self { r_point, s }
 }
 
@@ -139,7 +138,7 @@ ECDSA (Elliptic Curve Digital Signature Algorithm) là chuẩn IEEE P1363 và FI
 ```rust
 pub struct EcdsaSignature {
     pub r: U1024,  // r_sig = R.x mod n, 128 byte
-    pub s: U1024,  // s ∈ [1, n-1],     128 byte
+    pub s: U1024,  // s in [1, n-1],     128 byte
 }
 ```
 
@@ -160,12 +159,12 @@ pub fn sign<C: SWCurveConfig>(private_key: &U1024, message: &[u8]) -> Self {
 }
 
 pub fn verify<C: SWCurveConfig>(&self, public_key: &AffinePoint<C>, message: &[u8]) -> bool {
-    // Kiểm tra r, s ∈ [1, n-1]
+    // Kiểm tra r, s in [1, n-1]
     if self.r.is_zero() || self.s.is_zero() { return false; }
     if self.r >= C::ORDER || self.s >= C::ORDER { return false; }
 
     let e = FieldElem::new(hash_message(message));
-    let w = FieldElem::new(self.s).inv();      // w = s⁻¹
+    let w = FieldElem::new(self.s).inv();      // w = s^{-1}
     let u1 = (e * w).to_u1024();
     let u2 = (FieldElem::new(self.r) * w).to_u1024();
 
@@ -268,8 +267,8 @@ Hiệu năng chủ yếu bị chi phối bởi **phép nhân vô hướng 1024-b
 |---|---|---|---|---|---|
 | Schnorr/ECDSA trên secp256k1 | 32 B | 64 B | 64 B | 128 bit | — |
 | Schnorr/ECDSA trên P-384 | 48 B | 96 B | 96 B | 192 bit | — |
-| **Schnorr trên Curve1024** | **128 B** | **256 B** | **384 B** | **256 bit** | **≥250 bit** |
-| **ECDSA trên Curve1024** | **128 B** | **256 B** | **256 B** | **256 bit** | **≥250 bit** |
+| **Schnorr trên Curve1024** | **128 B** | **256 B** | **384 B** | **256 bit** | **>=250 bit** |
+| **ECDSA trên Curve1024** | **128 B** | **256 B** | **256 B** | **256 bit** | **>=250 bit** |
 
 Curve1024 cung cấp **mức bảo mật 256 bit** trên cả hai bài toán, tương đương AES-256 và phù hợp với yêu cầu bảo mật hậu lượng tử kinh điển (lưu ý: bản thân ECC không kháng máy tính lượng tử Shor, nhưng kích thước 1024-bit cung cấp biên an toàn lớn hơn đáng kể so với p-256 hay secp256k1 trong các kịch bản cổ điển).
 
@@ -291,5 +290,5 @@ Hiệu năng hiện tại chưa tối ưu do:
 1. **Double-and-add tuần tự**: thay bằng **Sliding Window** ($w = 4$) hoặc **NAF (Non-Adjacent Form)** giảm ~30% số lần cộng điểm.
 2. **Tọa độ Jacobian**: thay tọa độ Affine bằng Jacobian/Projective giảm số lần nghịch đảo (phép chia mod $p$ rất đắt) — mỗi phép cộng Affine cần 1 nghịch đảo, Jacobian chỉ cần khi chuyển về Affine ở bước cuối.
 3. **Montgomery ladder**: loại bỏ timing side-channel trong phép nhân vô hướng.
-4. **AVX-512 / SIMD**: các phép nhân 64×64 bit trong Montgomery có thể vector hóa trên phần cứng hiện đại.
+4. **AVX-512 / SIMD**: các phép nhân 64x64 bit trong Montgomery có thể vector hóa trên phần cứng hiện đại.
 5. **Phép nhân đa vô hướng song song (MSM)**: cho xác minh Schnorr ($[s]G + [e]Q$), dùng Pippenger's algorithm cắt ~50% công việc so với hai lần nhân vô hướng riêng biệt.

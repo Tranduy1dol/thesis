@@ -10,8 +10,7 @@ $if(unnumbered)$
 $else$
 $if(chapter)$
 \setcounter{chapter}{$chapter$}
-\addcontentsline{toc}{chapter}{$if(toc-title)$$toc-title$$else$$title$$endif$}
-\chapter[$toc-title$]{$title$}
+\chapter[$if(toc-title)$$toc-title$$else$$title$$endif$]{$title$}
 $else$
 \chapter{$title$}
 $endif$

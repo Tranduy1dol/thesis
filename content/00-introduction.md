@@ -3,7 +3,6 @@ title: "Mở đầu"
 unnumbered: true
 ---
 
-# Lý do chọn đề tài
 
 - Yêu cầu bảo mật ngày càng tăng
 - Các thuận toán liên quan đến đường cong elliptic phát triển, an toàn hơn

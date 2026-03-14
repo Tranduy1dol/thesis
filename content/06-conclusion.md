@@ -4,7 +4,6 @@ chapter: 6
 toc-title: "KẾT LUẬN"
 ---
 
-# Kết luận
 
 ## Tổng kết
 

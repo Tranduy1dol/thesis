@@ -5,9 +5,8 @@ chapter: 3
 
 Chương này trình bày trọng tâm lý thuyết của luận văn: các phương pháp xây dựng đường cong elliptic có bậc nhúng (embedding degree) xác định, phục vụ cho các ứng dụng mật mã dựa trên phép ghép cặp (pairing-based cryptography). Chúng ta sẽ đi từ nền tảng lý thuyết của Phương pháp Nhân phức (CM) và Đa thức lớp Hilbert, đến thuật toán Cocks-Pinch truyền thống, và cuối cùng là thuật toán Cocks-Pinch Cải tiến được đề xuất trong luận văn này, với khả năng sinh tham số trường cơ sở có cấu trúc NTT-friendly nhằm kháng lại tấn công rây trường số tháp (Tower Number Field Sieve - TNFS).
 
-# Phương pháp Nhân phức (Complex Multiplication Method)
 
-## Ý tưởng cốt lõi
+# Ý tưởng cốt lõi
 
 Phương pháp Nhân phức (CM) là công cụ nền tảng để **xây dựng đường cong elliptic có số điểm định trước**. Thay vì chọn ngẫu nhiên các hệ số $a, b$ rồi đếm điểm, CM đi ngược lại: bắt đầu từ bậc nhóm mong muốn $\#E(\mathbb{F}_p) = p + 1 - t$ rồi suy ngược ra phương trình đường cong.
 
@@ -276,7 +275,7 @@ let step = U1024::ONE.shl(t_align as usize);
 // t_val luôn là bội số của step
 let t_val = t_base + U1024::rand(&t_steps) * step;
 let r = cyclotomic_phi18(&t_val);
-// Đảm bảo r thỏa mãn: two_adicity(r-1) = 3 * v₂(T) >= s
+// Đảm bảo r thỏa mãn: two_adicity(r-1) = 3 * v_2(T) >= s
 ```
 
 Với `min_scalar_two_adicity = 32`, ta cần $\lceil 32/3 \rceil = 11$, tức $T \equiv 0 \pmod{2^{11}}$. Điều này **không làm giảm không gian tham số** đáng kể — vẫn còn $2^{85}/2^{11} = 2^{74}$ ứng viên $T$ trong dải hợp lệ.
@@ -329,8 +328,8 @@ Bảng dưới so sánh thuật toán CP gốc và CP Cải tiến với cùng m
 
 *Kết quả thực nghiệm điển hình:*
 ```
-r two-adicity: 2^33 | (r-1)  →  r = d·2^33 + 1, NTT đến bậc 2^33
-p two-adicity: 2^34 | (p-1)  →  p = d·2^34 + 1, NTT đến bậc 2^34
+r two-adicity: 2^33 | (r-1)  →  r = d.2^33 + 1, NTT đến bậc 2^33
+p two-adicity: 2^34 | (p-1)  →  p = d.2^34 + 1, NTT đến bậc 2^34
 Thời gian tổng: 32.81s
 ```
 

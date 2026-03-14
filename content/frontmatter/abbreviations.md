@@ -2,7 +2,6 @@
 title: "Danh mục viết tắt"
 ---
 
-# Danh mục viết tắt
 
 | Viết tắt | Giải thích |
 |----------|------------|

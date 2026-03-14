@@ -11,7 +11,41 @@ cd "$PROJECT_DIR"
 
 echo "🔄 Converting Markdown to LaTeX..."
 
-# Chapter mapping: markdown file -> output tex file
+CSL="templates/ieee.csl"
+# Download CSL once if not cached
+if [ ! -f "$CSL" ]; then
+    echo "  📥 Downloading ieee.csl..."
+    curl -sL "https://raw.githubusercontent.com/citation-style-language/styles/master/ieee.csl" -o "$CSL"
+fi
+
+# --------------------------------------------------------------------------
+# Frontmatter: content/frontmatter/*.md → cover/*.tex
+# Uses frontmatter.latex template (unnumbered chapter*)
+# --------------------------------------------------------------------------
+declare -A FRONTMATTER=(
+    ["content/frontmatter/abstract.md"]="cover/abstract.tex"
+    ["content/frontmatter/abbreviations.md"]="cover/abbreviations.tex"
+    ["content/frontmatter/acknowledgments.md"]="cover/acknowledgments.tex"
+)
+
+for md_file in "${!FRONTMATTER[@]}"; do
+    tex_file="${FRONTMATTER[$md_file]}"
+    if [ -f "$md_file" ]; then
+        echo "  📝 $md_file → $tex_file"
+        pandoc "$md_file" \
+            --from markdown+yaml_metadata_block+pipe_tables \
+            --to latex \
+            --template=templates/pandoc/frontmatter.latex \
+            --output "$tex_file"
+    else
+        echo "  ⚠️  Skipping $md_file (not found)"
+    fi
+done
+
+# --------------------------------------------------------------------------
+# Chapters: content/*.md → chapter/*.tex
+# Uses chapter.latex template (numbered chapter)
+# --------------------------------------------------------------------------
 declare -A CHAPTERS=(
     ["content/00-introduction.md"]="chapter/00-introduction.tex"
     ["content/01-chapter1.md"]="chapter/01-chapter1.tex"
@@ -32,7 +66,7 @@ for md_file in "${!CHAPTERS[@]}"; do
             --template=templates/pandoc/chapter.latex \
             --citeproc \
             --bibliography=references.bib \
-            --csl=https://raw.githubusercontent.com/citation-style-language/styles/master/ieee.csl \
+            --csl="$CSL" \
             --output "$tex_file"
     else
         echo "  ⚠️  Skipping $md_file (not found)"

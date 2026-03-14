@@ -4,7 +4,6 @@ chapter: 5
 toc-title: CÀI ĐẶT VÀ ĐÁNH GIÁ
 ---
 
-# Tên chương 5
 
 Đoạn giới thiệu chương...
 
