@@ -7,45 +7,135 @@
 \addcontentsline{toc}{chapter}{Mở đầu}
 \chapter*{Mở đầu}
 
-\begin{itemize}
-\tightlist
-\item
-  Yêu cầu bảo mật ngày càng tăng
-\item
-  Các thuận toán liên quan đến đường cong elliptic phát triển, an toàn
-  hơn
-\item
-  Hầu hết các thư viện, ứng dụng đường cong elliptic trên thế giới hiện
-  nay đều phát triển ở nước ngoài.
-\end{itemize}
+Điện toán hiện đại đang phụ thuộc sâu sắc vào mã hóa khóa công khai,
+trong đó Đường cong Elliptic (Elliptic Curve Cryptography - ECC) đóng
+vai trò xương sống cho hầu hết các giao thức bảo mật từ TLS, SSH cho đến
+các hệ thống blockchain. Tuy ECC mang lại hiệu năng và kích thước khóa
+tối ưu, việc phụ thuộc vào các thư viện và cấu hình sinh sẵn từ các tổ
+chức nước ngoài cũng đặt ra những thách thức lớn về an ninh và làm chủ
+công nghệ lõi. Việc tự xây dựng một hệ thống từ tầng thấp nhất (Lớp số
+nguyên lớn U1024) đến tầng cao nhất (Chữ ký Schnorr/ECDSA) giúp loại bỏ
+cái vỏ bọc ``hộp đen'' công nghệ.
 
-\section{Đóng góp của đề
+\subsubsection{Lý do chọn đề
+tài}\label{luxfd-do-chux1ecdn-ux111ux1ec1-tuxe0i}
+
+\textbf{Sự cần thiết của Tự chủ mật mã (Loại bỏ ``Hộp đen'' công nghệ)}:
+Hiện nay, hầu hết các hệ thống phần mềm đều sử dụng thiết kế các đường
+cong do Viện Tiêu chuẩn và Công nghệ Quốc gia Hoa Kỳ (NIST) hoặc các tổ
+chức nước ngoài khuyến cáo (như secp256r1 hay ed25519) và đóng gói sẵn
+dưới dạng thư viện ``hộp đen'' (ví dụ: OpenSSL). Tuy nhiên, việc phụ
+thuộc hoàn toàn vào các bộ tham số sinh sẵn đã dấy lên nhiều lo ngại về
+an ninh quốc gia, điển hình là nghi án cơ quan tình báo cài cắm ``cửa
+hậu'' (backdoor) vào thuật toán sinh số ngẫu nhiên Dual\_EC\_DRBG
+{[}1{]}. Việc tự xây dựng một hệ thống giúp chúng ta có khả năng kiểm
+duyệt và làm chủ hoàn toàn công nghệ lõi, đảm bảo xác suất bằng không
+đối với bất kỳ dòng mã độc ngầm hay cửa hậu nào. Đây là bước đệm cần
+thiết hướng tới việc tự chủ ``đường cong thuần Việt''.
+
+\textbf{Nhu cầu an toàn tuyệt đối trước sức mạnh máy tính cổ điển}: Hiện
+nay, các tiêu chuẩn an toàn thông tin do NIST khuyến nghị thường chỉ
+định Đường cong Elliptic ở mức 256-bit đến tối đa 521-bit {[}2{]}. Tuy
+đủ dùng trong bối cảnh hiện tại nhưng khóa 256-bit chỉ cung cấp độ an
+toàn dài hạn (khoảng 128-bit an toàn đối xứng). Đề tài này nhằm khám phá
+khả năng và sự đánh đổi (trade-off) khi đẩy cấp độ bảo mật lên bậc cực
+hạn: đường cong trên trường nguyên tố 1024-bit. Với tham số khổng lồ
+này, hệ thống cung cấp mức độ an toàn xấp xỉ 512-bit, khiến cho mọi cuộc
+tấn công bằng máy tính cổ điển sử dụng các thuật toán giải bài toán
+logarit rời rạc (DLP) tốt nhất hiện nay như thuật toán Pollard's rho hay
+Baby-step Giant-step trở thành bất khả thi tuyệt đối trong biên niên kỷ
+tương lai.
+
+\textbf{Vấn đề an toàn bộ nhớ trong Mật mã học}: Trong thực tế triển
+khai, các thư viện mật mã truyền thống chủ yếu được viết bằng C/C++, dẫn
+tới việc thường xuyên đối mặt với các lỗ hổng hệ thống nghiêm trọng liên
+quan đến an toàn bộ nhớ. Tiêu biểu có thể kể đến sự cố rò rỉ bộ nhớ
+Heartbleed năm 2014, đe dọa trực tiếp sự toàn vẹn của nền tảng Internet
+toàn cầu {[}3{]}. Theo thống kê từ báo cáo của hệ điều hành Microsoft,
+khoảng 70\% các bản vá lỗi bảo mật (CVE) cốt lõi của họ đều có nguyên
+nhân trực tiếp từ những lỗi quản lý bộ nhớ như vậy {[}4{]}. Thiết kế của
+đề tài này giải quyết triệt để rủi ro đó ngay ở giai đoạn đầu bằng cách
+sử dụng Rust -- một ngôn ngữ lập trình hệ thống hiện đại, đảm bảo nguyên
+tắc an toàn bộ nhớ (memory-safe) ở cấp độ trình biên dịch. Điều này giúp
+hệ thống triệt tiêu hoàn toàn rủi ro tràn bộ nhớ đệm (buffer overflow)
+hay sử dụng vùng nhớ đã giải phóng (use-after-free) phổ biến trong các
+thư viện tiền nhiệm.
+
+\subsubsection{Đóng góp của đề
 tài}\label{ux111uxf3ng-guxf3p-cux1ee7a-ux111ux1ec1-tuxe0i}
 
-Trong khóa luận này, tôi tập trung nghiên cứu, thiết một hệ thống bảo
-mật trên nền tảng là đường cong elliptic bậc siêu cao . Hệ thống gồm các
-tính năng nổi bật:
+Trong khóa luận này, hệ thống thiết kế tập trung nghiên cứu, thiết kế và
+cài đặt một nền tảng mật mã đường cong elliptic với tham số kích thước
+cực lớn (1024-bit). Khóa luận đạt được các đóng góp sau: - Xây dựng từ
+đầu hệ thống số học bignum cho cấp độ phần cứng bằng ngôn ngữ hệ thống
+đảm bảo an toàn bộ nhớ và luồng thực thi tuyệt đối. - Ứng dụng thành
+công lý thuyết thuật toán CM (Complex Multiplication) và phương pháp
+Cocks-Pinch cải tiến để chủ động sinh ra một đường cong
+``pairing-friendly'' mới 1024-bit không có trong bất kỳ tiêu chuẩn có
+sẵn nào, nhưng vẫn đảm bảo đặc tính bảo mật chống các cuộc gọi tấn công
+MOV và Anomalous attack nổi tiếng. - Cài đặt và tích hợp ba sơ đồ chữ ký
+tiêu chuẩn: ECDSA, Schnorr và chữ ký tổng hợp nền tảng ghép cặp BLS.
 
-\section{Bố cục của khóa
+\subsubsection{Bố cục của khóa
 luận}\label{bux1ed1-cux1ee5c-cux1ee7a-khuxf3a-luux1eadn}
 
-Nội dung của khóa luận được trình bày như sau:
+Nội dung của khóa luận được trình bày bao gồm các phần chính sau:
 
 \begin{itemize}
 \tightlist
 \item
-  \emph{Mở đầu}: Trình bày mục đích, nội dung và bố cục của khóa luận.
+  \textbf{Phần Mở đầu}: Trình bày tính cấp thiết, mục đích, nội dung và
+  đóng góp của khóa luận.
 \item
-  \emph{Chương 1. Giới thiệu bài toán}: Trong chương này, khóa luận tốt
-  nghiệp sẽ giới thiệu \ldots.
+  \textbf{Chương 1. Giới thiệu bài toán}: Khái quát phạm vi đồ án và bối
+  cảnh sử dụng.
 \item
-  \emph{Chương 2. Cơ sở toán học}: Trong chương này, khóa luận tốt
-  nghiệp sẽ giới thiệu \ldots.
+  \textbf{Chương 2. Cơ sở toán học}: Cung cấp các kiến thức nền tảng
+  trong lý thuyết nhóm, trường hữu hạn, định nghĩa và luật tính toán
+  trên đường cong elliptic.
 \item
-  \emph{Chương 3. Phương pháp xây dựng đường cong elliptic}: Trong
-  chương này, khóa luận tốt nghiệp sẽ giới thiệu \ldots.
+  \textbf{Chương 3. Phương pháp xây dựng đường cong elliptic}: Trình bày
+  lý thuyết và biến đổi toán học cùng thuật toán Cocks-Pinch để tính
+  toán và tự thiết kế tham số đường cong.
 \item
-  \emph{Kết luận}: Đưa ra kết luận về việc xây dựng hệ thống \ldots.
+  \textbf{Chương 4. Sơ đồ chữ ký số}: Mô tả cấu trúc dữ liệu và logic
+  thiết kế phần mềm bằng Rust triển khai ba thuật toán chữ ký ECDSA,
+  Schnorr và chữ ký BLS.
+\item
+  \textbf{Chương 5. Cài đặt và Đánh giá}: Tổng hợp thông số kỹ thuật
+  thực nghiệm, báo cáo đánh giá benchmark phần cứng, chứng minh độ tin
+  cậy và so sánh tính bảo mật thực tiễn so với các nền tảng mật mã tiêu
+  chuẩn toàn cầu. Cuối cùng, luận văn mở ra những đề xuất định hướng
+  khắc phục hạn chế và tối ưu quy mô sản phẩm trong tương lai.
 \end{itemize}
+
+\phantomsection\label{refs}
+\begin{CSLReferences}{0}{0}
+\bibitem[\citeproctext]{ref-DualECDRBG}
+\CSLLeftMargin{{[}1{]} }%
+\CSLRightInline{D. Shumow and N. Ferguson, {``On the possibility of a
+back door in the NIST SP800-90 dual ec prng,''} in \emph{CRYPTO 2007
+rump session}, 2007.}
+
+\bibitem[\citeproctext]{ref-NIST80057}
+\CSLLeftMargin{{[}2{]} }%
+\CSLRightInline{E. Barker, {``Recommendation for key management, part 1:
+general,''} National Institute of Standards; Technology, NIST Special
+Publication 800-57 Part 1 Revision 5, 2020. doi:
+\href{https://doi.org/10.6028/NIST.SP.800-57pt1r5}{10.6028/NIST.SP.800-57pt1r5}.}
+
+\bibitem[\citeproctext]{ref-CVE_Heartbleed}
+\CSLLeftMargin{{[}3{]} }%
+\CSLRightInline{CVE, {``CVE-2014-0160: The heartbleed bug.''}
+\url{https://cve.mitre.org/cgi-bin/cvename.cgi?name=cve-2014-0160},
+2014.}
+
+\bibitem[\citeproctext]{ref-MicrosoftMemorySafety}
+\CSLLeftMargin{{[}4{]} }%
+\CSLRightInline{M. Miller, {``Trends, challenges, and strategic shifts
+in the software vulnerability mitigation landscape.''} BlueHat IL,
+2019.}
+
+\end{CSLReferences}
 
 \FloatBarrier

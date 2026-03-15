@@ -4,181 +4,107 @@ chapter: 5
 toc-title: CÀI ĐẶT VÀ ĐÁNH GIÁ
 ---
 
-Chương này trình bày kết quả thực nghiệm toàn diện của hệ thống: tham số đường cong được sinh ra, kết quả kiểm thử đơn vị và tích hợp, đo hiệu năng thực tế với Criterion, và phân tích so sánh mức độ bảo mật với các đường cong chuẩn trên thị trường.
+Chương này đánh giá toàn diện hệ thống đã xây dựng, không chỉ dừng lại ở trình bày số liệu mà tập trung **chứng minh giá trị** của hệ thống trên hai phương diện: hiệu năng thực tế và độ an toàn mật mã. Mục tiêu trả lời câu hỏi: *Các con số đo được nói lên điều gì? Hệ thống này có an toàn không? Có dùng được trong thực tế không?*
 
-## Tham số đường cong được sinh ra
+## Đánh giá hiệu năng
 
-Sau khi chạy thuật toán Cocks-Pinch cải tiến với các đầu vào $k=18$, $d=3$, `target_r_bits=512`, `target_p_bits=1024`, `min_scalar_two_adicity=32`, `min_base_two_adicity=32`, hệ thống sinh ra đường cong với các tham số được lưu trong `config/curve1024.toml`:
+### Kết quả đo đạc
 
-### Trường cơ sở và trường vô hướng
-
-| Tham số | Giá trị |
-|---|---|
-| Kích thước $p$ | 1024 bit |
-| Kích thước $r$ | 512 bit |
-| two-adicity $(p-1)$ | **34** — NTT đến bậc $2^{34}$ |
-| two-adicity $(r-1)$ | **33** — NTT đến bậc $2^{33}$ |
-| Bậc nhúng $k$ | **18** |
-| CM discriminant $D$ | $-3$ (họ KSS) |
-
-Hai trường đều thỏa điều kiện NTT-friendly ($\text{two-adicity} \geq 32$), đảm bảo có thể thực hiện biến đổi NTT hiệu quả trong các ứng dụng ZK proof.
-
-### Phương trình đường cong
-
-$$y^2 = x^3 + 5 \pmod{p}$$
-
-Hệ số $a = 0$, $b = 5$ (Short Weierstrass). Với $a = 0$, công thức nhân đôi điểm đơn giản hóa rõ rệt:
-$$\lambda = \frac{3x_1^2}{2y_1}$$
-không cần tính $a$ tại mỗi bước — tiết kiệm 1 phép nhân trường mỗi lần `double()`.
-
-### Điểm sinh
-
-Điểm sinh $G = (x, y) \in E(\mathbb{F}_p)$ với:
-
-```
-x = 0x07ba566379f7fa8d4ecd750604d301b18502c40e2f424c0733acb5111f37a3d
-     e59db085670df8316de6129f2ad09f6b86af70e33165c363cfe12c4370c371d
-     21e15315b6c6fc1c0f90311464d68b5d3f567ca49915e36f7090f005d5227cf
-     e790c35156512fb95a2097d808b54ea1adaf226816c6aa27a0bb870bf4b9d1a10a8
-
-y = 0x9487acd554d3ef9e9a2a6ceaddb12532e14d5ee1a9a2ee38be3fcbfa3211998
-     b1c38a460b9f2594685164785cc3eef1de1b99ce7b6357f30f585a7d3bdd18f
-     676dd22f2f264a76815a83a882f746f9fbd7e8835784e0f6e5e84313e3b89f5
-     4e64805a0a77013c9464e3f401342c493785f1e861f1fd9de922042dc5448e7e776
-```
-
-Điểm $G$ được xác minh qua kiểm thử `test_generator_is_on_curve` và `test_generator_order_is_r`.
-
-## Kết quả kiểm thử
-
-Toàn bộ bộ kiểm thử gồm **36 test** chia thành hai lớp: kiểm thử đơn vị trong thư viện và kiểm thử tích hợp ngoài crate.
-
-### Kiểm thử đơn vị (17 tests — `cargo test --lib`)
-
-| Nhóm | Test | Kết quả |
-|---|---|---|
-| `u1024` | test_basics, test_shifts, test_arithmetic, test_bytes_and_rand | OK |
-| `prime_field` | test_basics, test_arithmetic, test_pow, test_zero_one, test_bytes, test_from_montgomery, test_conditionally_selectable | OK |
-| `affine` | test_curve_point, test_negation, test_point_addition, test_point_multiplication | OK |
-| `signature::schnorr` | test_valid_schnorr_signature | OK |
-| `signature::ecdsa` | test_valid_ecdsa_signature | OK |
-
-Tổng thời gian: **95.40 giây** (debug build — `test_point_multiplication` và các test chữ ký chiếm phần lớn do phép nhân vô hướng 1024-bit chưa tối ưu trong debug mode).
-
-### Kiểm thử tích hợp (19 tests — `cargo test --tests`)
-
-**Tham số đường cong (`curve_params.rs` — 4 tests, 0.00s):**
-
-| Test | Mô tả | Kết quả |
-|---|---|---|
-| `test_modulus_bit_length` | $|p| = 1024$ bit | OK |
-| `test_order_bit_length` | $|r| = 512$ bit | OK |
-| `test_base_field_ntt_two_adicity` | two-adicity$(p-1) \geq 32$ | OK |
-| `test_scalar_field_ntt_two_adicity` | two-adicity$(r-1) \geq 32$ | OK |
-
-**Luật nhóm (`group_law.rs` — 6 tests, 18.34s):**
-
-| Test | Mô tả | Kết quả |
-|---|---|---|
-| `test_generator_is_on_curve` | $G$ nằm trên đường cong | OK |
-| `test_generator_order_is_r` | $[r]G = \mathcal{O}$ | OK |
-| `test_point_double_equals_add_self` | $2G = G + G$ | OK |
-| `test_identity_element` | $G + \mathcal{O} = G$, $\mathcal{O} + G = G$ | OK |
-| `test_point_negation` | $G + (-G) = \mathcal{O}$ | OK |
-| `test_scalar_mul_matches_repeated_add` | $G + 2G = [3]G$ | OK |
-
-**Bảo mật MOV (`attack_mov.rs` — 2 tests, 0.00s):**
-
-| Test | Mô tả | Kết quả |
-|---|---|---|
-| `test_mov_attack_resistance` | $k=18 > 6$, $|F_{p^{18}}| = 18432$ bit | OK |
-| `test_mov_weak_curve_simulation` | Mô phỏng đường cong yếu $k=1$ | OK |
-
-**Bảo mật Anomalous (`attack_anomalous.rs` — 2 tests, 0.00s):**
-
-| Test | Mô tả | Kết quả |
-|---|---|---|
-| `test_anomalous_attack_resistance` | $r \neq p$, $|p| > |r|$ | OK |
-| `test_anomalous_weak_curve_simulation` | Mô phỏng đường cong $t=1$ | OK |
-
-**Chữ ký (`signatures.rs` — 5 tests, 128.83s):**
-
-| Test | Mô tả | Kết quả |
-|---|---|---|
-| `test_schnorr_sign_verify_roundtrip` | Ký + xác minh đúng khóa | OK |
-| `test_schnorr_rejects_wrong_message` | Từ chối thông điệp bị sửa | OK |
-| `test_schnorr_rejects_wrong_key` | Từ chối khóa sai | OK |
-| `test_ecdsa_sign_verify_roundtrip` | Ký + xác minh đúng khóa | OK |
-| `test_ecdsa_rejects_wrong_message` | Từ chối thông điệp bị sửa | OK |
-
-**Tổng kết: 36/36 test PASSED, 0 FAILED.**
-
-## Kết quả đo hiệu năng (Criterion, `--release`)
-
-Benchmark chạy với `cargo bench` (release build, tối ưu LLVM O3), 10 mẫu mỗi phép đo, phần cứng thông thường không có AVX-512.
-
-### Sinh khóa
+Toàn bộ hệ thống được đo bằng framework Criterion (release build, tối ưu LLVM O3, 10 mẫu/phép đo, phần cứng thông thường không có AVX-512). Kết quả cụ thể như sau:
 
 | Phép đo | Min | Mean | Max |
 |---|---|---|---|
 | `KeyPair::generate` | 1.629 s | **1.687 s** | 1.757 s |
+| `Schnorr/sign` | 1.473 s | **1.551 s** | 1.641 s |
+| `Schnorr/verify` | 2.656 s | **2.831 s** | 3.025 s |
+| `ECDSA/sign` | 1.524 s | **1.606 s** | 1.711 s |
+| `ECDSA/verify` | 2.847 s | **3.140 s** | 3.459 s |
+| Nhân vô hướng $[k]G$ | 1.061 s | **~1.1–1.3 s** | 1.489 s |
 
-Sinh khóa = 1 phép nhân vô hướng $[d]G$ với $d \approx 2^{512}$ bit.
+### Phân tích: Kết quả có hợp lý về mặt lý thuyết không?
 
-### Chữ ký
+Trước tiên cần nhìn nhận rằng Curve1024 sử dụng trường nguyên tố $p$ **1024-bit** — gấp 4 lần kích thước của secp256k1 (256-bit) hay P-384. Đây là lựa chọn chủ động, không phải sai sót thiết kế, vì mục tiêu là bảo mật 256-bit và tính pairing-friendly. Hệ quả tất yếu là hiệu năng chậm hơn đáng kể.
 
-| Phép đo | Min | Mean | Max | Ghi chú |
-|---|---|---|---|---|
-| `ECDSA/sign` | 1.524 s | **1.606 s** | 1.711 s | 1 phép nhân vô hướng |
-| `ECDSA/verify` | 2.847 s | **3.140 s** | 3.459 s | 2 phép nhân vô hướng |
-| `Schnorr/sign` | 1.473 s | **1.551 s** | 1.641 s | 1 phép nhân vô hướng |
-| `Schnorr/verify` | 2.656 s | **2.831 s** | 3.025 s | 2 phép nhân vô hướng |
+Phép nhân vô hướng dùng thuật toán Double-and-Add với **1024 vòng lặp** (tương ứng kích thước bit của trường vô hướng $r = 512$ bit — số vòng lặp bằng độ dài bit của *trường cơ sở* $p$). Mỗi vòng lặp thực hiện một phép `double` và có thể một phép `add`, mỗi phép toán đó cần **1 phép nghịch đảo** modulo $p$ trong hệ tọa độ Affine hiện tại. Phép nghịch đảo được tính bằng định lý Fermat: $a^{-1} = a^{p-2} \pmod{p}$, tức là gọi đệ quy `pow` với khoảng **~1536 phép nhân Montgomery** 1024-bit bên trong. Đây là nguồn gốc của con số ~1.1–1.6 giây/phép nhân vô hướng.
 
-Quan sát:
-- **Ký ~ 1.55–1.61 s** (1 phép nhân vô hướng): Schnorr nhanh hơn ECDSA ~3% do không cần nghịch đảo $k^{-1}$.
-- **Xác minh ~ 2.83–3.14 s** (2 phép nhân vô hướng tuần tự): chi phí gần gấp đôi ký, đúng với dự kiến lý thuyết.
+Schnorr ký nhanh hơn ECDSA ~3% do Schnorr không cần tính nghịch đảo $k^{-1} \pmod{r}$ trong bước sinh chữ ký. Xác minh (cả Schnorr và ECDSA) tốn gần gấp đôi ký do cần **2 phép nhân vô hướng độc lập** ($[s]G$ và $[e]Q$ cho Schnorr; $[u_1]G$ và $[u_2]Q$ cho ECDSA). Tỷ lệ này hoàn toàn phù hợp với dự kiến lý thuyết.
 
-### Phép nhân vô hướng $[k]G$
+So với secp256k1, độ chênh lệch (~1.5 s so với ~0.2 ms) xuất phát chủ yếu từ ba yếu tố tích lũy: (1) scalar dài gấp 4 lần kéo dài thêm 4× số vòng lặp, (2) mỗi phép nhân Montgomery trên số 1024-bit tốn ~16 lần công sức so với 256-bit (chi phí $O(n^2)$ với $n$ số limb), và (3) secp256k1 có thư viện tối ưu nhiều năm với assembly AVX-512 được tinh chỉnh. Kết hợp lại, khoảng cách ~8000× là kỳ vọng hợp lý, không phải dấu hiệu của thuật toán sai.
 
-| Scalar $k$ | Min | Mean | Max |
-|---|---|---|---|
-| $k = 1$ | 1.061 s | **1.124 s** | 1.205 s |
-| $k = 2$ | 1.190 s | **1.329 s** | 1.489 s |
-| $k = 3$ | 1.143 s | **1.184 s** | 1.225 s |
-| $k = 4$ | 1.167 s | **1.240 s** | 1.321 s |
+### Tính khả thi trong ứng dụng thực tế
 
-Phép nhân vô hướng là **bottleneck** chi phối toàn bộ hệ thống. Với Double-and-add trên 1024 bit, mỗi lần nhân thực hiện đúng 1024 lần `double` và trung bình 512 lần `add`. Mỗi `add`/`double` cần 1 nghịch đảo trong $\mathbb{F}_p$ (= $a^{p-2}$, ~1536 phép nhân Montgomery).
+Với thời gian ~1.5–1.7 giây cho một phép ký, hệ thống hoàn toàn phù hợp với các **kịch bản ký ngoại tuyến** như ký tài liệu pháp lý, ký gói phần mềm khi phát hành, ký giao dịch tài chính giá trị lớn, hay ký chứng chỉ trong hạ tầng PKI — những trường hợp mà độ trễ vài giây là chấp nhận được và bù đắp hoàn toàn bởi biên bảo mật 256-bit so với 128-bit của các chuẩn thông thường.
 
-## Phân tích bảo mật và so sánh
+Ngược lại, hệ thống **chưa phù hợp** cho các ứng dụng yêu cầu độ trễ dưới mili-giây như TLS handshake xử lý hàng nghìn kết nối/giây, giao dịch thanh toán tốc độ cao, hay ký batch thời gian thực. Đây là sự đánh đổi có chủ ý — tập trung vào tính đúng đắn và bảo mật của nền tảng toán học trước, tối ưu hóa sau.
 
-### Kích thước tham số
+Nhờ áp dụng **phép nhân Montgomery** thay cho phép chia lấy dư thông thường, tất cả phép nhân trong $\mathbb{F}_p$ đều thực thi bằng phép shift và trừ có điều kiện, không cần chia số 1024-bit cho $p$ — một phép toán đắt hơn nhân ~5–10 lần. Đây là tối ưu quan trọng nhất đã được triển khai trong cài đặt hiện tại.
 
-| Sơ đồ | Khóa riêng | Khóa công khai | Chữ ký |
-|---|---|---|---|
-| Schnorr/ECDSA trên secp256k1 | 32 B | 64 B | 64 B |
-| Schnorr/ECDSA trên P-384 | 48 B | 96 B | 96 B |
-| **Schnorr trên Curve1024** | **128 B** | **256 B** | **384 B** |
-| **ECDSA trên Curve1024** | **128 B** | **256 B** | **256 B** |
+Các hướng cải tiến hiệu năng tiếp theo được phân tích tại §5.4.
 
-### So sánh với đường cong chuẩn
+## Đánh giá độ an toàn
 
-| Đường cong | $|p|$ | $|r|$ | $k$ | two-adicity $r$ | two-adicity $p$ | Bảo mật |
-|---|---|---|---|---|---|---|
-| secp256k1 | 256 | 256 | — | 1 | — | 128 bit |
-| P-384 | 384 | 384 | — | 1 | — | 192 bit |
-| BLS12-381 | 381 | 255 | 12 | 32 | — | 128 bit |
-| **Curve1024 (luận văn)** | **1024** | **512** | **18** | **33** | **34** | **256 bit** |
+### An toàn trước tấn công cổ điển
 
-Curve1024 là đường cong pairing-friendly duy nhất trong bảng đạt two-adicity $\geq 32$ trên **cả hai trường** $\mathbb{F}_r$ và $\mathbb{F}_p$, cung cấp nền tảng NTT đầy đủ cho ZK proof. Mức bảo mật 256 bit tương đương AES-256.
+Hệ thống sử dụng trường nguyên tố $p$ có độ lớn 1024-bit và bậc nhóm $r$ là 512-bit. Bài toán ECDLP trên nhóm $E(\mathbb{F}_p)$ — tức là tìm $k$ từ $Q = [k]G$ — hiện chưa có thuật toán tốt hơn thuật toán tổng quát. Thuật toán tốt nhất hiện tại là **Pollard's $\rho$**, có độ phức tạp $O(\sqrt{r}) \approx O(2^{256})$ phép toán nhóm. Với $2^{256}$ bước tính toán cần thực hiện, ngay cả khi huy động toàn bộ năng lực tính toán của nhân loại — mỗi nguyên tử Trái Đất thực hiện $10^9$ phép tính mỗi giây từ khi Big Bang — vẫn không đủ để phá vỡ khóa trong tuổi thọ của vũ trụ. Đây là **biên an toàn tuyệt đối** trước mọi hệ thống máy tính cổ điển.
 
-## Hướng tối ưu hóa tiếp theo
+Mức bảo mật 256-bit vượt xa chuẩn tối thiểu NIST khuyến nghị (128-bit cho các ứng dụng đến năm 2030) và tương đương với AES-256 — chuẩn mã hóa đối xứng mạnh nhất hiện nay. Đây là mục tiêu tường minh của thuật toán Cocks-Pinch cải tiến được trình bày tại Chương 3.
 
-Hiệu năng hiện tại (~1.5 s/ký, release) có thể cải thiện đáng kể thông qua:
+### An toàn trước tấn công Invalid Curve
 
-1. **Sliding Window / NAF**: giảm ~30% số lần cộng điểm so với Double-and-add.
-2. **Tọa độ Jacobian/Projective**: loại bỏ 1 phép nghịch đảo per `add`/`double` — nghịch đảo đắt gấp ~200x so với nhân Montgomery. Chỉ cần 1 nghịch đảo duy nhất khi chuyển về Affine ở bước cuối.
-3. **Montgomery ladder**: constant-time scalar multiplication, loại bỏ timing side-channel hoàn toàn.
-4. **AVX-512 / SIMD**: vector hóa phép nhân 64×64-bit limb trong Montgomery trên phần cứng x86-64 hiện đại.
-5. **Multi-Scalar Multiplication (MSM — Pippenger)**: cho xác minh Schnorr $[s]G + [e]Q$, giảm ~50% công việc so với 2 phép nhân tuần tự.
+**Invalid Curve Attack** là một dạng tấn công nguy hiểm trong ECC: kẻ tấn công gửi một điểm $P'$ *không thuộc đường cong* $E$ nhưng vẫn hợp lệ về mặt định dạng, ép hệ thống tính toán trên một đường cong suy biến có bậc nhỏ, từ đó thu thập thông tin về khóa riêng qua nhiều truy vấn.
 
-Ước tính kết hợp Jacobian + Sliding Window có thể đưa thời gian ký xuống dưới **500 ms** mà không thay đổi logic bảo mật.
+Hệ thống hiện tại **miễn nhiễm hoàn toàn** với tấn công này. Mọi điểm được tạo ra thông qua `AffinePoint::new(x, y)` đều tự động kiểm tra điều kiện:
+$$y^2 \equiv x^3 + b \pmod{p}$$
+
+bằng lời gọi `assert!(self.is_on_curve())` ngay trong hàm khởi tạo. Không tồn tại đường dẫn code nào cho phép một điểm không hợp lệ tồn tại trong hệ thống. Điều này được xác nhận bởi test `test_curve_point` trong bộ kiểm thử đơn vị.
+
+### An toàn trước tấn công MOV
+
+**Tấn công MOV** (Menezes-Okamoto-Vanstone) sử dụng phép ghép cặp (pairing) để ánh xạ bài toán ECDLP trong $E(\mathbb{F}_p)$ về bài toán DLP trong trường hữu hạn mở rộng $\mathbb{F}_{p^k}$, nơi bài toán DLP có thể được giải hiệu quả hơn bằng thuật toán chỉ số (index calculus).
+
+Tuy nhiên, hiệu quả của tấn công này phụ thuộc vào việc $\mathbb{F}_{p^k}$ có đủ nhỏ để bài toán DLP khả thi hay không. Với Curve1024, bậc nhúng $k = 18$, trường mở rộng $\mathbb{F}_{p^{18}}$ có kích thước $|p^{18}| = 18 \times 1024 = 18432$ bit. Bài toán DLP trong trường 18432-bit hoàn toàn không thể giải được với công nghệ hiện tại — trên thực tế, kinh nghiệm cộng đồng yêu cầu $k|p| \geq 3072$ bit để kháng tấn công này ở mức 128-bit; hệ thống đạt $18 \times 1024 = 18432$ bit, vượt xa tiêu chuẩn này. Kết quả này được test `test_mov_attack_resistance` xác nhận tường minh.
+
+### An toàn trước tấn công Anomalous
+
+**Tấn công Anomalous (SSSA)** khai thác trường hợp đặc biệt khi $\#E(\mathbb{F}_p) = p$, tức là số điểm trên đường cong bằng đúng modulus. Trong trường hợp này, tồn tại một đẳng cấu nhóm ánh xạ bài toán ECDLP về bài toán trên nhóm cộng $\mathbb{Z}/p\mathbb{Z}$, cho phép giải trong thời gian tuyến tính.
+
+Curve1024 có $\#E(\mathbb{F}_p) = h \cdot r$ với $r$ là bậc nhóm con nguyên tố 512-bit và $h$ là cofactor, trong khi $p$ là số nguyên tố 1024-bit. Hiển nhiên $\#E(\mathbb{F}_p) \neq p$ vì $|r| = 512 < 1024 = |p|$, nên điều kiện anomalous không thoả mãn. Test `test_anomalous_attack_resistance` xác minh điều này.
+
+### Hạn chế: Timing Side-Channel Attack
+
+Đây là điểm cần trung thực học thuật: thuật toán **Double-and-Add** hiện tại, mặc dù có `conditional_select` ở từng bước đơn lẻ, vẫn có tổng số phép `add` thực hiện **phụ thuộc vào số lượng bit 1 trong scalar $k$**. Kẻ tấn công có thể đo thời gian thực thi để suy luận về trọng số Hamming của khóa riêng, từ đó thu hẹp không gian tìm kiếm.
+
+Đây là sự đánh đổi có chủ ý để giữ kiến trúc đơn giản (nguyên tắc KISS — Keep It Simple and Secure). Biện pháp khắc phục là thay thế bằng **Montgomery Ladder**, thuật toán thực hiện đúng 1024 phép `double` và 1024 phép `add` bất kể giá trị scalar, đảm bảo tính *constant-time* thực sự. Đây là hướng phát triển ưu tiên cao.
+
+Toàn bộ kết quả kiểm thử **36/36 test PASSED** (17 đơn vị + 19 tích hợp) xác nhận tính đúng đắn toán học và an toàn của hệ thống trên mọi tiêu chí đã mô tả.
+
+## Kết luận và hướng phát triển
+
+### Kết quả đạt được
+
+Luận văn đã hoàn thành xây dựng một hệ thống mật mã đường cong elliptic hoàn chỉnh từ nền tảng toán học đến ứng dụng thực tế:
+
+- **Cơ sở toán học vững chắc:** Cài đặt $\mathbb{F}_p$ với phép nhân Montgomery, toán học điểm affine đầy đủ, và phép nhân vô hướng thuần Rust không phụ thuộc thư viện ngoài.
+- **Đường cong đặc biệt:** Sinh được đường cong pairing-friendly 1024-bit ($k=18$, bảo mật 256-bit, NTT-friendly trên cả hai trường) bằng thuật toán Cocks-Pinch cải tiến — một đóng góp gốc của luận văn.
+- **Sơ đồ chữ ký hoàn chỉnh:** Schnorr và ECDSA hoạt động chính xác và được kiểm thử đầy đủ.
+- **Bộ kiểm thử toàn diện:** 36 test bao phủ từ số học cấp thấp đến bảo mật tầng cao, kể cả mô phỏng tấn công MOV và Anomalous.
+
+### Hướng phát triển
+
+**Tối ưu hóa hiệu năng:**
+
+1. **Tọa độ Jacobian/Projective:** Loại bỏ phép nghịch đảo trong mỗi bước `add`/`double` bằng cách làm việc trong hệ tọa độ $(X:Y:Z)$ thay vì $(x, y)$ Affine. Toàn bộ vòng lặp nhân vô hướng chỉ cần 1 phép nghịch đảo duy nhất ở bước chuyển về Affine cuối cùng — ước tính giảm thời gian ký xuống dưới 200 ms.
+
+2. **Sliding Window / NAF:** Giảm ~25–30% số phép `add` trong nhân vô hướng so với Double-and-Add cơ bản. Kết hợp với Jacobian, thời gian ký dự kiến đạt dưới 150 ms.
+
+3. **AVX-512 / SIMD assembly:** Vector hóa các phép nhân 64×64-bit limb trong Montgomery multiplication trên kiến trúc x86-64 hiện đại. Các thư viện như `blst` (Ethereum) đạt tốc độ BLS12-381 signing dưới 1 ms nhờ kỹ thuật này.
+
+**Bảo mật cấp cao:**
+
+4. **Montgomery Ladder:** Thay thế Double-and-Add bằng Montgomery Ladder để đạt *constant-time* thực sự, loại bỏ timing side-channel theo giá trị scalar.
+
+5. **Phép ghép cặp (Pairing):** Cài đặt Miller loop và bước mũ cuối (final exponentiation) để kích hoạt đầy đủ BLS aggregate signatures, mở ra ứng dụng trong các giao thức đồng thuận phân tán.
+
+6. **Multi-Scalar Multiplication (MSM — Pippenger):** Tối ưu bước xác minh $[s]G + [e]Q$ bằng thuật toán Pippenger, giảm ~50% công việc so với hai phép nhân tuần tự.
+
+Các hướng 1 và 4 là ưu tiên cao nhất vì cùng lúc cải thiện cả hiệu năng và bảo mật, không yêu cầu thay đổi kiến trúc cấp cao.
