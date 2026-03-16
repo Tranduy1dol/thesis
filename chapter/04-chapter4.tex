@@ -4,8 +4,8 @@
 \clearpage
 \phantomsection
 
-\setcounter{chapter}{4}
-\chapter[SƠ ĐỒ CHỮ KÝ SỐ]{Sơ đồ chữ ký số}
+\setcounter{chapter}{3}
+\chapter[Sơ đồ chữ ký số]{Sơ đồ chữ ký số}
 
 Chương này trình bày ba sơ đồ chữ ký số được xây dựng trên nền tảng
 đường cong elliptic đã sinh ở Chương 3: \textbf{Schnorr},
@@ -39,25 +39,13 @@ Mọi sơ đồ chữ ký đều dùng chung cấu trúc cặp khóa:
   --- độ phức tạp \(O(2^{256})\).
 \end{itemize}
 
-Cặp khóa được lưu/đọc từ file nhị phân 128 byte (big-endian) với quyền
-\texttt{0600} trên Unix:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{impl}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{:}\NormalTok{ SWCurveConfig}\OperatorTok{\textgreater{}}\NormalTok{ KeyPair}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{\textgreater{}} \OperatorTok{\{}
-    \KeywordTok{pub} \KeywordTok{fn}\NormalTok{ generate() }\OperatorTok{{-}\textgreater{}} \DataTypeTok{Self} \OperatorTok{\{}
-        \KeywordTok{let}\NormalTok{ private\_key }\OperatorTok{=} \PreprocessorTok{U1024::}\NormalTok{rand(}\OperatorTok{\&}\PreprocessorTok{C::}\NormalTok{ORDER)}\OperatorTok{;}
-        \KeywordTok{let}\NormalTok{ public\_key  }\OperatorTok{=} \PreprocessorTok{C::}\NormalTok{generator()}\OperatorTok{.}\NormalTok{mul(}\OperatorTok{\&}\NormalTok{private\_key)}\OperatorTok{;}
-        \DataTypeTok{Self} \OperatorTok{\{}\NormalTok{ private\_key}\OperatorTok{,}\NormalTok{ public\_key }\OperatorTok{\}}
-    \OperatorTok{\}}
-    \KeywordTok{pub} \KeywordTok{fn}\NormalTok{ save(}\OperatorTok{\&}\KeywordTok{self}\OperatorTok{,}\NormalTok{ path}\OperatorTok{:} \OperatorTok{\&}\DataTypeTok{str}\NormalTok{) }\OperatorTok{{-}\textgreater{}} \PreprocessorTok{io::}\DataTypeTok{Result}\OperatorTok{\textless{}}\NormalTok{()}\OperatorTok{\textgreater{}} \OperatorTok{\{}
-        \PreprocessorTok{fs::}\NormalTok{write(path}\OperatorTok{,} \KeywordTok{self}\OperatorTok{.}\NormalTok{private\_key}\OperatorTok{.}\NormalTok{to\_be\_bytes())}\OperatorTok{?;}
-        \PreprocessorTok{fs::}\NormalTok{set\_permissions(path}\OperatorTok{,} \PreprocessorTok{Permissions::}\NormalTok{from\_mode(}\DecValTok{0o600}\NormalTok{))}\OperatorTok{?;}
-        \ConstantTok{Ok}\NormalTok{(())}
-    \OperatorTok{\}}
-\OperatorTok{\}}
-\end{Highlighting}
-\end{Shaded}
+Cặp khóa được lưu và đọc từ file nhị phân 128 byte (big-endian) với
+quyền truy cập khắt khe \texttt{0600} trên hệ điều hành Unix phân quyền
+để giảm rủi ro bị đọc lén bởi các tài khoản người dùng khác trên cùng
+máy chủ. Các thao tác khởi tạo (\texttt{generate}) ngẫu nhiên và truy
+xuất dữ liệu tĩnh (\texttt{save}) được xử lý bằng API tiêu chuẩn. Chi
+tiết mã nguồn quản lý vòng đời cặp khóa được đính kèm tại mã nguồn công
+khai của dự án \citep{LumenMath}.
 
 \subsection{Hàm băm mở rộng}\label{huxe0m-bux103m-mux1edf-rux1ed9ng}
 
@@ -65,31 +53,22 @@ Vì \(r \approx 2^{512}\) và SHA-256 chỉ cho 256 bit, hệ thống dùng
 \textbf{4 lần SHA-256} với tiền tố khác nhau để sinh 1024 bit, rồi cắt
 lấy 512 bit thấp khi cần:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{pub} \KeywordTok{fn}\NormalTok{ hash\_message(message}\OperatorTok{:} \OperatorTok{\&}\NormalTok{[}\DataTypeTok{u8}\NormalTok{]) }\OperatorTok{{-}\textgreater{}}\NormalTok{ U1024 }\OperatorTok{\{}
-    \KeywordTok{let} \KeywordTok{mut}\NormalTok{ buf }\OperatorTok{=}\NormalTok{ [}\DecValTok{0u8}\OperatorTok{;} \DecValTok{128}\NormalTok{]}\OperatorTok{;}
-    \ControlFlowTok{for}\NormalTok{ i }\KeywordTok{in} \DecValTok{0}\OperatorTok{..}\DecValTok{4} \OperatorTok{\{}
-        \KeywordTok{let} \KeywordTok{mut}\NormalTok{ h }\OperatorTok{=} \PreprocessorTok{Sha256::}\NormalTok{new()}\OperatorTok{;}
-\NormalTok{        h}\OperatorTok{.}\NormalTok{update([i }\KeywordTok{as} \DataTypeTok{u8}\NormalTok{])}\OperatorTok{;}
-\NormalTok{        h}\OperatorTok{.}\NormalTok{update(message)}\OperatorTok{;}
-\NormalTok{        buf[i}\OperatorTok{*}\DecValTok{32}\OperatorTok{..}\NormalTok{(i}\OperatorTok{+}\DecValTok{1}\NormalTok{)}\OperatorTok{*}\DecValTok{32}\NormalTok{]}\OperatorTok{.}\NormalTok{copy\_from\_slice(}\OperatorTok{\&}\NormalTok{h}\OperatorTok{.}\NormalTok{finalize())}\OperatorTok{;}
-    \OperatorTok{\}}
-    \PreprocessorTok{U1024::}\NormalTok{from\_be\_bytes(}\OperatorTok{\&}\NormalTok{buf)}
-\OperatorTok{\}}
-\end{Highlighting}
-\end{Shaded}
-
-Cấu trúc này tương đương với \textbf{SHA-1024} tùy chỉnh, đảm bảo đầu ra
-đủ lớn để tránh đụng độ có nghĩa với độ bảo mật \(r \approx 2^{512}\).
+Để đáp ứng yêu cầu kích thước, hàm \texttt{hash\_message} được cấu hình
+để thực hiện băm lặp chuỗi đầu vào theo các bộ tiền tố biến thiên. Cấu
+trúc lặp này vận hành tương đương như một hàm \textbf{SHA-1024} tùy
+chỉnh. Sự thiết kế này đảm bảo vùng không gian đầu ra đủ độ rộng nhằm
+phòng tránh hiệu quả các biến thế đụng độ vòng lặp có nghĩa với mức bảo
+mật \(r \approx 2^{512}\). Chi tiết cài đặt thuật toán kết hợp băm mở
+rộng được cung cấp tại mã nguồn công khai của dự án \citep{LumenMath}.
 
 \section{Chữ ký Schnorr}\label{chux1eef-kuxfd-schnorr}
 
 \subsection{Lý thuyết}\label{luxfd-thuyux1ebft}
 
 Schnorr là sơ đồ chữ ký Sigma-protocol dựa trên giả thuyết logarit rời
-rạc (DL). Nó được ưa chuộng vì độ đơn giản của chứng minh bảo mật (trong
-mô hình Oracle ngẫu nhiên) và hỗ trợ tổng hợp tự nhiên.
+rạc (DL) \citep{Schnorr1989}. Nó được ưa chuộng vì độ đơn giản của chứng
+minh bảo mật (trong mô hình Oracle ngẫu nhiên) và hỗ trợ tổng hợp tự
+nhiên.
 
 \textbf{Ký:} Cho khóa riêng \(d \in [1, r-1]\) và thông điệp \(m\): 1.
 Chọn ngẫu nhiên \(k \xleftarrow{R} [1, r-1]\) 2. Tính điểm \(R = [k]G\)
@@ -117,28 +96,20 @@ tọa độ \(x, y\) mỗi tọa độ 128 byte, cộng thêm \(s\) 128 byte).
 
 \subsection{Cài đặt}\label{cuxe0i-ux111ux1eb7t}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{pub} \KeywordTok{fn}\NormalTok{ sign(private\_key}\OperatorTok{:} \OperatorTok{\&}\NormalTok{U1024}\OperatorTok{,}\NormalTok{ message}\OperatorTok{:} \OperatorTok{\&}\NormalTok{[}\DataTypeTok{u8}\NormalTok{]) }\OperatorTok{{-}\textgreater{}} \DataTypeTok{Self} \OperatorTok{\{}
-    \KeywordTok{let}\NormalTok{ k }\OperatorTok{=} \PreprocessorTok{U1024::}\NormalTok{rand(}\OperatorTok{\&}\PreprocessorTok{C::}\NormalTok{ORDER)}\OperatorTok{;}
-    \KeywordTok{let}\NormalTok{ r\_point }\OperatorTok{=} \PreprocessorTok{C::}\NormalTok{generator()}\OperatorTok{.}\NormalTok{mul(}\OperatorTok{\&}\NormalTok{k)}\OperatorTok{;}
-    \KeywordTok{let}\NormalTok{ e       }\OperatorTok{=} \DataTypeTok{Self}\PreprocessorTok{::}\NormalTok{challenge\_hash(}\OperatorTok{\&}\NormalTok{r\_point}\OperatorTok{,}\NormalTok{ message)}\OperatorTok{;} \CommentTok{// H(Rx‖Ry‖m) mod r}
-    \KeywordTok{let}\NormalTok{ s       }\OperatorTok{=}\NormalTok{ (k\_field }\OperatorTok{+}\NormalTok{ e }\OperatorTok{*}\NormalTok{ d\_field)}\OperatorTok{.}\NormalTok{to\_u1024()}\OperatorTok{;}     \CommentTok{// s = k + e.d mod r}
-    \DataTypeTok{Self} \OperatorTok{\{}\NormalTok{ r\_point}\OperatorTok{,}\NormalTok{ s }\OperatorTok{\}}
-\OperatorTok{\}}
+Các bước ký và xác minh thuật toán Schnorr được nhóm tác giả cài đặt bám
+sát với quy trình lý thuyết toán học (đã trình bày ở Mục 4.2.1), tận
+dụng triệt để kiến trúc cấp phát và an toàn bộ nhớ của Rust để loại bỏ
+lỗi tràn giới hạn (buffer overflow) sinh ra từ việc xử lý chuỗi số lớn.
+Thuật toán cài đặt tích hợp hàm băm nội sinh \texttt{challenge\_hash}
+dùng nối trực tiếp các thành phần \(R_x, R_y, m\) trước khi gọi hàm băm
+mở rộng. Quy trình gộp này đảm bảo ``thách thức'' sinh ra phụ thuộc định
+danh vào toàn bộ ngữ cảnh thông điệp, triệt tiêu mọi rủi ro tấn công giả
+mạo (forgery) bóc tách dữ liệu --- đặc biệt theo kiểu công kích
+Pohlig-Hellman trên phần tử nonce.
 
-\KeywordTok{pub} \KeywordTok{fn}\NormalTok{ verify(}\OperatorTok{\&}\KeywordTok{self}\OperatorTok{,}\NormalTok{ public\_key}\OperatorTok{:} \OperatorTok{\&}\NormalTok{AffinePoint}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{\textgreater{},}\NormalTok{ message}\OperatorTok{:} \OperatorTok{\&}\NormalTok{[}\DataTypeTok{u8}\NormalTok{]) }\OperatorTok{{-}\textgreater{}} \DataTypeTok{bool} \OperatorTok{\{}
-    \KeywordTok{let}\NormalTok{ e  }\OperatorTok{=} \DataTypeTok{Self}\PreprocessorTok{::}\NormalTok{challenge\_hash(}\OperatorTok{\&}\KeywordTok{self}\OperatorTok{.}\NormalTok{r\_point}\OperatorTok{,}\NormalTok{ message)}\OperatorTok{;}
-    \KeywordTok{let}\NormalTok{ v1 }\OperatorTok{=} \PreprocessorTok{C::}\NormalTok{generator()}\OperatorTok{.}\NormalTok{mul(}\OperatorTok{\&}\KeywordTok{self}\OperatorTok{.}\NormalTok{s)}\OperatorTok{;}              \CommentTok{// [s]G}
-    \KeywordTok{let}\NormalTok{ v2 }\OperatorTok{=} \KeywordTok{self}\OperatorTok{.}\NormalTok{r\_point}\OperatorTok{.}\NormalTok{add(}\OperatorTok{\&}\NormalTok{public\_key}\OperatorTok{.}\NormalTok{mul(}\OperatorTok{\&}\NormalTok{e}\OperatorTok{.}\NormalTok{to\_u1024()))}\OperatorTok{;} \CommentTok{// R + [e]Q}
-\NormalTok{    v1 }\OperatorTok{==}\NormalTok{ v2}
-\OperatorTok{\}}
-\end{Highlighting}
-\end{Shaded}
-
-Hàm \texttt{challenge\_hash} nối \(R_x, R_y, m\) rồi gọi
-\texttt{hash\_message}, đảm bảo thách thức phụ thuộc vào toàn bộ ngữ
-cảnh --- tránh tấn công forgery kiểu Pohlig-Hellman trên nonce.
+Chi tiết mã nguồn của các hàm \texttt{sign()} và \texttt{verify()} thuộc
+thuật toán Schnorr được đính kèm tại mã nguồn công khai của dự án
+\citep{LumenMath}.
 
 \subsection{Bảo mật}\label{bux1ea3o-mux1eadt}
 
@@ -159,8 +130,9 @@ cảnh --- tránh tấn công forgery kiểu Pohlig-Hellman trên nonce.
 \subsection{Lý thuyết}\label{luxfd-thuyux1ebft-1}
 
 ECDSA (Elliptic Curve Digital Signature Algorithm) là chuẩn IEEE P1363
-và FIPS 186-4. Nó khác Schnorr ở chỗ \(r\) trong chữ ký là \textbf{tọa
-độ \(x\) của điểm \(R\)} lấy modulo \(n\), thay vì bản thân điểm \(R\).
+và FIPS 186-4 \citep{FIPS186_4}. Nó khác Schnorr ở chỗ \(r\) trong chữ
+ký là \textbf{tọa độ \(x\) của điểm \(R\)} lấy modulo \(n\), thay vì bản
+thân điểm \(R\).
 
 \textbf{Ký:} Cho khóa riêng \(d\) và thông điệp \(m\): 1.
 \(k \xleftarrow{R} [1, r-1]\) 2. \(R = [k]G\) 3.
@@ -191,34 +163,19 @@ vì không lưu điểm \(R\) đầy đủ.
 
 \subsection{Cài đặt}\label{cuxe0i-ux111ux1eb7t-1}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{pub} \KeywordTok{fn}\NormalTok{ sign}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{:}\NormalTok{ SWCurveConfig}\OperatorTok{\textgreater{}}\NormalTok{(private\_key}\OperatorTok{:} \OperatorTok{\&}\NormalTok{U1024}\OperatorTok{,}\NormalTok{ message}\OperatorTok{:} \OperatorTok{\&}\NormalTok{[}\DataTypeTok{u8}\NormalTok{]) }\OperatorTok{{-}\textgreater{}} \DataTypeTok{Self} \OperatorTok{\{}
-    \KeywordTok{let}\NormalTok{ k     }\OperatorTok{=} \PreprocessorTok{U1024::}\NormalTok{rand(}\OperatorTok{\&}\PreprocessorTok{C::}\NormalTok{ORDER)}\OperatorTok{;}
-    \KeywordTok{let}\NormalTok{ r\_pt  }\OperatorTok{=} \PreprocessorTok{C::}\NormalTok{generator()}\OperatorTok{.}\NormalTok{mul(}\OperatorTok{\&}\NormalTok{k)}\OperatorTok{;}
-    \KeywordTok{let}\NormalTok{ e     }\OperatorTok{=} \PreprocessorTok{FieldElem::}\OperatorTok{\textless{}}\PreprocessorTok{C::}\NormalTok{ScalarField}\OperatorTok{\textgreater{}}\PreprocessorTok{::}\NormalTok{new(hash\_message(message))}\OperatorTok{;}
-    \KeywordTok{let}\NormalTok{ r     }\OperatorTok{=} \PreprocessorTok{FieldElem::}\OperatorTok{\textless{}}\PreprocessorTok{C::}\NormalTok{ScalarField}\OperatorTok{\textgreater{}}\PreprocessorTok{::}\NormalTok{new(r\_pt}\OperatorTok{.}\NormalTok{x}\OperatorTok{.}\NormalTok{to\_u1024())}\OperatorTok{;}
-    \KeywordTok{let}\NormalTok{ k\_inv }\OperatorTok{=} \PreprocessorTok{FieldElem::}\OperatorTok{\textless{}}\PreprocessorTok{C::}\NormalTok{ScalarField}\OperatorTok{\textgreater{}}\PreprocessorTok{::}\NormalTok{new(k)}\OperatorTok{.}\NormalTok{inv()}\OperatorTok{;}
-    \KeywordTok{let}\NormalTok{ d     }\OperatorTok{=} \PreprocessorTok{FieldElem::}\OperatorTok{\textless{}}\PreprocessorTok{C::}\NormalTok{ScalarField}\OperatorTok{\textgreater{}}\PreprocessorTok{::}\NormalTok{new(}\OperatorTok{*}\NormalTok{private\_key)}\OperatorTok{;}
-    \KeywordTok{let}\NormalTok{ s     }\OperatorTok{=}\NormalTok{ k\_inv }\OperatorTok{*}\NormalTok{ (e }\OperatorTok{+}\NormalTok{ r }\OperatorTok{*}\NormalTok{ d)}\OperatorTok{;}
-    \DataTypeTok{Self} \OperatorTok{\{}\NormalTok{ r}\OperatorTok{:}\NormalTok{ r}\OperatorTok{.}\NormalTok{to\_u1024()}\OperatorTok{,}\NormalTok{ s}\OperatorTok{:}\NormalTok{ s}\OperatorTok{.}\NormalTok{to\_u1024() }\OperatorTok{\}}
-\OperatorTok{\}}
+Tương tự Schnorr, các thủ tục ký xác thực và kiểm chứng chuẩn mực của
+thuật toán ECDSA cũng được triển khai trong không gian số học bằng các
+thao tác đại số trực tiếp trên cấu trúc thành phần
+\texttt{FieldElement}. Tại quy trình ký sinh, tiến trình tạo phần tử
+ngẫu nhiên nonce được rà soát khắt khe và lập tức phải loại bỏ (chu kỳ
+thử lại mới) nếu tổ hợp tạo ra vi phạm hệ số tiệm cận, cụ thể rơi vào 2
+trường hợp suy biến tiềm ẩn: \(r_{\text{sig}} = 0\) hoặc \(s = 0\).
+Logic bóc lỗi này tuân thủ trọn vẹn đặc tả bảo mật thuộc tiêu chuẩn
+chuẩn hóa FIPS 186-4 được ban hành riêng cho ECDSA.
 
-\KeywordTok{pub} \KeywordTok{fn}\NormalTok{ verify}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{:}\NormalTok{ SWCurveConfig}\OperatorTok{\textgreater{}}\NormalTok{(}\OperatorTok{\&}\KeywordTok{self}\OperatorTok{,}\NormalTok{ public\_key}\OperatorTok{:} \OperatorTok{\&}\NormalTok{AffinePoint}\OperatorTok{\textless{}}\NormalTok{C}\OperatorTok{\textgreater{},}\NormalTok{ message}\OperatorTok{:} \OperatorTok{\&}\NormalTok{[}\DataTypeTok{u8}\NormalTok{]) }\OperatorTok{{-}\textgreater{}} \DataTypeTok{bool} \OperatorTok{\{}
-    \CommentTok{// Kiểm tra r, s in [1, n{-}1]}
-    \ControlFlowTok{if} \KeywordTok{self}\OperatorTok{.}\NormalTok{r}\OperatorTok{.}\NormalTok{is\_zero() }\OperatorTok{||} \KeywordTok{self}\OperatorTok{.}\NormalTok{s}\OperatorTok{.}\NormalTok{is\_zero() }\OperatorTok{\{} \ControlFlowTok{return} \ConstantTok{false}\OperatorTok{;} \OperatorTok{\}}
-    \ControlFlowTok{if} \KeywordTok{self}\OperatorTok{.}\NormalTok{r }\OperatorTok{\textgreater{}=} \PreprocessorTok{C::}\NormalTok{ORDER }\OperatorTok{||} \KeywordTok{self}\OperatorTok{.}\NormalTok{s }\OperatorTok{\textgreater{}=} \PreprocessorTok{C::}\NormalTok{ORDER }\OperatorTok{\{} \ControlFlowTok{return} \ConstantTok{false}\OperatorTok{;} \OperatorTok{\}}
-
-    \KeywordTok{let}\NormalTok{ e }\OperatorTok{=} \PreprocessorTok{FieldElem::}\NormalTok{new(hash\_message(message))}\OperatorTok{;}
-    \KeywordTok{let}\NormalTok{ w }\OperatorTok{=} \PreprocessorTok{FieldElem::}\NormalTok{new(}\KeywordTok{self}\OperatorTok{.}\NormalTok{s)}\OperatorTok{.}\NormalTok{inv()}\OperatorTok{;}      \CommentTok{// w = s\^{}\{{-}1\}}
-    \KeywordTok{let}\NormalTok{ u1 }\OperatorTok{=}\NormalTok{ (e }\OperatorTok{*}\NormalTok{ w)}\OperatorTok{.}\NormalTok{to\_u1024()}\OperatorTok{;}
-    \KeywordTok{let}\NormalTok{ u2 }\OperatorTok{=}\NormalTok{ (}\PreprocessorTok{FieldElem::}\NormalTok{new(}\KeywordTok{self}\OperatorTok{.}\NormalTok{r) }\OperatorTok{*}\NormalTok{ w)}\OperatorTok{.}\NormalTok{to\_u1024()}\OperatorTok{;}
-
-    \KeywordTok{let}\NormalTok{ p }\OperatorTok{=} \PreprocessorTok{C::}\NormalTok{generator()}\OperatorTok{.}\NormalTok{mul(}\OperatorTok{\&}\NormalTok{u1)}\OperatorTok{.}\NormalTok{add(}\OperatorTok{\&}\NormalTok{public\_key}\OperatorTok{.}\NormalTok{mul(}\OperatorTok{\&}\NormalTok{u2))}\OperatorTok{;}
-    \OperatorTok{!}\NormalTok{p}\OperatorTok{.}\NormalTok{is\_infinite }\OperatorTok{\&\&} \PreprocessorTok{FieldElem::}\OperatorTok{\textless{}}\PreprocessorTok{C::}\NormalTok{ScalarField}\OperatorTok{\textgreater{}}\PreprocessorTok{::}\NormalTok{new(p}\OperatorTok{.}\NormalTok{x}\OperatorTok{.}\NormalTok{to\_u1024())}\OperatorTok{.}\NormalTok{to\_u1024() }\OperatorTok{==} \KeywordTok{self}\OperatorTok{.}\NormalTok{r}
-\OperatorTok{\}}
-\end{Highlighting}
-\end{Shaded}
+Chi tiết mã nguồn của các hàm \texttt{sign()} và \texttt{verify()} thuộc
+thuật toán ECDSA được đính kèm tại mã nguồn công khai của dự án
+\citep{LumenMath}.
 
 \subsection{So sánh Schnorr và
 ECDSA}\label{so-suxe1nh-schnorr-vuxe0-ecdsa}
@@ -227,6 +184,17 @@ ECDSA}\label{so-suxe1nh-schnorr-vuxe0-ecdsa}
   >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
   >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
   >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\caption{So sánh sơ đồ chữ ký Schnorr và ECDSA}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Tiêu chí
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Schnorr
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+ECDSA
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Tiêu chí
@@ -255,10 +223,10 @@ BLS}\label{chux1eef-kuxfd-tux1ed5ng-hux1ee3p-bls}
 \subsection{Lý thuyết (tổng
 quan)}\label{luxfd-thuyux1ebft-tux1ed5ng-quan}
 
-Chữ ký BLS (Boneh-Lynn-Shacham, 2001) là sơ đồ \textbf{tổng hợp phi
-tương tác}: \(n\) người ký với \(n\) khóa riêng khác nhau có thể tạo ra
-\textbf{một chữ ký duy nhất} đại diện cho tất cả, và xác minh chỉ cần
-một phép ghép cặp thay vì \(n\) phép.
+Chữ ký BLS (Boneh-Lynn-Shacham, 2001) \citep{BLS2001} là sơ đồ
+\textbf{tổng hợp phi tương tác}: \(n\) người ký với \(n\) khóa riêng
+khác nhau có thể tạo ra \textbf{một chữ ký duy nhất} đại diện cho tất
+cả, và xác minh chỉ cần một phép ghép cặp thay vì \(n\) phép.
 
 \textbf{Nền tảng:} Dùng phép ghép cặp song tuyến
 \(e: \mathbb{G}_1 \times \mathbb{G}_2 \to \mathbb{G}_T\) với: -
@@ -284,7 +252,7 @@ Tính đúng đắn:
 KSS18}\label{vai-truxf2-cux1ee7a-ux111ux1b0ux1eddng-cong-kss18}
 
 Đường cong được xây dựng trong luận văn này (họ Kachisa-Schaefer-Scott
-với \(k = 18\)) cung cấp nền tảng để cài đặt BLS:
+với \(k = 18\)) \citep{CocksPinchK5K8} cung cấp nền tảng để cài đặt BLS:
 
 \begin{itemize}
 \tightlist

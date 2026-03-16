@@ -7,16 +7,68 @@
 \addcontentsline{toc}{chapter}{Danh mục viết tắt}
 \chapter*{Danh mục viết tắt}
 
-\begin{longtable}[]{@{}ll@{}}
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.4444}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5556}}@{}}
 \toprule\noalign{}
-Viết tắt & Giải thích \\
+\begin{minipage}[b]{\linewidth}\raggedright
+Viết tắt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Tên đầy đủ
+\end{minipage} \\
 \midrule\noalign{}
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-AI & Artificial Intelligence (Trí tuệ nhân tạo) \\
-ML & Machine Learning (Học máy) \\
-API & Application Programming Interface \\
+AES & Advanced Encryption Standard --- Tiêu chuẩn mã hóa nâng cao \\
+AVX & Advanced Vector Extensions --- Tập lệnh vector mở rộng
+(Intel/AMD) \\
+BLS & Boneh-Lynn-Shacham --- Sơ đồ chữ ký tổng hợp dựa trên ghép cặp \\
+BN & Barreto-Naehrig --- Họ đường cong elliptic pairing-friendly \\
+CM & Complex Multiplication --- Phương pháp Nhân phức \\
+CP & Cocks-Pinch --- Thuật toán sinh đường cong elliptic \\
+CSPRNG & Cryptographically Secure Pseudo-Random Number Generator --- Bộ
+sinh số giả ngẫu nhiên an toàn mật mã \\
+CVE & Common Vulnerabilities and Exposures --- Danh mục lỗ hổng bảo
+mật \\
+DL & Discrete Logarithm --- Logarit rời rạc \\
+DLP & Discrete Logarithm Problem --- Bài toán logarit rời rạc \\
+ECC & Elliptic Curve Cryptography --- Mật mã đường cong Elliptic \\
+ECDLP & Elliptic Curve Discrete Logarithm Problem --- Bài toán logarit
+rời rạc trên đường cong Elliptic \\
+ECDSA & Elliptic Curve Digital Signature Algorithm --- Thuật toán chữ ký
+số đường cong Elliptic \\
+EUF-CMA & Existential Unforgeability under Chosen Message Attack ---
+Tính không thể giả mạo dưới tấn công thông điệp chọn trước \\
+FFT & Fast Fourier Transform --- Biến đổi Fourier nhanh \\
+FIPS & Federal Information Processing Standards --- Tiêu chuẩn xử lý
+thông tin liên bang (Hoa Kỳ) \\
+FRI & Fast Reed-Solomon Interactive Oracle Proof --- Chứng minh oracle
+tương tác Reed-Solomon nhanh \\
+KSS & Kachisa-Schaefer-Scott --- Họ đường cong elliptic
+pairing-friendly \\
+KZG & Kate-Zaverucha-Goldberg --- Sơ đồ cam kết đa thức \\
+MOV & Menezes-Okamoto-Vanstone --- Tấn công dùng phép ghép cặp \\
+MSM & Multi-Scalar Multiplication --- Phép nhân đa vô hướng \\
+NAF & Non-Adjacent Form --- Dạng biểu diễn không liền kề \\
+NFS & Number Field Sieve --- Thuật toán rây trường số \\
+NIST & National Institute of Standards and Technology --- Viện Tiêu
+chuẩn và Công nghệ Quốc gia Hoa Kỳ \\
+NTT & Number Theoretic Transform --- Biến đổi Lý thuyết số \\
+PKC & Public Key Cryptography --- Mật mã khóa công khai \\
+PKI & Public Key Infrastructure --- Hạ tầng khóa công khai \\
+PLONK & Permutations over Lagrange-bases for Oecumenical Noninteractive
+arguments of Knowledge --- Hệ chứng minh ZK không tương tác \\
+REDC & Montgomery Reduction --- Phép rút gọn Montgomery \\
+RSA & Rivest-Shamir-Adleman --- Hệ mật mã khóa công khai RSA \\
+SHA & Secure Hash Algorithm --- Thuật toán băm an toàn \\
+SIMD & Single Instruction, Multiple Data --- Một lệnh, nhiều dữ liệu \\
+SSSA & Smart-Satoh-Araki --- Tấn công đường cong dị thường
+(Anomalous) \\
+SSH & Secure Shell --- Giao thức đăng nhập từ xa an toàn \\
+TLS & Transport Layer Security --- Bảo mật tầng giao vận \\
+TNFS & Tower Number Field Sieve --- Thuật toán rây trường số tháp \\
+ZK & Zero-Knowledge --- Chứng minh không tiết lộ thông tin \\
 \end{longtable}
 
 \FloatBarrier
