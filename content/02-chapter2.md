@@ -1,9 +1,9 @@
 ---
 title: Cơ sở toán học
-chapter: 2
+chapter: 1
 ---
 
-Chương này trình bày các khái niệm toán học nền tảng được sử dụng trong toàn bộ luận văn: cấu trúc trường hữu hạn, đường cong elliptic Short Weierstrass và các phép toán nhóm trên nó, cùng với các kỹ thuật số học tối ưu (Montgomery, Fermat) được cài đặt trực tiếp trong thư viện `curve1024`.
+Chương này trình bày các khái niệm toán học nền tảng được sử dụng trong toàn bộ luận văn: cấu trúc trường hữu hạn, đường cong elliptic Short Weierstrass và các phép toán nhóm trên nó [@Silverman2009; @Washington2008], cùng với các kỹ thuật số học tối ưu (Montgomery, Fermat) được cài đặt trực tiếp trong thư viện `curve1024`.
 
 
 # Định nghĩa Trường số nguyên tố
@@ -74,7 +74,7 @@ trong đó $\mathcal{O}$ là **điểm vô cực** (point at infinity) — phầ
 
 ## Cấu trúc nhóm
 
-Tập $E(\mathbb{F}_p)$ tạo thành một **nhóm Abel hữu hạn** với phép cộng điểm. Bậc của nhóm $\#E(\mathbb{F}_p) = p + 1 - t$ (định lý Hasse), trong đó $|t| \leq 2\sqrt{p}$ là vết Frobenius.
+Tập $E(\mathbb{F}_p)$ tạo thành một **nhóm Abel hữu hạn** với phép cộng điểm. Bậc của nhóm $\#E(\mathbb{F}_p) = p + 1 - t$ (định lý Hasse [@Silverman2009]), trong đó $|t| \leq 2\sqrt{p}$ là vết Frobenius.
 
 Trong cài đặt:
 
@@ -90,7 +90,7 @@ pub struct AffinePoint<C: SWCurveConfig> {
 
 ## Quy tắc hình học
 
-Phép cộng trên $E$ được định nghĩa bằng quy tắc "dây-cung và tiếp tuyến":
+Phép cộng trên $E$ được định nghĩa bằng quy tắc "dây cung và tiếp tuyến":
 
 - **Phần tử đơn vị:** $P + \mathcal{O} = \mathcal{O} + P = P$ với mọi $P$.
 - **Phần tử nghịch đảo:** $-( x, y) = (x, -y)$, vì $P + (-P) = \mathcal{O}$.
@@ -111,31 +111,9 @@ Mỗi công thức cần **1 phép nghịch đảo** (tính $\lambda$), 2–3 ph
 
 ## Cài đặt
 
-```rust
-pub fn add(&self, rhs: &Self) -> Self {
-    if self.is_infinite { return *rhs; }
-    if rhs.is_infinite  { return *self; }
-    if self.neg() == *rhs { return Self::infinite(); }
-    if *self == *rhs  { return self.double(); }
+Các bước cộng và nhân đôi điểm trên đường cong được cài đặt trực tiếp từ công thức đại số, thông qua hai hàm `add()` và `double()`. Đặc biệt, hệ thống tích hợp sẵn hàm `is_on_curve()` trong quá trình khởi tạo điểm kết quả thông qua hàm `new()` để kiểm tra và loại bỏ ngay lập tức các điểm không hợp lệ. Điều này giúp hệ thống bắt lỗi sớm và miễn nhiễm hoàn toàn với tấn công đường cong không hợp lệ (Invalid Curve Attack). 
 
-    let lambda = (rhs.y - self.y) * (rhs.x - self.x).inv();
-    let x3 = lambda.square() - self.x - rhs.x;
-    let y3 = lambda * (self.x - x3) - self.y;
-    Self::new(x3, y3)
-}
-
-pub fn double(&self) -> Self {
-    if self.is_infinite || self.y.is_zero() { return Self::infinite(); }
-    let three = FieldElement::new(U1024::from(3));
-    let two   = FieldElement::new(U1024::from(2));
-    let lambda = (three * self.x.square() + C::COEFF_A) * (two * self.y).inv();
-    let x3 = lambda.square() - self.x - self.x;
-    let y3 = lambda * (self.x - x3) - self.y;
-    Self::new(x3, y3)
-}
-```
-
-Hàm `new` gọi `assert!(point.is_on_curve())` để đảm bảo mọi điểm kết quả đều hợp lệ — bắt lỗi nhanh trong quá trình phát triển.
+Chi tiết mã nguồn cài đặt các hàm `add()` và `double()` được trình bày tại mã nguồn công khai của dự án [@LumenMath].
 
 # Phép nhân vô hướng (Scalar Multiplication)
 
@@ -182,18 +160,20 @@ Mỗi lần gọi `mul` thực hiện đúng 1024 lần `double` và tối đa 1
 
 Phép nhân vô hướng là hàm cốt lõi của mọi sơ đồ mật mã ECC:
 
-| Thao tác | Ký hiệu | Ứng dụng |
-|---|---|---|
-| Sinh khóa công khai | $Q = [d]G$ | Từ khóa riêng $d$ |
-| Cam kết ký (Schnorr/ECDSA) | $R = [k]G$ | Nonce commitment |
-| Xác minh Schnorr | $[s]G$ và $[e]Q$ | Hai lần nhân vô hướng |
-| Xác minh ECDSA | $[u_1]G + [u_2]Q$ | Hai lần nhân vô hướng |
+| Thao tác                   | Ký hiệu           | Ứng dụng              |
+| -------------------------- | ----------------- | --------------------- |
+| Sinh khóa công khai        | $Q = [d]G$        | Từ khóa riêng $d$     |
+| Cam kết ký (Schnorr/ECDSA) | $R = [k]G$        | Nonce commitment      |
+| Xác minh Schnorr           | $[s]G$ và $[e]Q$  | Hai lần nhân vô hướng |
+| Xác minh ECDSA             | $[u_1]G + [u_2]Q$ | Hai lần nhân vô hướng |
+
+: Vai trò của phép nhân vô hướng trong các sơ đồ mật mã ECC
 
 # Tối ưu số học: Phép nhân Montgomery
 
 ## Vấn đề
 
-Phép nhân thông thường $a \cdot b \pmod{p}$ đòi hỏi một phép chia đầy đủ để lấy số dư — rất đắt với số 1024-bit. Montgomery đề xuất thực hiện phép nhân trong **không gian Montgomery** để tránh phép chia.
+Phép nhân thông thường $a \cdot b \pmod{p}$ đòi hỏi một phép chia đầy đủ để lấy số dư — rất đắt với số 1024-bit. Montgomery đề xuất thực hiện phép nhân trong **không gian Montgomery** để tránh phép chia [@Montgomery1985].
 
 ## Biến đổi Montgomery
 
@@ -206,7 +186,10 @@ Phép nhân Montgomery (**REDC**) tính $\hat{a} \cdot \hat{b} \cdot R^{-1} \pmo
 | $a \cdot b \pmod{p}$ | cần chia cho $p$ | shift + trừ có điều kiện |
 | Chi phí | $O(n^2)$ + chia | $O(n^2)$ không chia |
 
+: So sánh chi phí phép nhân thông thường và Montgomery
+
 **Quy trình REDC** (với ba hằng số biên dịch: $R^2 \bmod p$, $-p^{-1} \bmod R$):
+
 1. Nhân $\text{lo}, \text{hi} = \hat{a} \cdot \hat{b}$
 2. $m = \text{lo} \cdot N' \bmod R$ với $N' = -p^{-1} \bmod R$
 3. $t = (\text{hi}, \text{lo}) + m \cdot p$ (chỉ giữ phần trên $R$)
@@ -233,27 +216,17 @@ Trong thực tế, hầu hết tính toán diễn ra trong không gian Montgomer
 
 # Lũy thừa nhanh (Square-and-Multiply)
 
-Hàm `pow` thực hiện lũy thừa $a^e \pmod{p}$ bằng phương pháp **square-and-multiply** với bảo vệ timing side-channel qua `conditional_select`:
+Hàm `pow` thực hiện lũy thừa $a^e \pmod{p}$ bằng phương pháp **square-and-multiply** (nhân bình phương liên tiếp). Việc cài đặt cấp thấp tiềm ẩn rủi ro lộ lọt thông tin khóa qua độ chênh lệch thời gian thực thi của các khối lệnh điều kiện.
+
+Để bảo vệ hệ thống trước tấn công kênh kề (timing side-channel), thay vì sử dụng cấu trúc rẽ nhánh `if-else` (mở ra nguy cơ phán đoán bit số mũ dựa trên thời gian thực thi của CPU branch-prediction), thủ tục sử dụng cách tính chọn hằng-thời-gian (constant-time execution):
 
 ```rust
-pub fn pow(&self, exp: U1024) -> Self {
-    let mut res  = Self::one();
-    let mut base = *self;
-    for i in 0..16 {           // 16 limb x 64 bit = 1024 bit
-        let mut limb = exp.0[i];
-        for _ in 0..64 {
-            let bit     = (limb & 1) as u8;
-            let product = res * base;
-            // Chọn res hoặc product dựa trên bit, không dùng nhánh if
-            res  = Self::conditional_select(&res, &product, bit.into());
-            base = base.square();
-            limb >>= 1;
-        }
-    }
-    res
-}
+// Cả hai nhánh điều kiện đều được tính toán
+let product = res * base;
+// Chỉ định phép gán qua hàm chuyển đổi bit, không dùng rẽ nhánh điều khiển
+res = Self::conditional_select(&res, &product, bit.into());
 ```
 
-`conditional_select` từ crate `subtle` đảm bảo cả hai nhánh thực hiện cùng số lệnh, loại bỏ thông tin qua thời gian thực thi (constant-time execution).
+Hàm `conditional_select` đảm bảo cả hai nhánh (khi bit bằng 0 hoặc 1) đều tiêu tốn một lượng chu kỳ lệnh (clock cycles) CPU bằng nhau hoàn toàn. Chi tiết mã nguồn vòng lặp 1024-bit của hàm `pow` được đính kèm tại mã nguồn công khai của dự án [@LumenMath].
 
 Nghịch đảo $a^{-1} = a^{p-2}$ dùng `pow` với $e = p - 2$: 1024 lần bình phương và ~512 lần nhân (trung bình), tổng $\approx 1536$ phép nhân Montgomery.

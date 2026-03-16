@@ -1,9 +1,9 @@
 ---
 title: Phương pháp xây dựng đường cong elliptic
-chapter: 3
+chapter: 2
 ---
 
-Chương này trình bày trọng tâm lý thuyết của luận văn: các phương pháp xây dựng đường cong elliptic có bậc nhúng (embedding degree) xác định, phục vụ cho các ứng dụng mật mã dựa trên phép ghép cặp (pairing-based cryptography). Chúng ta sẽ đi từ nền tảng lý thuyết của Phương pháp Nhân phức (CM) và Đa thức lớp Hilbert, đến thuật toán Cocks-Pinch truyền thống, và cuối cùng là thuật toán Cocks-Pinch Cải tiến được đề xuất trong luận văn này, với khả năng sinh tham số trường cơ sở có cấu trúc NTT-friendly nhằm kháng lại tấn công rây trường số tháp (Tower Number Field Sieve - TNFS).
+Chương này trình bày trọng tâm lý thuyết của luận văn: các phương pháp xây dựng đường cong elliptic có bậc nhúng (embedding degree) xác định, phục vụ cho các ứng dụng mật mã dựa trên phép ghép cặp (pairing-based cryptography) [@MoonMath]. Chúng ta sẽ đi từ nền tảng lý thuyết của Phương pháp Nhân phức (CM) và Đa thức lớp Hilbert [@Silverman2009], đến thuật toán Cocks-Pinch truyền thống [@CocksPinch2001], và cuối cùng là thuật toán Cocks-Pinch Cải tiến được đề xuất trong luận văn này, với khả năng sinh tham số trường cơ sở có cấu trúc NTT-friendly nhằm kháng lại tấn công rây trường số tháp (Tower Number Field Sieve - TNFS) [@BarbulescuDuquesne2019].
 
 
 # Ý tưởng cốt lõi
@@ -28,13 +28,15 @@ Khi đã có $D$, bước tiếp theo là tính **Đa thức lớp Hilbert** (Hi
 
 Bậc của $H_D(x)$ bằng **số lớp** (class number) $h(D)$ — một bất biến số học của thứ tự $\mathbb{Z}[\sqrt{D}]$. Với $|D|$ nhỏ:
 
-| $   | D   | $              | $h(D)$ | $H_D(x)$ |
-| --- | --- | -------------- | ------ | -------- |
-| 3   | 1   | $x$            |        |          |
-| 4   | 1   | $x - 1728$     |        |          |
-| 7   | 1   | $x + 3375$     |        |          |
-| 11  | 1   | $x + 32768$    |        |          |
-| 23  | 3   | $x^3 + \cdots$ |        |          |
+| $\lvert D \rvert$ | $h(D)$ | $H_D(x)$       |
+| ------------------ | ------ | --------------- |
+| 3                  | 1      | $x$             |
+| 4                  | 1      | $x - 1728$      |
+| 7                  | 1      | $x + 3375$      |
+| 11                 | 1      | $x + 32768$     |
+| 23                 | 3      | $x^3 + \cdots$  |
+
+: Đa thức lớp Hilbert $H_D(x)$ với các giá trị $|D|$ nhỏ
 
 Với $|D| = 3$ và $|D| = 4$, đa thức này bậc 1, nên **$j$-invariant được xác định ngay lập tức**: $j = 0$ và $j = 1728$ tương ứng. Đây là lý do tại sao secp256k1 ($j=0$, $D=-3$) và nhiều đường cong BLS có dạng đơn giản $y^2 = x^3 + b$.
 
@@ -58,34 +60,11 @@ $$t, \quad -t, \quad \frac{t \pm 3v}{2}, \quad \frac{-t \pm 3v}{2}$$
 
 trong đó $4p = t^2 + 3v^2$. Để xác định xoắn đúng, ta lần lượt thử các giá trị $b$ nhỏ và kiểm tra số điểm thực sự của đường cong $y^2 = x^3 + b$ bằng cách tính phép nhân vô hướng $[p+1-t']P$ với điểm ngẫu nhiên $P$.
 
-Trong cài đặt của luận văn (tệp `complex_multiplication.rs`), hàm `find_twist` thực hiện:
-
-```rust
-// Sáu bậc nhóm khả dĩ cho D = -3 (j = 0)
-let candidates = [
-    p1.borrowing_sub(&config.t).0,    //  p + 1 - t
-    p1.carrying_add(&config.t).0,     //  p + 1 + t
-    p1.borrowing_sub(&t3p).0,         //  p + 1 - (t+3v)/2
-    p1.carrying_add(&t3p).0,          //  p + 1 + (t+3v)/2
-    p1.borrowing_sub(&t3m).0,         //  p + 1 - (t-3v)/2
-    p1.carrying_add(&t3m).0,          //  p + 1 + (t-3v)/2
-];
-// Tìm bậc nào chia hết cho r, rồi tìm b tương ứng
-```
+Trong cài đặt của luận văn, hàm `find_twist` thực hiện tính toán và lọc nghiệm từ 6 vết Frobenius này. Chi tiết mã nguồn tính toán mảng ứng viên được trình bày tại mã nguồn công khai của dự án [@LumenMath].
 
 # Tham số đầu vào của hệ thống
 
-Trước khi đi vào chi tiết thuật toán, phần này giải thích ý nghĩa và cơ sở lựa chọn của 7 tham số đầu vào trong cài đặt thực tế (`cocks_pinch.rs`):
-
-```rust
-let k                    = 18u64;
-let d                    = U1024::from(3);
-let target_r_bits        = 512;
-let target_p_bits        = 1024;
-let max_attempts         = 100_000u64;
-let min_scalar_two_adicity = 32u32;
-let min_base_two_adicity   = 32u32;
-```
+Trước khi đi vào chi tiết thuật toán, phần này giải thích ý nghĩa và cơ sở lựa chọn của 7 tham số đầu vào trong cài đặt thực tế, đã được tổng hợp tại bảng đặc trưng ở cuối mục này.
 
 ## `k = 18` — Bậc nhúng (Embedding Degree)
 
@@ -93,7 +72,7 @@ Bậc nhúng $k$ xác định **trường mở rộng** $\mathbb{F}_{p^k}$ nơi 
 
 - **Cân bằng bảo mật:** Với $r \approx 2^{512}$ và $p \approx 2^{1024}$, kích thước trường mở rộng là $p^k \approx 2^{1024 \times 18} = 2^{18432}$ bit. Theo tiêu chuẩn NFS hiện tại, bài toán DLP trên $\mathbb{F}_{p^{18}}$ ở mức bảo mật $\geq 256$ bit — tương đương với mức bảo mật của khóa $r \approx 2^{512}$.
 - **Hỗ trợ Đa thức Cyclotomic bậc 18:** $\Phi_{18}(T) = T^6 - T^3 + 1$ cho phép sinh $r$ hiệu quả, có cấu trúc NTT-friendly tự nhiên khi $T \equiv 0 \pmod{2^k}$ (xem §3.3.1).
-- **Thực tế:** $k = 18$ là bậc nhúng phổ biến trong họ đường cong KSS18, phù hợp với mức bảo mật hậu lượng tử cao hơn các đường cong BLS12 (dùng trong Ethereum 2.0).
+- **Thực tế:** $k = 18$ là bậc nhúng phổ biến trong họ đường cong KSS18 [@CocksPinchK5K8], phù hợp với mức bảo mật hậu lượng tử cao hơn các đường cong BLS12 (dùng trong Ethereum 2.0).
 
 ## `d = 3` — Biệt thức CM ($|D|$)
 
@@ -161,13 +140,15 @@ Từ 7 tham số trên, đường cong được xây dựng có đặc trưng:
 | Dạng $r$ | $d \cdot 2^{33} + 1$ | NTT-friendly scalar field |
 | Dạng $p$ | $d \cdot 2^{34} + 1$ | NTT-friendly base field (kháng TNFS) |
 
+: Tổng hợp đặc trưng đường cong mục tiêu
+
 # Thuật toán Cocks-Pinch truyền thống
 
 ## Vấn đề: Xây dựng ngược từ $r$
 
 Phương pháp CM truyền thống xuất phát từ $p$ được chọn trước, đòi hỏi giải phương trình $4p = t^2 + |D|v^2$ — một bài toán biểu diễn số nguyên bởi dạng toàn phương (quadratic form) không hề dễ trong không gian lớn.
 
-**Thuật toán Cocks-Pinch (CP)** đảo chiều bài toán: **bắt đầu từ $r$ rồi xây dựng $p$**. Đây là cách tiếp cận tự nhiên hơn khi mục tiêu là đảm bảo $r$ có kích thước an toàn (ví dụ: 512 bit) với bậc nhúng $k$ cho trước.
+**Thuật toán Cocks-Pinch (CP)** [@CocksPinch2001] đảo chiều bài toán: **bắt đầu từ $r$ rồi xây dựng $p$**. Đây là cách tiếp cận tự nhiên hơn khi mục tiêu là đảm bảo $r$ có kích thước an toàn (ví dụ: 512 bit) với bậc nhúng $k$ cho trước.
 
 ## Điều kiện bậc nhúng
 
@@ -209,21 +190,7 @@ $$t = t_0 + h_t \cdot r, \quad y = y_0 + h_y \cdot r, \quad h_t, h_y \in \{-20, 
 
 cho đến khi $\frac{t^2 + 3y^2}{4}$ là số nguyên tố đúng kích thước mục tiêu.
 
-Trong cài đặt (`cocks_pinch.rs`), hàm `try_lift_to_prime` thực hiện tìm kiếm này:
-
-```rust
-for ht in -half_range..=half_range {
-    for hy in -half_range..=half_range {
-        let t = apply_lift(lp.t0, r, ht as i32);
-        let y = apply_lift(lp.y0, r, hy as i32);
-        // p = (t² + 3y²) / 4
-        let numerator = t² + 3y²;
-        if numerator % 4 != 0 { continue; }
-        let p = numerator / 4;
-        if is_prime(&p) { return Some(CurveParams { p, r, t, y, .. }); }
-    }
-}
-```
+Trong phần cài đặt hệ thống, hàm `try_lift_to_prime` thực hiện quá trình quét lưới hai chiều này để lọc ra các ứng viên thỏa mãn. Chi tiết mã nguồn của thiết kế vòng lặp quét lưới được đính kèm tại mã nguồn công khai của dự án [@LumenMath].
 
 ## Phân tích độ phức tạp trung bình
 
@@ -233,7 +200,7 @@ Mật độ số nguyên tố lân cận $N$ là khoảng $1/\ln N$, tức $1/10
 
 ## Động lực: Tấn công rây trường số tháp (TNFS)
 
-Bảo mật của phép ghép cặp phụ thuộc vào độ khó của **bài toán logarit rời rạc** (DLP) trên trường mở rộng $\mathbb{F}_{p^k}$. Năm 2016, Barbulescu và Duquesne chỉ ra rằng thuật toán **Tower Number Field Sieve (TNFS)** — một biến thể của NFS — có thể giảm đáng kể độ phức tạp tấn công DLP trên $\mathbb{F}_{p^k}$ khi $k$ composite và $p$ có cấu trúc đặc biệt. Điều này **phá vỡ ước lượng bảo mật ban đầu** của các đường cong như BN256 (từ ~128 bit xuống còn ~100 bit hiệu quả).
+Bảo mật của phép ghép cặp phụ thuộc vào độ khó của **bài toán logarit rời rạc** (DLP) trên trường mở rộng $\mathbb{F}_{p^k}$. Năm 2016, Barbulescu và Duquesne [@BarbulescuDuquesne2019] chỉ ra rằng thuật toán **Tower Number Field Sieve (TNFS)** — một biến thể của NFS — có thể giảm đáng kể độ phức tạp tấn công DLP trên $\mathbb{F}_{p^k}$ khi $k$ composite và $p$ có cấu trúc đặc biệt. Điều này **phá vỡ ước lượng bảo mật ban đầu** của các đường cong như BN256 (từ ~128 bit xuống còn ~100 bit hiệu quả).
 
 Để kháng lại TNFS, cần đảm bảo trường cơ sở của đường cong có **cấu trúc tốt** ở cả hai trường: trường vô hướng $\mathbb{F}_r$ (phục vụ tính toán ZK proof) và trường cơ sở $\mathbb{F}_p$ (phục vụ phép ghép cặp).
 
@@ -294,21 +261,7 @@ $$\text{extra} = \max(0,\, s_p - 3k), \quad \text{half\_range} = 20 + 2^{\text{e
 
 Điều này đảm bảo có đủ ứng viên $h_t, h_y$ để **bao phủ mọi tổ hợp bit từ vị trí $3k$ đến $s_p$** trong $p-1$.
 
-```rust
-struct LiftParams<'a> {
-    t0: &'a U1024,
-    y0: &'a U1024,
-    target_p_bits: usize,
-    min_base_two_adicity: u32,  // s_p
-    r_two_adicity: u32,         // 3k
-}
-
-// Mở rộng lưới tìm kiếm tỉ lệ với khoảng cách giữa s_p và 3k
-let extra = lp.min_base_two_adicity
-    .saturating_sub(lp.r_two_adicity)
-    .min(10); // giới hạn để lưới không bùng nổ
-let half_range = 20i64 + (1i64 << extra);
-```
+Quá trình tính toán động độ mở rộng của lưới tỷ lệ thuận với khoảng cách giữa mục tiêu bậc hai-adicity (two-adicity) của trường cơ sở so với mặc định. Chi tiết cấu trúc dữ liệu `LiftParams` và thuật toán tính toán độ mở rộng này được trình bày tại mã nguồn công khai của dự án [@LumenMath].
 
 ## Phân tích hiệu năng của thuật toán cải tiến
 
@@ -326,6 +279,8 @@ Bảng dưới so sánh thuật toán CP gốc và CP Cải tiến với cùng m
 | $r$ hỗ trợ NTT? | Không | Có (bậc $2^{33}$) |
 | $p$ hỗ trợ NTT? | Không | Có (bậc $2^{34}$) |
 
+: So sánh thuật toán CP truyền thống và CP Cải tiến
+
 *Kết quả thực nghiệm điển hình:*
 ```
 r two-adicity: 2^33 | (r-1)  →  r = d.2^33 + 1, NTT đến bậc 2^33
@@ -335,7 +290,7 @@ Thời gian tổng: 32.81s
 
 ## So sánh với BLS12-381
 
-Đường cong BLS12-381 — chuẩn công nghiệp hiện tại trong ZK proof — có:
+Đường cong BLS12-381 [@BLS12_381] — chuẩn công nghiệp hiện tại trong ZK proof — có:
 - $r$ two-adicity = **32** (đủ cho ZK circuits đến $2^{32}$ ràng buộc)
 - $p$ two-adicity = **32**
 
