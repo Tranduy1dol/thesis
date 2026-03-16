@@ -64,9 +64,7 @@ for md_file in "${!CHAPTERS[@]}"; do
             --from markdown+yaml_metadata_block+implicit_figures+table_captions+pipe_tables \
             --to latex \
             --template=templates/pandoc/chapter.latex \
-            --citeproc \
-            --bibliography=references.bib \
-            --csl="$CSL" \
+            --natbib \
             --output "$tex_file"
     else
         echo "  ⚠️  Skipping $md_file (not found)"
