@@ -213,6 +213,7 @@ $$2^s \mid (q - 1) \quad \text{với } s \text{ đủ lớn}$$
 Số $s$ được gọi là **số hạng hai-adicity** (two-adicity) của $q$. Ý nghĩa: trường $\mathbb{F}_q$ chứa một căn nguyên thủy $2^s$-th của đơn vị, cho phép áp dụng **Biến đổi Lý thuyết số (NTT)** — tức FFT trên trường hữu hạn — để nhân đa thức bậc cao trong $O(n \log n)$ thay vì $O(n^2)$.
 
 Đây là yếu tố *quyết định* hiệu năng trong:
+
 - Sinh chứng minh ZK (Groth16, PLONK): tính $H(x) = (A(x) \cdot B(x) - C(x)) / Z(x)$
 - Các cam kết đa thức (KZG, FRI)
 - Thuật toán MSM (Multi-scalar multiplication) biến thể NTT

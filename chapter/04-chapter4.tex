@@ -72,13 +72,33 @@ rạc (DL) \citep{Schnorr1989}. Nó được ưa chuộng vì độ đơn giản
 minh bảo mật (trong mô hình Oracle ngẫu nhiên) và hỗ trợ tổng hợp tự
 nhiên.
 
-\textbf{Ký:} Cho khóa riêng \(d \in [1, r-1]\) và thông điệp \(m\): 1.
-Chọn ngẫu nhiên \(k \xleftarrow{R} [1, r-1]\) 2. Tính điểm \(R = [k]G\)
-3. Tính thách thức \(e = H(R_x \| R_y \| m) \pmod{r}\) 4. Tính
-\(s = k + e \cdot d \pmod{r}\) 5. Chữ ký: \(\sigma = (R, s)\)
+\textbf{Ký:} Cho khóa riêng \(d \in [1, r-1]\) và thông điệp \(m\):
 
-\textbf{Xác minh:} Cho khóa công khai \(Q\) và chữ ký \((R, s)\): 1.
-Tính \(e = H(R_x \| R_y \| m)\) 2. Kiểm tra \([s]G = R + [e]Q\)
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Chọn ngẫu nhiên \(k \xleftarrow{R} [1, r-1]\)
+\item
+  Tính điểm \(R = [k]G\)
+\item
+  Tính thách thức \(e = H(R_x \| R_y \| m) \pmod{r}\)
+\item
+  Tính \(s = k + e \cdot d \pmod{r}\)
+\item
+  Chữ ký: \(\sigma = (R, s)\)
+\end{enumerate}
+
+\textbf{Xác minh:} Cho khóa công khai \(Q\) và chữ ký \((R, s)\):
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Tính \(e = H(R_x \| R_y \| m)\)
+\item
+  Kiểm tra \([s]G = R + [e]Q\)
+\end{enumerate}
 
 Tính đúng đắn: \([s]G = [k + ed]G = [k]G + [e][d]G = R + [e]Q\) {[}ok{]}
 
@@ -138,17 +158,43 @@ và FIPS 186-4 \citep{FIPS186_4}. Nó khác Schnorr ở chỗ \(r\) trong chữ
 ký là \textbf{tọa độ \(x\) của điểm \(R\)} lấy modulo \(n\), thay vì bản
 thân điểm \(R\).
 
-\textbf{Ký:} Cho khóa riêng \(d\) và thông điệp \(m\): 1.
-\(k \xleftarrow{R} [1, r-1]\) 2. \(R = [k]G\) 3.
-\(r_{\text{sig}} = R_x \pmod{n}\) (nếu \(r_{\text{sig}} = 0\), thử lại)
-4. \(e = H(m)\) 5. \(s = k^{-1}(e + r_{\text{sig}} \cdot d) \pmod{n}\)
-(nếu \(s = 0\), thử lại) 6. Chữ ký: \(\sigma = (r_{\text{sig}}, s)\)
+\textbf{Ký:} Cho khóa riêng \(d\) và thông điệp \(m\):
 
-\textbf{Xác minh:} 1. Kiểm tra \(r_{\text{sig}}, s \in [1, n-1]\) 2.
-\(e = H(m)\), \(w = s^{-1} \pmod{n}\) 3. \(u_1 = ew\),
-\(u_2 = r_{\text{sig}} \cdot w\), cả hai tính mod \(n\) 4.
-\(P = [u_1]G + [u_2]Q\) 5. Hợp lệ khi \(P \neq \mathcal{O}\) và
-\(P_x \pmod{n} = r_{\text{sig}}\)
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \(k \xleftarrow{R} [1, r-1]\)
+\item
+  \(R = [k]G\)
+\item
+  \(r_{\text{sig}} = R_x \pmod{n}\) (nếu \(r_{\text{sig}} = 0\), thử
+  lại)
+\item
+  \(e = H(m)\)
+\item
+  \(s = k^{-1}(e + r_{\text{sig}} \cdot d) \pmod{n}\) (nếu \(s = 0\),
+  thử lại)
+\item
+  Chữ ký: \(\sigma = (r_{\text{sig}}, s)\)
+\end{enumerate}
+
+\textbf{Xác minh:}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Kiểm tra \(r_{\text{sig}}, s \in [1, n-1]\)
+\item
+  \(e = H(m)\), \(w = s^{-1} \pmod{n}\)
+\item
+  \(u_1 = ew\), \(u_2 = r_{\text{sig}} \cdot w\), cả hai tính mod \(n\)
+\item
+  \(P = [u_1]G + [u_2]Q\)
+\item
+  Hợp lệ khi \(P \neq \mathcal{O}\) và \(P_x \pmod{n} = r_{\text{sig}}\)
+\end{enumerate}
 
 \subsection{Cấu trúc dữ
 liệu}\label{cux1ea5u-truxfac-dux1eef-liux1ec7u-1}
@@ -235,10 +281,16 @@ khác nhau có thể tạo ra \textbf{một chữ ký duy nhất} đại diện 
 cả, và xác minh chỉ cần một phép ghép cặp thay vì \(n\) phép.
 
 \textbf{Nền tảng:} Dùng phép ghép cặp song tuyến
-\(e: \mathbb{G}_1 \times \mathbb{G}_2 \to \mathbb{G}_T\) với: -
-\(\mathbb{G}_1 = E(\mathbb{F}_p)\),
-\(\mathbb{G}_2 = E'(\mathbb{F}_{p^2})\) (hoặc tương đương) -
-\(\mathbb{G}_T \subset \mathbb{F}_{p^k}^*\)
+\(e: \mathbb{G}_1 \times \mathbb{G}_2 \to \mathbb{G}_T\) với:
+
+\begin{itemize}
+\tightlist
+\item
+  \(\mathbb{G}_1 = E(\mathbb{F}_p)\),
+  \(\mathbb{G}_2 = E'(\mathbb{F}_{p^2})\) (hoặc tương đương)
+\item
+  \(\mathbb{G}_T \subset \mathbb{F}_{p^k}^*\)
+\end{itemize}
 
 \textbf{Ký:} Người thứ \(i\) với khóa riêng \(d_i\):
 \[\sigma_i = [d_i] H(m) \in \mathbb{G}_1\] trong đó
