@@ -245,6 +245,9 @@ let r = cyclotomic_phi18(&t_val);
 // Đảm bảo r thỏa mãn: two_adicity(r-1) = 3 * v_2(T) >= s
 ```
 
+\captionof{lstlisting}{Cài đặt ràng buộc $T$ để đạt two-adicity cho $r$}\label{lst:ch3_t_constraint}\vspace{12pt}
+
+
 Với `min_scalar_two_adicity = 32`, ta cần $\lceil 32/3 \rceil = 11$, tức $T \equiv 0 \pmod{2^{11}}$. Điều này **không làm giảm không gian tham số** đáng kể — vẫn còn $2^{85}/2^{11} = 2^{74}$ ứng viên $T$ trong dải hợp lệ.
 
 ## Cải tiến 2: NTT-friendly $p$ qua mở rộng lưới nâng

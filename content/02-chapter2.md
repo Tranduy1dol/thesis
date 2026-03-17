@@ -32,6 +32,9 @@ pub struct PrimeFieldElement<C: PrimeFieldConfig> {
 }
 ```
 
+\captionof{lstlisting}{Định nghĩa PrimeFieldConfig và PrimeFieldElement}\label{lst:ch2_primefield}\vspace{12pt}
+
+
 Thiết kế này cho phép trình biên dịch mở inline toàn bộ hằng số tại thời gian biên dịch (zero-cost abstraction): hai trường khác nhau $\mathbb{F}_p$ và $\mathbb{F}_r$ dùng chung code nhưng có tham số riêng biệt không thể nhầm lẫn.
 
 ## Các phép toán cơ bản
@@ -48,6 +51,9 @@ fn add(self, rhs: Self) -> Self {
 }
 ```
 
+\captionof{lstlisting}{Cài đặt phép cộng trên trường hữu hạn modulo $p$}\label{lst:ch2_add}\vspace{12pt}
+
+
 Phép cộng không cần phép chia đầy đủ — chỉ cần một phép trừ có điều kiện. Chi phí: $O(n)$ với $n$ là số limb (16 limb x 64 bit = 1024 bit).
 
 **Nhân** dùng phép nhân Montgomery (xem §2.4).
@@ -59,6 +65,9 @@ pub fn inv(&self) -> Self {
     self.pow(C::MODULUS - 2)  // a^(p-2) mod p
 }
 ```
+
+\captionof{lstlisting}{Cài đặt phép nghịch đảo bằng Định lý nhỏ Fermat}\label{lst:ch2_inv}\vspace{12pt}
+
 
 # Đường cong elliptic Short Weierstrass
 
@@ -85,6 +94,9 @@ pub struct AffinePoint<C: SWCurveConfig> {
     pub is_infinite: bool,
 }
 ```
+
+\captionof{lstlisting}{Định nghĩa cấu trúc điểm AffinePoint}\label{lst:ch2_affine}\vspace{12pt}
+
 
 # Phép cộng điểm (Point Addition)
 
@@ -154,6 +166,9 @@ pub fn mul(&self, scalar: &U1024) -> Self {
 }
 ```
 
+\captionof{lstlisting}{Thuật toán nhân vô hướng Double-and-Add}\label{lst:ch2_mul}\vspace{12pt}
+
+
 Mỗi lần gọi `mul` thực hiện đúng 1024 lần `double` và tối đa 1024 lần `add`. Chi phí tính toán chủ yếu đến từ phép nghịch đảo trong $\mathbb{F}_p$ (mỗi lần `add`/`double` cần 1 nghịch đảo, tức $p^{p-2}$ — một lũy thừa 1024-bit).
 
 ## Tầm quan trọng
@@ -207,6 +222,9 @@ fn reduce(lo: &U1024, hi: &U1024) -> U1024 {
 }
 ```
 
+\captionof{lstlisting}{Hàm giảm bậc Montgomery (REDC)}\label{lst:ch2_reduce}\vspace{12pt}
+
+
 ## Chuyển đổi vào/ra không gian Montgomery
 
 - **Chuyển vào:** `PrimeFieldElement::new(a)` tính $a \cdot R^2 \cdot R^{-1} = a \cdot R \pmod{p}$.
@@ -226,6 +244,9 @@ let product = res * base;
 // Chỉ định phép gán qua hàm chuyển đổi bit, không dùng rẽ nhánh điều khiển
 res = Self::conditional_select(&res, &product, bit.into());
 ```
+
+\captionof{lstlisting}{Phép gán hằng-thời-gian trong lũy thừa chống tấn công kênh kề}\label{lst:ch2_pow_constant_time}\vspace{12pt}
+
 
 Hàm `conditional_select` đảm bảo cả hai nhánh (khi bit bằng 0 hoặc 1) đều tiêu tốn một lượng chu kỳ lệnh (clock cycles) CPU bằng nhau hoàn toàn. Chi tiết mã nguồn vòng lặp 1024-bit của hàm `pow` được đính kèm tại mã nguồn công khai của dự án [@LumenMath].
 

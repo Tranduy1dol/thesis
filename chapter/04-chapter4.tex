@@ -27,6 +27,8 @@ Mọi sơ đồ chữ ký đều dùng chung cấu trúc cặp khóa:
 \end{Highlighting}
 \end{Shaded}
 
+\captionof{lstlisting}{Cấu trúc dữ liệu cặp khóa KeyPair}\label{lst:ch4_keypair}\vspace{12pt}
+
 \begin{itemize}
 \tightlist
 \item
@@ -90,6 +92,8 @@ Tính đúng đắn: \([s]G = [k + ed]G = [k]G + [e][d]G = R + [e]Q\) {[}ok{]}
 \OperatorTok{\}}
 \end{Highlighting}
 \end{Shaded}
+
+\captionof{lstlisting}{Cấu trúc dữ liệu chữ ký Schnorr}\label{lst:ch4_schnorr}\vspace{12pt}
 
 Kích thước chữ ký: \(2 \times 128 + 128 = \mathbf{384}\) byte (R gồm hai
 tọa độ \(x, y\) mỗi tọa độ 128 byte, cộng thêm \(s\) 128 byte).
@@ -157,6 +161,8 @@ liệu}\label{cux1ea5u-truxfac-dux1eef-liux1ec7u-1}
 \OperatorTok{\}}
 \end{Highlighting}
 \end{Shaded}
+
+\captionof{lstlisting}{Cấu trúc dữ liệu chữ ký ECDSA}\label{lst:ch4_ecdsa}\vspace{12pt}
 
 Kích thước chữ ký: \(128 + 128 = \mathbf{256}\) byte --- nhỏ hơn Schnorr
 vì không lưu điểm \(R\) đầy đủ.
@@ -284,12 +290,16 @@ tiếp theo. Chương này tập trung vào Schnorr và ECDSA trên
 Binary \texttt{curve1024-sig} cung cấp giao diện dòng lệnh kiểu GPG cho
 toàn bộ vòng đời khóa:
 
-\begin{verbatim}
-curve1024-sig keygen [-o <file>]
-curve1024-sig sign   -f <file> [-k <key>] [--scheme schnorr|ecdsa]
-curve1024-sig verify -f <file> [-k <pub>]
-curve1024-sig export-pub [-k <priv>] [-o <pub>]
-\end{verbatim}
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{curve1024{-}sig}\NormalTok{ keygen [{-}o }\OperatorTok{\textless{}}\NormalTok{file}\OperatorTok{\textgreater{}}\NormalTok{]}
+\ExtensionTok{curve1024{-}sig}\NormalTok{ sign   }\AttributeTok{{-}f} \OperatorTok{\textless{}}\NormalTok{file}\OperatorTok{\textgreater{}}\NormalTok{ [{-}k }\OperatorTok{\textless{}}\NormalTok{key}\OperatorTok{\textgreater{}}\NormalTok{] [{-}{-}scheme schnorr}\KeywordTok{|}\ExtensionTok{ecdsa]}
+\ExtensionTok{curve1024{-}sig}\NormalTok{ verify }\AttributeTok{{-}f} \OperatorTok{\textless{}}\NormalTok{file}\OperatorTok{\textgreater{}}\NormalTok{ [{-}k }\OperatorTok{\textless{}}\NormalTok{pub}\OperatorTok{\textgreater{}}\NormalTok{]}
+\ExtensionTok{curve1024{-}sig}\NormalTok{ export{-}pub [{-}k }\OperatorTok{\textless{}}\NormalTok{priv}\OperatorTok{\textgreater{}}\NormalTok{] [{-}o }\OperatorTok{\textless{}}\NormalTok{pub}\OperatorTok{\textgreater{}}\NormalTok{]}
+\end{Highlighting}
+\end{Shaded}
+
+\captionof{lstlisting}{Giao diện dòng lệnh CLI curve1024-sig}\label{lst:ch4_cli}\vspace{12pt}
 
 Các tham số được đọc từ \texttt{config/curve1024.toml} thông qua
 \texttt{build.rs} để sinh hằng số tĩnh --- đảm bảo zero-cost abstraction

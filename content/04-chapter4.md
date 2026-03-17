@@ -17,6 +17,9 @@ pub struct KeyPair<C: SWCurveConfig> {
 }
 ```
 
+\captionof{lstlisting}{Cấu trúc dữ liệu cặp khóa KeyPair}\label{lst:ch4_keypair}\vspace{12pt}
+
+
 - **Khóa riêng** `d`: một số nguyên ngẫu nhiên trong $[1, r-1]$, sinh bởi CSPRNG (`U1024::rand`).
 - **Khóa công khai** `Q = [d]G`: tính bằng phép nhân vô hướng. Với $r \approx 2^{512}$, tính $Q$ từ $d$ là tính khả thi (mili giây), nhưng bài toán ngược (tính $d$ từ $Q$) là ECDLP — độ phức tạp $O(2^{256})$.
 
@@ -55,6 +58,9 @@ pub struct SchnorrSignature<C: SWCurveConfig> {
     pub s:       U1024,           // s in [0, r-1], 128 byte
 }
 ```
+
+\captionof{lstlisting}{Cấu trúc dữ liệu chữ ký Schnorr}\label{lst:ch4_schnorr}\vspace{12pt}
+
 
 Kích thước chữ ký: $2 \times 128 + 128 = \mathbf{384}$ byte (R gồm hai tọa độ $x, y$ mỗi tọa độ 128 byte, cộng thêm $s$ 128 byte).
 
@@ -98,6 +104,9 @@ pub struct EcdsaSignature {
     pub s: U1024,  // s in [1, n-1],     128 byte
 }
 ```
+
+\captionof{lstlisting}{Cấu trúc dữ liệu chữ ký ECDSA}\label{lst:ch4_ecdsa}\vspace{12pt}
+
 
 Kích thước chữ ký: $128 + 128 = \mathbf{256}$ byte — nhỏ hơn Schnorr vì không lưu điểm $R$ đầy đủ.
 
@@ -159,11 +168,14 @@ Phép ghép cặp Optimal Ate (trên KSS18) chạy vòng lặp Miller với $O(\
 
 Binary `curve1024-sig` cung cấp giao diện dòng lệnh kiểu GPG cho toàn bộ vòng đời khóa:
 
-```
+```bash
 curve1024-sig keygen [-o <file>]
 curve1024-sig sign   -f <file> [-k <key>] [--scheme schnorr|ecdsa]
 curve1024-sig verify -f <file> [-k <pub>]
 curve1024-sig export-pub [-k <priv>] [-o <pub>]
 ```
+
+\captionof{lstlisting}{Giao diện dòng lệnh CLI curve1024-sig}\label{lst:ch4_cli}\vspace{12pt}
+
 
 Các tham số được đọc từ `config/curve1024.toml` thông qua `build.rs` để sinh hằng số tĩnh — đảm bảo zero-cost abstraction và không có chi phí khởi tạo runtime.

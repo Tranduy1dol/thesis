@@ -12,6 +12,7 @@
 *.synctex.gz
 *.dvi
 *.ps
+*.lol
 
 # Obsidian - user-specific files
 .obsidian/workspace.json
