@@ -15,9 +15,6 @@ on:
       - 'Makefile'
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
   build:
     name: Build PDF
@@ -53,15 +50,23 @@ jobs:
           pdflatex -interaction=nonstopmode main.tex
           pdflatex -interaction=nonstopmode main.tex
 
-      - name: Prepare docs folder
+      - name: Push PDF to Tranduy1dol/curve1024
+        env:
+          PAT: ${{ secrets.CURVE1024_PAT }}
         run: |
-          mkdir -p docs
-          cp main.pdf docs/thesis.pdf
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Commit and push PDF to docs/
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "ci: update thesis PDF [skip ci]"
-          file_pattern: docs/thesis.pdf
-          commit_user_name: github-actions[bot]
-          commit_user_email: github-actions[bot]@users.noreply.github.com
+          # Clone the target repo using PAT
+          git clone https://x-access-token:${PAT}@github.com/Tranduy1dol/curve1024.git target-repo
+
+          # Copy PDF into docs/
+          mkdir -p target-repo/docs
+          cp main.pdf target-repo/docs/thesis.pdf
+
+          # Commit and push if there are changes
+          cd target-repo
+          git add docs/thesis.pdf
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "ci: update thesis PDF [skip ci]"
+          git push
