@@ -1,40 +1,66 @@
 \documentclass[aspectratio=169]{beamer}
 
-% ── XeLaTeX font setup ────────────────────────────────────────────────────────
-\usepackage{fontspec}
-\setmainfont{Be Vietnam Pro}
-\setsansfont{Be Vietnam Pro}
-\setmonofont{Courier New}
+% ── Language (pdflatex) ───────────────────────────────────────────────────────
+\usepackage[utf8]{vietnam}
 
-% ── Language & encoding ───────────────────────────────────────────────────────
-\usepackage{polyglossia}
-\setmainlanguage{vietnamese}
-
-% ── Math & symbols ────────────────────────────────────────────────────────────
+% ── Packages ──────────────────────────────────────────────────────────────────
 \usepackage{amsmath, amssymb}
-\usepackage{listings}
-\usepackage{xcolor}
-\usepackage{booktabs}
-\usepackage{graphicx}
+\usepackage{xcolor, booktabs, graphicx, tikz, listings}
 
-% ── Beamer theme ──────────────────────────────────────────────────────────────
-\usetheme{Madrid}
-\usecolortheme{seahorse}
+% ── UET Brand Colors ──────────────────────────────────────────────────────────
+\definecolor{uetblue}{RGB}{0,82,165}
+\definecolor{fitgreen}{RGB}{0,153,68}
+\definecolor{lightblue}{RGB}{232,240,254}
+
+% ── Base theme ────────────────────────────────────────────────────────────────
+\usetheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{blocks}[rounded][shadow=false]
+
+% ── Beamer colors ─────────────────────────────────────────────────────────────
+\setbeamercolor{headline}{bg=white}
+\setbeamercolor{frametitle}{bg=uetblue, fg=white}
+\setbeamercolor{footline}{bg=uetblue, fg=white}
+\setbeamercolor{block title}{bg=uetblue, fg=white}
+\setbeamercolor{block body}{bg=lightblue, fg=black}
+\setbeamercolor{block title alerted}{bg=red!70!black, fg=white}
+\setbeamercolor{block body alerted}{bg=red!10, fg=black}
+\setbeamercolor{itemize item}{fg=uetblue}
+\setbeamercolor{itemize subitem}{fg=uetblue!70}
+\setbeamercolor{enumerate item}{fg=uetblue}
+
+% ── Headline: small logos on every content slide ──────────────────────────────
+\setbeamertemplate{headline}{%
+  \begin{beamercolorbox}[wd=\paperwidth, ht=0.75cm, dp=0pt, leftskip=0.3cm]{headline}%
+    \raisebox{0.08cm}{\includegraphics[height=0.58cm]{../figures/UET_logo.jpg}}%
+    \hspace{0.2cm}%
+    \raisebox{0.08cm}{\includegraphics[height=0.58cm]{../figures/FIT_logo.png}}%
+  \end{beamercolorbox}%
+}
+
+% ── Frametitle ────────────────────────────────────────────────────────────────
+\setbeamertemplate{frametitle}{%
+  \begin{beamercolorbox}[wd=\paperwidth, ht=2.25ex, dp=1.2ex, leftskip=0.5cm]{frametitle}%
+    \usebeamerfont{frametitle}\insertframetitle%
+  \end{beamercolorbox}%
+}
+
+% ── Footline ──────────────────────────────────────────────────────────────────
+\setbeamertemplate{footline}{%
+  \begin{beamercolorbox}[wd=\paperwidth, ht=2.25ex, dp=1.5ex,
+      leftskip=0.5cm, rightskip=0.5cm]{footline}%
+    \small\textbf{VNU UET -- Khoa Công nghệ Thông tin}%
+    \hfill%
+    \small\insertframenumber\,/\,\inserttotalframenumber%
+  \end{beamercolorbox}%
+}
 
 % ── Metadata ──────────────────────────────────────────────────────────────────
-\title[Đường cong Elliptic bậc siêu cao]{Xây dựng đường cong Elliptic bậc siêu cao\\và ứng dụng chữ ký số}
-\author[Trần Mạnh Duy]{Trần Mạnh Duy\\{\small Hướng dẫn: GS.\,TS. Lê Phê Đô}}
+\title{Xây dựng đường cong Elliptic bậc siêu cao và ứng dụng chữ ký số}
+\author{Trần Mạnh Duy}
 \institute{Trường Đại học Công nghệ -- ĐHQGHN}
 \date{Hà Nội, 2026}
 
-% ── Logos on title slide ──────────────────────────────────────────────────────
-\titlegraphic{%
-  \includegraphics[height=1.1cm]{../figures/UET_logo.jpg}%
-  \hspace{0.6cm}%
-  \includegraphics[height=1.1cm]{../figures/FIT_logo.png}%
-}
-
-% ── Figures path (relative to presentation/ directory) ───────────────────────
 \graphicspath{{../figures/}}
 
 \begin{document}
