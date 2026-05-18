@@ -1,34 +1,26 @@
-% Title slide — plain frame, fully custom via TikZ
 \begin{frame}[plain]
 \begin{tikzpicture}[remember picture, overlay]
 
-  %% ── Header background ────────────────────────────────────────────────────
-  \fill[lightblue]
+  \fill[white]
     (current page.north west) rectangle
-    ([yshift=-2.1cm] current page.north east);
+    ([yshift=-1.6cm] current page.north east);
 
-  %% ── Logos (left) ─────────────────────────────────────────────────────────
   \node[anchor=north west, inner sep=0pt] at
-    ([xshift=0.5cm, yshift=-0.35cm] current page.north west) {%
-      \includegraphics[height=1.35cm]{../figures/UET_logo.jpg}%
-      \hspace{0.3cm}%
-      \includegraphics[height=1.35cm]{../figures/FIT_logo.png}%
+    ([xshift=0.5cm, yshift=-0.25cm] current page.north west) {%
+      \includegraphics[height=0.9cm]{../figures/UET_logo.jpg}%
+      \hspace{0.2cm}%
+      \includegraphics[height=0.9cm]{../figures/FIT_logo.png}%
   };
 
-  %% ── School name (right of logos) ─────────────────────────────────────────
-  \node[anchor=north west] at
-    ([xshift=4.2cm, yshift=-0.45cm] current page.north west) {%
-      \textcolor{fitgreen}{\textbf{\small KHOA CÔNG NGHỆ THÔNG TIN}}%
+  %% ── School name (centered) ──────────────────────────────────────────────
+  \node[anchor=north, text=fitgreen] at
+    ([yshift=-0.28cm] current page.north) {%
+      \textbf{\footnotesize KHOA CÔNG NGHỆ THÔNG TIN}%
   };
-  \node[anchor=north west] at
-    ([xshift=4.2cm, yshift=-0.95cm] current page.north west) {%
-      {\small\textbf{TRƯỜNG ĐẠI HỌC CÔNG NGHỆ -- ĐẠI HỌC QUỐC GIA HÀ NỘI}}%
+  \node[anchor=north, text=uetblue] at
+    ([yshift=-0.72cm] current page.north) {%
+      {\footnotesize\textbf{TRƯỜNG ĐẠI HỌC CÔNG NGHỆ -- ĐẠI HỌC QUỐC GIA HÀ NỘI}}%
   };
-
-  %% ── Separator line ───────────────────────────────────────────────────────
-  \draw[uetblue!60, line width=0.4pt]
-    ([xshift=0.4cm,  yshift=-2.05cm] current page.north west) --
-    ([xshift=-0.4cm, yshift=-2.05cm] current page.north east);
 
   %% ── Footer ───────────────────────────────────────────────────────────────
   \fill[uetblue]
@@ -46,18 +38,18 @@
 \end{tikzpicture}
 
 %% ── Main content ─────────────────────────────────────────────────────────────
-\vspace{2.3cm}
+\vspace{1.6cm}
 \begin{center}
-  {\large\bfseries
+  \textcolor{titlegray}{\large\bfseries
     Xây dựng đường cong Elliptic bậc siêu cao\\[4pt]
     và ứng dụng Chữ ký số%
   }\\[0.6em]
-  \textcolor{uetblue}{\rule{9cm}{0.5pt}}\\[0.5em]
-  \textbf{KHÓA LUẬN TỐT NGHIỆP}\\[0.15em]
-  \textbf{NĂM HỌC 2025--2026}\\[1.0em]
+  \textcolor{uetblue}{\rule{9cm}{0.8pt}}\\[0.5em]
+  \textcolor{uetblue}{\textbf{KHÓA LUẬN TỐT NGHIỆP}}\\[0.15em]
+  \textcolor{uetblue}{\textbf{NĂM HỌC 2025--2026}}\\[1.0em]
   \begin{tabular}{rl}
-    \textbf{Người thực hiện:}      & Trần Mạnh Duy \\[2pt]
-    \textbf{Giảng viên hướng dẫn:} & GS.\ TS.\ Lê Phê Đô \\
+    \textcolor{uetblue}{\textbf{Người thực hiện:}}      & Trần Mạnh Duy \\[2pt]
+    \textcolor{uetblue}{\textbf{Giảng viên hướng dẫn:}} & GS.\ TS.\ Lê Phê Đô \\
   \end{tabular}
 \end{center}
 \end{frame}

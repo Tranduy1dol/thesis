@@ -13,6 +13,9 @@
 *.dvi
 *.ps
 *.lol
+# Beamer artifacts
+*.nav
+*.snm
 
 # Obsidian - user-specific files
 .obsidian/workspace.json

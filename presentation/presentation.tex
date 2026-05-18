@@ -8,8 +8,9 @@
 \usepackage{xcolor, booktabs, graphicx, tikz, listings}
 
 % ── UET Brand Colors ──────────────────────────────────────────────────────────
-\definecolor{uetblue}{RGB}{0,82,165}
-\definecolor{fitgreen}{RGB}{0,153,68}
+\definecolor{uetblue}{RGB}{38,63,108}
+\definecolor{fitgreen}{RGB}{93,175,70}
+\definecolor{titlegray}{RGB}{136,136,136}
 \definecolor{lightblue}{RGB}{232,240,254}
 
 % ── Base theme ────────────────────────────────────────────────────────────────
@@ -47,11 +48,13 @@
 
 % ── Footline ──────────────────────────────────────────────────────────────────
 \setbeamertemplate{footline}{%
-  \begin{beamercolorbox}[wd=\paperwidth, ht=2.25ex, dp=1.5ex,
-      leftskip=0.5cm, rightskip=0.5cm]{footline}%
-    \small\textbf{VNU UET -- Khoa Công nghệ Thông tin}%
-    \hfill%
-    \small\insertframenumber\,/\,\inserttotalframenumber%
+  \begin{beamercolorbox}[wd=\paperwidth, ht=3.5ex, dp=2ex,
+      leftskip=0.5cm, rightskip=0.5cm, center]{footline}%
+    \vbox to 3.5ex{\vfil
+      \small\textbf{VNU UET -- Khoa Công nghệ Thông tin}%
+      \hfill%
+      \small\insertframenumber\,/\,\inserttotalframenumber%
+    \vfil}%
   \end{beamercolorbox}%
 }
 
