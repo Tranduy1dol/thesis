@@ -1,0 +1,24 @@
+\begin{frame}{Cơ sở toán học: Đường cong Elliptic}
+  \begin{block}{Short Weierstrass trên $\mathbb{F}_p$}
+    $E(\mathbb{F}_p) = \{(x,y)\in\mathbb{F}_p^2 \mid y^2 = x^3 + ax + b\} \cup \{\mathcal{O}\}$
+  \end{block}
+  \begin{columns}[t]
+    \column{0.5\textwidth}
+      \textbf{Phép cộng điểm} $P_1 + P_2 = P_3$:
+      \[
+        \lambda = \frac{y_2 - y_1}{x_2 - x_1}, \quad
+        x_3 = \lambda^2 - x_1 - x_2
+      \]
+      \textbf{Phép nhân vô hướng}:\\
+      $[k]P$ bằng thuật toán \emph{Double-and-Add},\\
+      độ phức tạp $O(\log k)$
+    \column{0.5\textwidth}
+      \begin{block}{Vai trò trong ECC}
+        \begin{itemize}
+          \item Sinh khóa công khai: $Q = [d]G$
+          \item Cam kết ký: $R = [k]G$
+          \item Xác minh Schnorr: $[s]G \stackrel{?}{=} R + [e]Q$
+        \end{itemize}
+      \end{block}
+  \end{columns}
+\end{frame}

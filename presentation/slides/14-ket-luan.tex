@@ -1,0 +1,30 @@
+\begin{frame}{Kết luận \& Hướng phát triển}
+  \begin{columns}[t]
+    \column{0.5\textwidth}
+      \begin{block}{Kết quả đạt được}
+        \begin{itemize}
+          \item[$\checkmark$] Tự chủ sinh đường cong KSS18 1024-bit
+          \item[$\checkmark$] Bảo mật 256-bit, vượt NIST 2030+
+          \item[$\checkmark$] Rust -- an toàn bộ nhớ tuyệt đối
+          \item[$\checkmark$] Schnorr \& ECDSA, 36/36 test PASSED
+        \end{itemize}
+      \end{block}
+    \column{0.5\textwidth}
+      \begin{block}{Hướng phát triển}
+        \textbf{Ngắn hạn:}
+        \begin{itemize}
+          \item Tọa độ Jacobian ($\sim$10$\times$ nhanh hơn)
+          \item Montgomery Ladder (constant-time)
+        \end{itemize}
+        \textbf{Trung hạn:}
+        \begin{itemize}
+          \item Phép ghép cặp đầy đủ $\rightarrow$ BLS
+        \end{itemize}
+        \textbf{Dài hạn:}
+        \begin{itemize}
+          \item Giao thức ngưỡng MuSig2/FROST
+          \item Kiểm định hình thức (Creusot/Kani)
+        \end{itemize}
+      \end{block}
+  \end{columns}
+\end{frame}

@@ -1,0 +1,14 @@
+\begin{frame}{Đặt vấn đề}
+  \begin{block}{ECC là nền tảng bảo mật hiện đại}
+    TLS, SSH, Bitcoin, Ethereum, \ldots
+  \end{block}
+  \vspace{0.3em}
+  \textbf{Ba vấn đề thực tiễn:}
+  \begin{enumerate}
+    \item \textbf{Tự chủ mật mã} -- Các đường cong NIST/SECG dùng ``hạt giống'' bí ẩn\\
+          $\Rightarrow$ NSA cài backdoor vào \texttt{Dual\_EC\_DRBG}
+    \item \textbf{Giới hạn bảo mật} -- ECC 256-bit chỉ đạt 128-bit bảo mật đối xứng
+    \item \textbf{An toàn bộ nhớ} -- 70\% lỗ hổng nghiêm trọng từ lỗi C/C++\\
+          (Microsoft, 2019)
+  \end{enumerate}
+\end{frame}

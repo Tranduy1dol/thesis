@@ -1,0 +1,30 @@
+\begin{frame}{Sơ đồ chữ ký số: Schnorr}
+  \begin{columns}[t]
+    \column{0.5\textwidth}
+      \begin{block}{Ký (khóa riêng $d$, thông điệp $m$)}
+        \begin{enumerate}
+          \item $k \xleftarrow{R} [1, r{-}1]$
+          \item $R = [k]G$
+          \item $e = H(R_x \| R_y \| m) \bmod r$
+          \item $s = k + e \cdot d \pmod{r}$
+          \item Chữ ký: $\sigma = (R,\, s)$
+        \end{enumerate}
+      \end{block}
+    \column{0.5\textwidth}
+      \begin{block}{Xác minh (khóa công khai $Q$)}
+        \begin{enumerate}
+          \item Tính $e = H(R_x \| R_y \| m)$
+          \item Kiểm tra: $[s]G \stackrel{?}{=} R + [e]Q$
+        \end{enumerate}
+        \vspace{0.3em}
+        \textit{Tính đúng đắn:}
+        $[s]G = [k{+}ed]G = R + [e]Q$ \checkmark
+      \end{block}
+  \end{columns}
+  \vspace{0.3em}
+  \begin{itemize}
+    \item Hàm băm mở rộng: 4 $\times$ SHA-256 với tiền tố khác nhau $\rightarrow$ 512-bit
+    \item Kích thước chữ ký: \textbf{384 byte} $(2\times 128 + 128)$
+    \item Hỗ trợ tổng hợp chữ ký tự nhiên (MuSig2, FROST)
+  \end{itemize}
+\end{frame}

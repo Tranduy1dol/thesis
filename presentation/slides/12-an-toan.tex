@@ -1,0 +1,15 @@
+\begin{frame}{Đánh giá độ an toàn}
+  \begin{block}{4 loại tấn công kinh điển}
+    \small
+    \begin{tabular}{p{3.5cm}p{7.5cm}}
+      \textbf{Pollard's $\rho$} & $O(2^{256})$ phép tính -- bất khả thi tuyệt đối \\[3pt]
+      \textbf{Invalid Curve} & Mọi điểm đều được kiểm tra \texttt{is\_on\_curve()} trong hàm khởi tạo \\[3pt]
+      \textbf{MOV} & $|p^{18}| = 18432$ bit -- DLP không thể giải bằng index calculus \\[3pt]
+      \textbf{Anomalous (SSSA)} & $\#E(\mathbb{F}_p) \neq p$ vì $|r|=512 < 1024=|p|$ \\
+    \end{tabular}
+  \end{block}
+  \begin{alertblock}{Hạn chế còn tồn tại}
+    \textbf{Timing side-channel}: Double-and-Add rò rỉ Hamming weight của scalar\\
+    $\Rightarrow$ \textbf{Giải pháp}: thay bằng \emph{Montgomery Ladder} (ưu tiên phát triển cao nhất)
+  \end{alertblock}
+\end{frame}

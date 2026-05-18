@@ -1,0 +1,27 @@
+\begin{frame}{Kết quả kiểm thử}
+  \begin{columns}[t]
+    \column{0.45\textwidth}
+      \begin{block}{36/36 test PASSED}
+        \begin{itemize}
+          \item \textbf{17 unit tests}\\
+                U1024, FieldElement,\\Point operations
+          \item \textbf{19 integration tests}\\
+                KeyPair, Schnorr, ECDSA,\\
+                MOV / Anomalous / Invalid Curve resistance
+        \end{itemize}
+      \end{block}
+    \column{0.55\textwidth}
+      \begin{block}{Kiến trúc phân tầng}
+        \begin{enumerate}
+          \item \texttt{U1024} -- số nguyên lớn
+          \item \texttt{PrimeField} -- số học Montgomery
+          \item \texttt{AffinePoint} -- tọa độ điểm
+          \item \texttt{KeyPair} -- cặp khóa
+          \item \texttt{Schnorr / ECDSA} -- chữ ký số
+        \end{enumerate}
+      \end{block}
+  \end{columns}
+  \vspace{0.3em}
+  Mã nguồn mở, MIT License:\\
+  \texttt{https://github.com/Tranduy1dol/curve1024}
+\end{frame}

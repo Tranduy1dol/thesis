@@ -1,0 +1,23 @@
+\begin{frame}{Phương pháp xây dựng đường cong: Tổng quan}
+  \begin{block}{Phương pháp Nhân phức (Complex Multiplication -- CM)}
+    Thay vì chọn $(a,b)$ ngẫu nhiên rồi đếm điểm,\\
+    CM \emph{đảo chiều}: bắt đầu từ bậc nhóm $r$ mong muốn $\Rightarrow$ suy ra đường cong
+  \end{block}
+  \vspace{0.4em}
+  \textbf{Tham số mục tiêu -- họ đường cong KSS18:}
+  \begin{table}
+    \small
+    \begin{tabular}{llp{5.5cm}}
+      \toprule
+      Tham số & Giá trị & Ý nghĩa \\
+      \midrule
+      $k$ & 18 & Bậc nhúng, ghép cặp trong $\mathbb{F}_{p^{18}}$ \\
+      $|r|$ & 512 bit & Bảo mật ECDLP \textbf{256-bit} \\
+      $|p|$ & 1024 bit & Bảo mật DLP $\geq$ 250-bit trên $\mathbb{F}_{p^{18}}$ \\
+      $D$ & $-3$ & Đường cong đơn giản $y^2 = x^3 + b$ \\
+      Two-adicity $r$ & $\geq 33$ & NTT trên $\mathbb{F}_r$ đến bậc $2^{33}$ \\
+      Two-adicity $p$ & $\geq 32$ & NTT trên $\mathbb{F}_p$ đến bậc $2^{32}$ \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+\end{frame}

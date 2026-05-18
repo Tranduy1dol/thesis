@@ -1,0 +1,29 @@
+\begin{frame}{Cơ sở toán học: Trường số nguyên tố $\mathbb{F}_p$}
+  \begin{block}{Định nghĩa}
+    $\mathbb{F}_p = \{0,1,\ldots,p{-}1\}$ với phép cộng và nhân $\pmod{p}$,\\
+    mọi phần tử $a \neq 0$ có nghịch đảo $a^{-1} = a^{p-2} \pmod{p}$
+  \end{block}
+  \vspace{0.5em}
+  \textbf{Kỹ thuật then chốt: Phép nhân Montgomery}
+  \begin{columns}[c]
+    \column{0.5\textwidth}
+      \begin{itemize}
+        \item Chọn $R = 2^{1024}$, biểu diễn $\hat{a} = a \cdot R \pmod{p}$
+        \item Nhân trong không gian Montgomery:\\
+              $\hat{a} \cdot \hat{b} \cdot R^{-1} \pmod{p}$
+        \item Thay phép \textbf{chia cho $p$} bằng \textbf{shift phải}
+      \end{itemize}
+    \column{0.5\textwidth}
+      \begin{table}
+        \small
+        \begin{tabular}{lcc}
+          \toprule
+          & Thông thường & Montgomery \\
+          \midrule
+          Phép chia & $\div p$ & shift \\
+          Chi phí & $O(n^2)$ + chia & $O(n^2)$ \\
+          \bottomrule
+        \end{tabular}
+      \end{table}
+  \end{columns}
+\end{frame}

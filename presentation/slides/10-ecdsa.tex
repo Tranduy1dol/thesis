@@ -1,0 +1,36 @@
+\begin{frame}{Sơ đồ chữ ký số: ECDSA}
+  \begin{columns}[t]
+    \column{0.5\textwidth}
+      \begin{block}{Ký (chuẩn FIPS 186-4)}
+        \begin{enumerate}
+          \item $k \xleftarrow{R} [1, r{-}1]$;\; $R = [k]G$
+          \item $r_{\text{sig}} = R_x \bmod n$
+          \item $e = H(m)$
+          \item $s = k^{-1}(e + r_{\text{sig}} \cdot d) \bmod n$
+          \item Chữ ký: $(r_{\text{sig}},\, s)$
+        \end{enumerate}
+      \end{block}
+    \column{0.5\textwidth}
+      \begin{block}{Điểm đặc trưng}
+        \begin{itemize}
+          \item Lưu $R_x \bmod n$ thay vì cả điểm $R$
+          \item Kích thước chữ ký nhỏ hơn: \textbf{256 byte}
+          \item Tự động loại bỏ $r_{\text{sig}}=0$ hoặc $s=0$
+        \end{itemize}
+      \end{block}
+  \end{columns}
+  \vspace{0.3em}
+  \begin{table}
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      Tiêu chí & Schnorr & ECDSA \\
+      \midrule
+      Kích thước chữ ký & 384 byte & \textbf{256 byte} \\
+      Chứng minh bảo mật & RO Model + DL & Heuristic + DL \\
+      Hỗ trợ tổng hợp & \textbf{Có} & Không \\
+      Chuẩn hóa & ISO/IEC 14888-3 & FIPS 186-4 \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+\end{frame}
