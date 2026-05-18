@@ -27,21 +27,22 @@
 \setbeamertemplate{headline}{}
 
 \setbeamertemplate{frametitle}{%
-  \vspace{0.4cm}%
-  \begin{beamercolorbox}[wd=\paperwidth, leftskip=0.5cm, rightskip=0.4cm]{frametitle}%
+  \begin{beamercolorbox}[wd=\paperwidth, leftskip=0.5cm, rightskip=0.2cm]{frametitle}%
     \color{uetblue}%
-    \begin{minipage}[c]{0.7\textwidth}
-      \begin{tabular}{@{}r@{\hspace{0.3cm}} !{\color{uetblue}\vrule width 2pt} @{\hspace{0.3cm}}l@{}}
-        \textbf{\Large \ifnum\value{section}<10 0\fi\arabic{section}} & \textbf{\Large \insertsection} \\[4pt]
-        & \large \insertframetitle
+    \begin{minipage}[t]{0.7\textwidth}
+      \vspace*{0.35cm}%
+      \begin{tabular}{@{}r@{\hspace{0.2cm}} !{\color{uetblue}\vrule width 1.2pt} @{\hspace{0.2cm}}l@{}}
+        \textbf{\large \ifnum\value{section}<10 0\fi\arabic{section}} & \textbf{\large \insertsection} \\[2pt]
+        & \normalsize \insertframetitle
       \end{tabular}
     \end{minipage}%
     \hfill%
-    \begin{minipage}[c]{0.25\textwidth}
+    \begin{minipage}[t]{0.25\textwidth}
+      \vspace*{0.15cm}%
       \raggedleft
-      \includegraphics[height=0.75cm]{../figures/UET_logo.jpg}%
+      \includegraphics[height=0.65cm]{../figures/UET_logo.jpg}%
       \hspace{0.15cm}%
-      \includegraphics[height=0.75cm]{../figures/FIT_logo.png}%
+      \includegraphics[height=0.65cm]{../figures/FIT_logo.png}%
     \end{minipage}%
   \end{beamercolorbox}%
 }
