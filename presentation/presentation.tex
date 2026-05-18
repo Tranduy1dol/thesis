@@ -1,18 +1,41 @@
 \documentclass[aspectratio=169]{beamer}
-\usepackage[utf8]{inputenc}
-\usepackage[vietnamese]{babel}
+
+% ── XeLaTeX font setup ────────────────────────────────────────────────────────
+\usepackage{fontspec}
+\setmainfont{Be Vietnam Pro}
+\setsansfont{Be Vietnam Pro}
+\setmonofont{Courier New}
+
+% ── Language & encoding ───────────────────────────────────────────────────────
+\usepackage{polyglossia}
+\setmainlanguage{vietnamese}
+
+% ── Math & symbols ────────────────────────────────────────────────────────────
 \usepackage{amsmath, amssymb}
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{booktabs}
+\usepackage{graphicx}
 
+% ── Beamer theme ──────────────────────────────────────────────────────────────
 \usetheme{Madrid}
 \usecolortheme{seahorse}
 
+% ── Metadata ──────────────────────────────────────────────────────────────────
 \title[Đường cong Elliptic bậc siêu cao]{Xây dựng đường cong Elliptic bậc siêu cao\\và ứng dụng chữ ký số}
 \author[Trần Mạnh Duy]{Trần Mạnh Duy\\{\small Hướng dẫn: GS.\,TS. Lê Phê Đô}}
 \institute{Trường Đại học Công nghệ -- ĐHQGHN}
 \date{Hà Nội, 2026}
+
+% ── Logos on title slide ──────────────────────────────────────────────────────
+\titlegraphic{%
+  \includegraphics[height=1.1cm]{../figures/UET_logo.jpg}%
+  \hspace{0.6cm}%
+  \includegraphics[height=1.1cm]{../figures/FIT_logo.png}%
+}
+
+% ── Figures path (relative to presentation/ directory) ───────────────────────
+\graphicspath{{../figures/}}
 
 \begin{document}
 
