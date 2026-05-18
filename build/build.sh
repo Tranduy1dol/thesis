@@ -31,6 +31,7 @@ for md_file in "${!SECTIONS[@]}"; do
             --to latex \
             --template=templates/pandoc/paper-section.latex \
             --lua-filter=build/ieee-tables.lua \
+            --shift-heading-level-by=1 \
             --natbib \
             --output "$tex_file"
         # IEEEtran uses \cite, not \citep/\citet

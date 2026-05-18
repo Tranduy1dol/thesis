@@ -1,2 +1,4 @@
 % Pandoc template for IEEE conference paper sections
+\section{$title$}
+
 $body$

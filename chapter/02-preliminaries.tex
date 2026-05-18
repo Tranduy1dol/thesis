@@ -1,5 +1,7 @@
 % Pandoc template for IEEE conference paper sections
-\section{Elliptic Curves and
+\section{Preliminaries}
+
+\subsection{Elliptic Curves and
 Pairings}\label{elliptic-curves-and-pairings}
 
 Let \(\mathbb{F}_p\) be a prime field with \(p > 3\). An elliptic curve
@@ -15,7 +17,7 @@ but \(r \nmid p^i - 1\) for \(0 < i < k\). This enables a bilinear map
 \(\mathbb{G}_T \subset \mathbb{F}_{p^k}^*\), which is the foundation of
 BLS signatures and zk-SNARKs.
 
-\section{Complex Multiplication
+\subsection{Complex Multiplication
 Method}\label{complex-multiplication-method}
 
 The CM method constructs curves with a prescribed group order. Given a
@@ -30,7 +32,7 @@ Hilbert class polynomial \(H_D(x)\). For \(D = -3\), we have
 \(H_{-3}(x) = x\), giving \(j = 0\) and the simple curve form
 \(y^2 = x^3 + b\).
 
-\section{Traditional Cocks-Pinch
+\subsection{Traditional Cocks-Pinch
 Algorithm}\label{traditional-cocks-pinch-algorithm}
 
 The Cocks-Pinch method \cite{CocksPinch2001} constructs
@@ -60,7 +62,7 @@ The resulting curve has \(\rho = \log p / \log r \approx 2\), which is
 the standard tradeoff of the Cocks-Pinch method compared to parametric
 families (\(\rho = 1\) for BN, \(\rho = 1.5\) for BLS12).
 
-\section{Two-Adicity and NTT}\label{two-adicity-and-ntt}
+\subsection{Two-Adicity and NTT}\label{two-adicity-and-ntt}
 
 The \emph{two-adicity} of a prime \(q\) is \(\nu_2(q-1)\), the largest
 power of 2 dividing \(q-1\). A field \(\mathbb{F}_q\) with two-adicity

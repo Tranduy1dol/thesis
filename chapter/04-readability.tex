@@ -1,5 +1,7 @@
 % Pandoc template for IEEE conference paper sections
-\section{Motivation}\label{motivation}
+\section{Readability-Aware Prime Selection}
+
+\subsection{Motivation}\label{motivation}
 
 Cryptographic primes are typically opaque hexadecimal values that resist
 manual inspection. While the Cocks-Pinch method is inherently
@@ -14,7 +16,7 @@ process is opaque. We propose a complementary approach: among all
 cryptographically valid candidates, select the one that is most amenable
 to human inspection.
 
-\section{Security-First Design}\label{security-first-design}
+\subsection{Security-First Design}\label{security-first-design}
 
 Our readability scoring is a \emph{post-filter} applied only to
 candidates that have already passed all security requirements:
@@ -37,7 +39,7 @@ candidates that have already passed all security requirements:
 The scoring system cannot weaken security because it only selects among
 pre-validated candidates.
 
-\section{Scoring Criteria}\label{scoring-criteria}
+\subsection{Scoring Criteria}\label{scoring-criteria}
 
 Each candidate prime is evaluated on eight independent structural
 criteria:
@@ -65,7 +67,7 @@ The combined score weights the base field prime \(p\) at \(1.5\times\)
 the scalar field prime \(r\), since \(p\) appears more frequently in
 implementations (field arithmetic, point encoding, serialization).
 
-\section{Search Procedure}\label{search-procedure}
+\subsection{Search Procedure}\label{search-procedure}
 
 The readability-aware search operates in two modes:
 
@@ -86,7 +88,7 @@ combinations for each valid \(r\), scoring every prime candidate that
 passes the security filter. The best-scoring \((p, r)\) pair across all
 attempts is retained.
 
-\section{Results}\label{results}
+\subsection{Results}\label{results}
 
 The following table shows the readability metrics of our selected
 parameters. Both primes share the tail pattern
