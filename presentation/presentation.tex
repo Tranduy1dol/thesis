@@ -1,24 +1,18 @@
 \documentclass[aspectratio=169]{beamer}
 
-% ── Language (pdflatex) ───────────────────────────────────────────────────────
 \usepackage[utf8]{vietnam}
-
-% ── Packages ──────────────────────────────────────────────────────────────────
 \usepackage{amsmath, amssymb}
 \usepackage{xcolor, booktabs, graphicx, tikz, listings}
 
-% ── UET Brand Colors ──────────────────────────────────────────────────────────
 \definecolor{uetblue}{RGB}{38,63,108}
 \definecolor{fitgreen}{RGB}{93,175,70}
 \definecolor{titlegray}{RGB}{136,136,136}
 \definecolor{lightblue}{RGB}{232,240,254}
 
-% ── Base theme ────────────────────────────────────────────────────────────────
 \usetheme{default}
 \setbeamertemplate{navigation symbols}{}
 \setbeamertemplate{blocks}[rounded][shadow=false]
 
-% ── Beamer colors ─────────────────────────────────────────────────────────────
 \setbeamercolor{headline}{bg=white}
 \setbeamercolor{frametitle}{bg=uetblue, fg=white}
 \setbeamercolor{footline}{bg=uetblue, fg=white}
@@ -30,7 +24,6 @@
 \setbeamercolor{itemize subitem}{fg=uetblue!70}
 \setbeamercolor{enumerate item}{fg=uetblue}
 
-% ── Headline: small logos on every content slide ──────────────────────────────
 \setbeamertemplate{headline}{%
   \begin{beamercolorbox}[wd=\paperwidth, ht=0.75cm, dp=0pt, leftskip=0.3cm]{headline}%
     \raisebox{0.08cm}{\includegraphics[height=0.58cm]{../figures/UET_logo.jpg}}%
@@ -39,26 +32,26 @@
   \end{beamercolorbox}%
 }
 
-% ── Frametitle ────────────────────────────────────────────────────────────────
 \setbeamertemplate{frametitle}{%
   \begin{beamercolorbox}[wd=\paperwidth, ht=2.25ex, dp=1.2ex, leftskip=0.5cm]{frametitle}%
     \usebeamerfont{frametitle}\insertframetitle%
   \end{beamercolorbox}%
 }
 
-% ── Footline ──────────────────────────────────────────────────────────────────
 \setbeamertemplate{footline}{%
-  \begin{beamercolorbox}[wd=\paperwidth, ht=3.5ex, dp=2ex,
-      leftskip=0.5cm, rightskip=0.5cm, center]{footline}%
-    \vbox to 3.5ex{\vfil
-      \small\textbf{VNU UET -- Khoa Công nghệ Thông tin}%
-      \hfill%
-      \small\insertframenumber\,/\,\inserttotalframenumber%
-    \vfil}%
-  \end{beamercolorbox}%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[uetblue]
+      (current page.south west) rectangle
+      ([yshift=0.65cm] current page.south east);
+    \node[anchor=west, text=white, font=\small\bfseries] at
+      ([xshift=0.5cm, yshift=0.32cm] current page.south west)
+      {VNU UET -- Faculty of Information Technology};
+    \node[anchor=east, text=white, font=\small] at
+      ([xshift=-0.5cm, yshift=0.32cm] current page.south east)
+      {\insertframenumber\,/\,\inserttotalframenumber};
+  \end{tikzpicture}%
 }
 
-% ── Metadata ──────────────────────────────────────────────────────────────────
 \title{Xây dựng đường cong Elliptic bậc siêu cao và ứng dụng chữ ký số}
 \author{Trần Mạnh Duy}
 \institute{Trường Đại học Công nghệ -- ĐHQGHN}

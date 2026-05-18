@@ -4,6 +4,49 @@
 \section{Sơ đồ chữ ký số}
 \section{Kết quả \& Đánh giá}
 
-\begin{frame}{Nội dung trình bày}
-  \tableofcontents
+\begin{frame}[plain]
+\begin{tikzpicture}[remember picture, overlay]
+
+  %% Logos — top right
+  \node[anchor=north east, inner sep=0pt] at
+    ([xshift=-0.4cm, yshift=-0.2cm] current page.north east) {%
+      \includegraphics[height=0.75cm]{../figures/UET_logo.jpg}%
+      \hspace{0.15cm}%
+      \includegraphics[height=0.75cm]{../figures/FIT_logo.png}%
+  };
+
+  %% Title
+  \node[anchor=north, text=uetblue, font=\Large\bfseries] at
+    ([yshift=-0.6cm] current page.north) {Nội dung trình bày};
+
+  %% Cards (5 sections, centered, yshift=0.6cm above center to clear footer)
+  \foreach \i/\num/\txt in {
+    1/01/{ĐẶT\\VẤN ĐỀ},
+    2/02/{CƠ SỞ\\TOÁN HỌC},
+    3/03/{PHƯƠNG PHÁP\\XÂY DỰNG},
+    4/04/{SƠ ĐỒ\\CHỮ KÝ SỐ},
+    5/05/{KẾT QUẢ\\\& ĐÁNH GIÁ}
+  }{
+    \pgfmathsetmacro{\xshift}{(\i-3)*2.7}
+    \node[rounded corners=7pt, fill=uetblue, text=white,
+          minimum width=2.3cm, minimum height=4.0cm,
+          align=center, text width=2.0cm]
+      at ([xshift=\xshift cm, yshift=0.5cm] current page.center) {%
+        {\large\bfseries\num}\\[0.5cm]
+        {\scriptsize\bfseries\txt}%
+    };
+  }
+
+  %% Footer
+  \fill[uetblue]
+    (current page.south west) rectangle
+    ([yshift=0.65cm] current page.south east);
+  \node[anchor=west, text=white, font=\small\bfseries] at
+    ([xshift=0.5cm, yshift=0.32cm] current page.south west)
+    {VNU UET -- Faculty of Information Technology};
+  \node[anchor=east, text=white, font=\small] at
+    ([xshift=-0.5cm, yshift=0.32cm] current page.south east)
+    {\insertframenumber\,/\,\inserttotalframenumber};
+
+\end{tikzpicture}
 \end{frame}
