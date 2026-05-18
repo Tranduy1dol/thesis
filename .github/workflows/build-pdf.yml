@@ -76,5 +76,5 @@ jobs:
           cd target-repo
           git add docs/thesis.pdf docs/presentation.pdf
           git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "ci: update thesis & presentation PDFs [skip ci]"
+          git commit -m "ci: update thesis & presentation PDFs"
           git push

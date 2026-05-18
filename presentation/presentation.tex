@@ -1,7 +1,7 @@
 \documentclass[aspectratio=169]{beamer}
 
 \usepackage[utf8]{vietnam}
-\usepackage{amsmath, amssymb}
+\usepackage{amsmath, amssymb, array}
 \usepackage{xcolor, booktabs, graphicx, tikz, listings}
 
 \definecolor{uetblue}{RGB}{38,63,108}
@@ -14,7 +14,7 @@
 \setbeamertemplate{blocks}[rounded][shadow=false]
 
 \setbeamercolor{headline}{bg=white}
-\setbeamercolor{frametitle}{bg=uetblue, fg=white}
+\setbeamercolor{frametitle}{bg=white, fg=uetblue}
 \setbeamercolor{footline}{bg=uetblue, fg=white}
 \setbeamercolor{block title}{bg=uetblue, fg=white}
 \setbeamercolor{block body}{bg=lightblue, fg=black}
@@ -25,16 +25,24 @@
 \setbeamercolor{enumerate item}{fg=uetblue}
 
 \setbeamertemplate{headline}{%
-  \begin{beamercolorbox}[wd=\paperwidth, ht=0.75cm, dp=0pt, leftskip=0.3cm]{headline}%
-    \raisebox{0.08cm}{\includegraphics[height=0.58cm]{../figures/UET_logo.jpg}}%
-    \hspace{0.2cm}%
-    \raisebox{0.08cm}{\includegraphics[height=0.58cm]{../figures/FIT_logo.png}}%
-  \end{beamercolorbox}%
+  \begin{tikzpicture}[remember picture, overlay]
+    \node[anchor=north east, inner sep=0pt] at
+      ([xshift=-0.4cm, yshift=-0.2cm] current page.north east) {%
+        \includegraphics[height=0.75cm]{../figures/UET_logo.jpg}%
+        \hspace{0.15cm}%
+        \includegraphics[height=0.75cm]{../figures/FIT_logo.png}%
+    };
+  \end{tikzpicture}%
 }
 
 \setbeamertemplate{frametitle}{%
-  \begin{beamercolorbox}[wd=\paperwidth, ht=2.25ex, dp=1.2ex, leftskip=0.5cm]{frametitle}%
-    \usebeamerfont{frametitle}\insertframetitle%
+  \vspace{0.4cm}%
+  \begin{beamercolorbox}[wd=\paperwidth, leftskip=0.5cm]{frametitle}%
+    \color{uetblue}%
+    \begin{tabular}{@{}r@{\hspace{0.3cm}} !{\color{uetblue}\vrule width 2pt} @{\hspace{0.3cm}}l@{}}
+      \textbf{\Large \ifnum\value{section}<10 0\fi\arabic{section}} & \textbf{\Large \insertsection} \\[4pt]
+      & \large \insertframetitle
+    \end{tabular}
   \end{beamercolorbox}%
 }
 
@@ -63,18 +71,29 @@
 
 \input{slides/01-title}
 \input{slides/02-toc}
+
+\section{Đặt vấn đề}
 \input{slides/03-dat-van-de}
 \input{slides/04-muc-tieu}
+
+\section{Cơ sở toán học}
 \input{slides/05-truong-huu-han}
 \input{slides/06-duong-cong-elliptic}
+
+\section{Phương pháp xây dựng đường cong}
 \input{slides/07-phuong-phap-xay-dung}
 \input{slides/08-cocks-pinch}
+
+\section{Sơ đồ chữ ký số}
 \input{slides/09-schnorr}
 \input{slides/10-ecdsa}
+
+\section{Kết quả \& Đánh giá}
 \input{slides/11-hieu-nang}
 \input{slides/12-an-toan}
 \input{slides/13-kiem-thu}
 \input{slides/14-ket-luan}
+
 \input{slides/15-cam-on}
 
 \end{document}
