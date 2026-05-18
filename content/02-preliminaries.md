@@ -1,0 +1,36 @@
+---
+title: "Preliminaries"
+section: 2
+---
+
+# Elliptic Curves and Pairings
+
+Let $\mathbb{F}_p$ be a prime field with $p > 3$. An elliptic curve in Short Weierstrass form is $E: y^2 = x^3 + ax + b$ with $4a^3 + 27b^2 \neq 0$. The set $E(\mathbb{F}_p)$ of rational points forms an abelian group under the chord-and-tangent law [@Silverman2009].
+
+A curve is *pairing-friendly* with embedding degree $k$ if there exists a prime-order subgroup of size $r$ such that $r \mid p^k - 1$ but $r \nmid p^i - 1$ for $0 < i < k$. This enables a bilinear map $e: \mathbb{G}_1 \times \mathbb{G}_2 \to \mathbb{G}_T$ where $\mathbb{G}_T \subset \mathbb{F}_{p^k}^*$, which is the foundation of BLS signatures and zk-SNARKs.
+
+# Complex Multiplication Method
+
+The CM method constructs curves with a prescribed group order. Given a CM discriminant $D < 0$, the existence of a curve over $\mathbb{F}_p$ with Frobenius trace $t$ requires the Diophantine equation:
+
+$$4p = t^2 + |D| \cdot y^2$$
+
+to have an integer solution. The $j$-invariant is obtained from the Hilbert class polynomial $H_D(x)$. For $D = -3$, we have $H_{-3}(x) = x$, giving $j = 0$ and the simple curve form $y^2 = x^3 + b$.
+
+# Traditional Cocks-Pinch Algorithm
+
+The Cocks-Pinch method [@CocksPinch2001] constructs pairing-friendly curves by starting from the subgroup order $r$ rather than the field prime $p$. For embedding degree $k = 18$:
+
+1. **Generate $r$**: Choose a parameter $T$ and compute $r = \Phi_{18}(T) = T^6 - T^3 + 1$. Verify that $r$ is prime.
+2. **Compute square root**: Find $\beta = \sqrt{-3} \pmod{r}$ via Tonelli-Shanks.
+3. **Compute CM parameters**: For each $i$ with $\gcd(i, 18) = 1$:
+$$t_0 \equiv T^i + 1 \pmod{r}, \quad y_0 \equiv \frac{t_0 - 2}{\beta} \pmod{r}$$
+4. **Lift to integers**: Search over $(h_t, h_y) \in [-20, 20]^2$ for:
+$$t = t_0 + h_t \cdot r, \quad y = y_0 + h_y \cdot r$$
+such that $p = (t^2 + 3y^2)/4$ is a prime of the target size.
+
+The resulting curve has $\rho = \log p / \log r \approx 2$, which is the standard tradeoff of the Cocks-Pinch method compared to parametric families ($\rho = 1$ for BN, $\rho = 1.5$ for BLS12).
+
+# Two-Adicity and NTT
+
+The *two-adicity* of a prime $q$ is $\nu_2(q-1)$, the largest power of 2 dividing $q-1$. A field $\mathbb{F}_q$ with two-adicity $s$ contains a primitive $2^s$-th root of unity, enabling NTT of length up to $2^s$. Modern ZK proof systems (Groth16 [@Groth2016], PLONK [@PLONK2019]) require NTT for polynomial multiplication over both $\mathbb{F}_r$ (constraint evaluation) and $\mathbb{F}_p$ (pairing computation). BLS12-381 achieves two-adicity 32 in both fields [@BLS12_381].

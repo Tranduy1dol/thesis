@@ -1,4 +1,4 @@
-.PHONY: all clean convert pdf watch help
+.PHONY: all clean convert pdf full watch help
 
 # Default target
 all: convert pdf
@@ -24,25 +24,25 @@ full: convert
 # Clean generated files
 clean:
 	@echo "Cleaning generated files..."
-	rm -f *.aux *.log *.out *.toc *.lof *.lot *.bbl *.blg *.fls *.fdb_latexmk
+	rm -f *.aux *.log *.out *.toc *.lof *.lot *.bbl *.blg *.fls *.fdb_latexmk *.lol
 	rm -f chapter/*.aux
 
-# Watch for changes (requires fswatch or inotifywait)
+# Watch for changes (requires inotifywait or fswatch)
 watch:
 	@echo "Watching for changes in content/..."
 	@while true; do \
 		inotifywait -e modify content/*.md 2>/dev/null || fswatch -1 content/*.md; \
-		$(MAKE) convert; \
+		$(MAKE) all; \
 	done
 
 # Help
 help:
-	@echo "UET Thesis Build System"
+	@echo "KSE Paper Build System"
 	@echo ""
 	@echo "Usage:"
 	@echo "  make convert  - Convert Markdown to LaTeX"
 	@echo "  make pdf      - Compile LaTeX to PDF"
-	@echo "  make all      - Convert and compile"
+	@echo "  make all      - Convert and compile (default)"
 	@echo "  make full     - Full build with bibliography"
 	@echo "  make clean    - Remove generated files"
 	@echo "  make watch    - Watch for changes and auto-convert"

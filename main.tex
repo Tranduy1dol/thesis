@@ -1,131 +1,27 @@
-\documentclass[a4paper,12pt,oneside]{book}%extreport
-\usepackage{times} 
-% \usepackage{multibib}
-\usepackage{lipsum}
-\usepackage{appendix}
-\usepackage[shortlabels]{enumitem}
-\usepackage{booktabs}
-\usepackage{rotating} % Rotating table
-\usepackage{hhline}
-\usepackage{colortbl}
-\usepackage{afterpage}
-\usepackage{mathtools} %Fixes/improves amsmath
-\usepackage{setspace}
-\usepackage[utf8]{vietnam} 
-\usepackage{amstext, amsmath,latexsym,amsbsy,amssymb, amssymb,amsthm,amsfonts,multicol, nccmath}
-\usepackage[left=3cm,right=2cm,top=2.5cm,bottom=3cm,footskip=40pt]{geometry}
-\usepackage{pdflscape}
-% apacite removed — conflicts with natbib
-\usepackage{tikz}
-\usepackage{array}
-\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
-\usetikzlibrary{calc}
-\usepackage{tabularx}
-\usepackage{multicol}
-\usepackage{array,color,colortbl}
-\setcounter{secnumdepth}{4}
-\usepackage{placeins}
- %\usepackage[square,numbers]{natbib}
-\usepackage[square, comma, numbers, sort&compress]{natbib}
-\setlength{\parindent}{1cm}
-\usepackage{color}
-\usepackage{indentfirst}
-\usepackage{exscale,eucal}
-\usepackage{fancyhdr}
-\usepackage{fncychap}
-\usepackage[chapter]{algorithm}
-\usepackage{multirow}
+\documentclass[conference]{IEEEtran}
+
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{algorithm}
 \usepackage{graphicx}
-\usepackage{algpseudocode}
-\usepackage{tabularx,multicol,multirow,longtable}
-\usepackage{etoolbox}
-\usepackage{listings}
+\usepackage{textcomp}
 \usepackage{xcolor}
-\renewcommand{\lstlistingname}{Mã nguồn}
-\newcommand{\passthrough}[1]{#1}
-\lstset{
-  basicstyle=\small\ttfamily,
-  breaklines=true,
-  frame=single,
-  numbers=left,
-  numberstyle=\tiny,
-  captionpos=b,
-  keepspaces=true,
-  showstringspaces=false,
-  belowcaptionskip=12pt
-}
-\usepackage{tikz}	\usetikzlibrary{calc,arrows,decorations.pathmorphing,backgrounds,positioning,fit,shapes,decorations.shapes, shapes.geometric, decorations.pathreplacing, decorations.text}
- 
-	\tikzstyle{block} = [draw,rectangle,thick,minimum height=2em,minimum width=2em,drop shadow,fill=blue!50]
-	\tikzstyle{sum} = [draw,circle,inner sep=0mm,minimum size=2mm]
-	\tikzstyle{connector} = [->,thick]
-	\tikzstyle{line} = [very thick]
-	\tikzstyle{branch} = [circle,inner sep=0pt,minimum size=1mm,fill=black,draw=black]
-	\tikzstyle{axes} = [->,>=stealth',semithick]
-	\tikzstyle{important line} = [very thick,draw=red]
-	\tikzstyle{important text} = [rounded corners,fill=red!10,inner sep=1ex]
-\usepackage{circuitikz}
-\usepackage{pgfplots}
-\pgfplotsset{compat=1.16}
-% natbib already loaded above with [square,comma,numbers,sort&compress]
-\usepackage{titlesec}
-\usepackage[labelsep=period]{caption}
-\usepackage{subfigure}
-\DeclareCaptionFormat{myformat}{\fontsize{13}{15}\selectfont#1#2#3}
-\captionsetup{format=myformat}
-\usepackage{titletoc}
-\titlelabel{\thetitle.\,\,}
-\titleformat{\chapter}[display] 
-  {\fontsize{14}{16}\selectfont\bfseries\centering}
-  {\MakeUppercase{\chaptertitlename}\ \thechapter}{0pt}{\fontsize{14}{16}\selectfont\MakeUppercase}
-\titlespacing{\chapter}{0pt}{0pt}{40pt} 
-\titleformat*{\section}{\fontsize{14}{14}\selectfont\bfseries}
-\titleformat*{\subsection}{\fontsize{14}{14}\selectfont\bfseries\slshape}
-\titleformat*{\subsubsection}{\fontsize{14}{14}\slshape}
-\titleformat*{\paragraph}{\large\bfseries}
-\titleformat*{\subparagraph}{\large\bfseries}
-\graphicspath {{figures/}}
-
-\titlespacing\section{0pt}{6pt plus 4pt minus 2pt}{1pt plus 2pt minus 2pt} 
-\titlespacing\subsection{0pt}{6pt plus 4pt minus 2pt}{1pt plus 2pt minus 2pt}
-\titlespacing\subsubsection{0pt}{6pt plus 4pt minus 2pt}{0pt plus 2pt minus 2pt}
-\titlespacing\subsubsubsection{0pt}{6pt plus 4pt minus 2pt}{0pt plus 2pt minus 2pt}
-
-\usepackage[subfigure]{tocloft} 
-
-\cftsetpnumwidth{20pt}
-\titlecontents{chapter}
-  [0pt]
-  {\bfseries}
-  {\fontsize{13.5}{14}\selectfont\chaptername\ \thecontentslabel.\,\,}
-  {}
-  {\cftdotfill{\cftdotsep}\contentspage} 
-	\renewcommand{\cftsecaftersnum}{.}%
-	\renewcommand{\cftsubsecaftersnum}{.}%
-
-\usetikzlibrary{calc}
-\newtheorem{definition}{\bf Định nghĩa}[chapter]
-\newtheorem{theorem}{\bf Định lý}[chapter]
-\newtheorem{lemma}{\bf Bổ đề}[chapter]
-
-\renewcommand{\cftfigfont}{Hình~}
-\renewcommand{\cfttabfont}{Bảng~ }
-\floatname{algorithm}{Thuật toán}
-\makeatletter
-\renewcommand\@biblabel[1]{[#1]}
-\makeatother
-\renewcommand{\baselinestretch}{1.4}
-\flushbottom
-\renewcommand*{\bibfont}{\fontsize{13}{16}\selectfont}
-
-\usepackage[hidelinks, unicode]{hyperref}
-
-% Pandoc syntax-highlighting macros (required for code blocks in included chapters)
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{array}
 \usepackage{fancyvrb}
+\usepackage{longtable}
+
+% Pandoc tightlist support
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+% Pandoc syntax highlighting (if code blocks are used)
 \newcommand{\VerbBar}{|}
 \newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
-\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
-\newenvironment{Shaded}{\vspace{4pt}\small}{\vspace{4pt}}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\},fontsize=\small}
+\newenvironment{Shaded}{\vspace{4pt}}{\vspace{4pt}}
 \newcommand{\AlertTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
 \newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
 \newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.49,0.56,0.16}{#1}}
@@ -157,112 +53,38 @@
 \newcommand{\VariableTok}[1]{\textcolor[rgb]{0.10,0.09,0.49}{#1}}
 \newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
 \newcommand{\WarningTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
-\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
-% pandoc --citeproc emits CSLReferences; define it as a simple list
-\newenvironment{CSLReferences}[2]{%
-  \setlength{\parindent}{0pt}%
-  \setlength{\parskip}{6pt plus 2pt minus 1pt}%
-  \list{}{\setlength{\leftmargin}{0pt}}%
-  \item\relax
-}{\endlist}
-\newcommand{\citeproctext}{}
-\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{\strut #1\strut}}
-\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut #1\strut}}
-\newlength{\csllabelwidth}
-\setlength{\csllabelwidth}{3em}
+\newcommand{\passthrough}[1]{#1}
 
 \begin{document}
 
-\fontsize{13}{15.5}\selectfont
+\title{NTT-Friendly Pairing Curve Construction with\\Readability-Aware Prime Selection over a 1024-bit Field}
 
-\pagestyle{empty}
-\input{cover/outer-cover}
-\newpage
-\pagestyle{plain}
-\pagenumbering{gobble}
-\input{cover/inner-cover}
-\newpage
-\def\baselinestretch{1.3}
-\pagestyle{plain}
-\pagenumbering{gobble}
-\input{cover/declaration}
-\newpage
-\input{cover/acknowledgments} 
-% \newpage
-% \input{cover/tomtat}
-\newpage
+\author{
+\IEEEauthorblockN{Tran Duy}
+\IEEEauthorblockA{University of Engineering and Technology\\
+Vietnam National University, Hanoi\\
+Email: placeholder@vnu.edu.vn}
+}
 
-\pagenumbering{roman}
+\maketitle
 
+\begin{abstract}
+Pairing-friendly elliptic curves are fundamental to advanced cryptographic protocols such as BLS signatures and zero-knowledge proof systems. However, the traditional Cocks-Pinch construction produces primes with no guaranteed algebraic structure, limiting their utility for NTT-based proof systems and hindering parameter auditability. We present two contributions: (1)~a modified Cocks-Pinch algorithm that constrains the cyclotomic seed to guarantee two-adicity of at least~36 in both the base field and scalar field primes, exceeding the industry-standard BLS12-381 curve; and (2)~a multi-criteria readability scoring system that selects human-auditable primes from the valid candidate space without weakening security. We instantiate these techniques to construct a 1024-bit pairing-friendly curve with embedding degree~18, providing 256-bit ECDLP security. A complete Rust implementation demonstrates practical signing operations and validates resistance against MOV, Anomalous, and TNFS attacks.
+\end{abstract}
 
-\setlength{\parindent}{1cm}
-\setlength{\parskip}{0.6ex}
+\begin{IEEEkeywords}
+elliptic curve cryptography, pairing-friendly curves, Cocks-Pinch method, NTT-friendly primes, parameter auditability
+\end{IEEEkeywords}
 
-\fontsize{13}{16}\selectfont
-\renewcommand{\contentsname}{\vspace{-70pt}\centerline{\fontsize{14}{16}\selectfont\MakeUppercase{Mục lục}}}
-\clearpage
-\phantomsection
-\addcontentsline{toc}{chapter}{Mục lục}
-\tableofcontents
-\clearpage
-\input{cover/abstract}
-\newpage
-\input{cover/abbreviations}
-\newpage
+\input{chapter/01-introduction}
+\input{chapter/02-preliminaries}
+\input{chapter/03-improved-cp}
+\input{chapter/04-readability}
+\input{chapter/05-evaluation}
+\input{chapter/06-related-work}
+\input{chapter/07-conclusion}
 
-\newpage
-\clearpage
-\phantomsection
-\addcontentsline{toc}{chapter}{Danh mục mã nguồn}
-\renewcommand{\lstlistlistingname}{\vspace{-70pt}\centerline{\fontsize{14}{16}\selectfont{\MakeUppercase{Danh mục mã nguồn}}}}
-\lstlistoflistings
-\fontsize{13}{16}\selectfont
-\newpage
-
-
-\clearpage
-\phantomsection
-\addcontentsline{toc}{chapter}{Danh mục bảng biểu}
-\renewcommand{\listtablename}{\vspace{-70pt}\centerline{\fontsize{14}{16}\selectfont{\MakeUppercase{Danh mục bảng biểu}}}}
-\listoftables
-\fontsize{13}{16}\selectfont
-\newpage
-
-\pagenumbering{arabic}
-\pagestyle{plain}
-
-\input{chapter/00-introduction}
-\newpage
-\input{chapter/01-chapter1}
-\newpage
-\input{chapter/02-chapter2}
-\newpage
-\input{chapter/03-chapter3}
-\newpage
-\input{chapter/04-chapter4}
-\newpage
-\input{chapter/05-chapter5}
-\newpage
-\input{chapter/06-conclusion}
-\newpage
-
-
-
-
-\renewcommand{\bibname}{Tài liệu tham khảo}
-\clearpage
-\phantomsection
-\addcontentsline{toc}{chapter}{{TÀI LIỆU THAM KHẢO}}
-\renewcommand{\refname}{Literary works}
-
-
-
-
-
-\bibliographystyle{unsrtnat}
+\bibliographystyle{IEEEtran}
 \bibliography{references}
-
-
-
 
 \end{document}
