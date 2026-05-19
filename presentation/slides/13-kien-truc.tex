@@ -1,0 +1,29 @@
+\begin{frame}{Kiến trúc hệ thống}
+  \begin{columns}[c]
+    \column{0.45\textwidth}
+      \begin{block}{Ngăn xếp phần mềm}
+        \begin{enumerate}
+          \item[\textbf{5}] \texttt{Schnorr / ECDSA}
+          \item[\textbf{4}] \texttt{KeyPair} + Hash mở rộng
+          \item[\textbf{3}] \texttt{AffinePoint} --- nhóm EC
+          \item[\textbf{2}] \texttt{PrimeField} --- Montgomery
+          \item[\textbf{1}] \texttt{U1024} --- bignum 1024-bit
+        \end{enumerate}
+      \end{block}
+    \column{0.55\textwidth}
+      \begin{block}{Đặc điểm thiết kế}
+        \begin{itemize}
+          \item \textbf{Rust} --- ownership + borrow checker\\
+                loại bỏ lỗi bộ nhớ tại compile-time
+          \item \textbf{Zero dependency} --- không dùng\\
+                thư viện mật mã bên ngoài
+          \item \textbf{Zero-cost abstraction} ---\\
+                trait \texttt{PrimeFieldConfig} với\\
+                hằng số compile-time, inline hoàn toàn
+          \item \textbf{Tham số từ file TOML} ---\\
+                thay đổi đường cong không cần\\
+                biên dịch lại toàn bộ
+        \end{itemize}
+      \end{block}
+  \end{columns}
+\end{frame}

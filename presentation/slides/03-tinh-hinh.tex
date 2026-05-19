@@ -1,0 +1,14 @@
+\begin{frame}{Tình hình hiện tại}
+  \begin{block}{ECC là nền tảng bảo mật hạ tầng số}
+    TLS 1.3, SSH, Bitcoin (secp256k1), Ethereum (BLS12-381), chữ ký số điện tử
+  \end{block}
+  \vspace{0.4em}
+  \textbf{Thực trạng:}
+  \begin{itemize}
+    \item Hầu hết hệ thống \textbf{tái sử dụng} đường cong sinh sẵn bởi NIST, SECG
+    \item Tham số dùng ``hạt giống'' không giải thích được $\Rightarrow$ nguy cơ backdoor
+    \item Sự kiện \texttt{Dual\_EC\_DRBG}: NSA bị cáo buộc cài cửa hậu vào PRNG chuẩn NIST
+    \item Thư viện mật mã chủ yếu viết bằng C/C++ $\Rightarrow$ lỗi bộ nhớ nghiêm trọng\\
+          (Heartbleed 2014, 70\% lỗ hổng Microsoft từ memory safety)
+  \end{itemize}
+\end{frame}

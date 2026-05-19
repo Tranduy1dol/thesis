@@ -1,4 +1,3 @@
-
 \begin{frame}[plain]
 \begin{tikzpicture}[remember picture, overlay]
 
@@ -14,34 +13,19 @@
   \node[anchor=north, text=uetblue, font=\Large\bfseries] at
     ([yshift=-0.6cm] current page.north) {Nội dung trình bày};
 
-  %% Cards (5 sections, centered, yshift=0.6cm above center to clear footer)
+  %% Cards (4 sections)
   \foreach \i/\num/\txt in {
-    1/01/{ĐẶT\\VẤN ĐỀ},
-    2/02/{CƠ SỞ\\TOÁN HỌC},
-    3/03/{PHƯƠNG PHÁP\\XÂY DỰNG},
-    4/04/{SƠ ĐỒ\\CHỮ KÝ SỐ},
-    5/05/{KẾT QUẢ\\\& ĐÁNH GIÁ}
+    1/01/{GIỚI\\THIỆU},
+    2/02/{CƠ SỞ\\LÝ THUYẾT},
+    3/03/{CÀI ĐẶT\\HỆ THỐNG},
+    4/04/{KẾT\\LUẬN}%
   }{
-    \pgfmathsetmacro{\xshift}{(\i-3)*2.7}
-    \node[rounded corners=7pt, fill=uetblue, text=white,
-          minimum width=2.3cm, minimum height=4.0cm,
-          align=center, text width=2.0cm]
-      at ([xshift=\xshift cm, yshift=0.5cm] current page.center) {%
-        {\large\bfseries\num}\\[0.5cm]
-        {\scriptsize\bfseries\txt}%
-    };
+    \node[draw=uetblue, rounded corners=6pt, minimum width=3cm, minimum height=2.2cm,
+          text=uetblue, align=center, font=\small\bfseries,
+          fill=lightblue]
+      at ([xshift={-5.25cm + (\i-1)*3.5cm}, yshift=-0.5cm] current page.center)
+      {\fontsize{20}{22}\selectfont\color{uetblue!40}\num\\[6pt]\txt};
   }
-
-  %% Footer
-  \fill[uetblue]
-    (current page.south west) rectangle
-    ([yshift=0.65cm] current page.south east);
-  \node[anchor=west, text=white, font=\small\bfseries] at
-    ([xshift=0.5cm, yshift=0.32cm] current page.south west)
-    {VNU UET -- Faculty of Information Technology};
-  \node[anchor=east, text=white, font=\small] at
-    ([xshift=-0.5cm, yshift=0.32cm] current page.south east)
-    {\insertframenumber\,/\,\inserttotalframenumber};
 
 \end{tikzpicture}
 \end{frame}

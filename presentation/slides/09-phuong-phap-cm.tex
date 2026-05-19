@@ -1,0 +1,21 @@
+\begin{frame}{Phương pháp Nhân phức (Complex Multiplication)}
+  \begin{block}{Ý tưởng cốt lõi}
+    Thay vì chọn $(a,b)$ ngẫu nhiên rồi đếm điểm,\\
+    CM \emph{đảo chiều}: bắt đầu từ bậc nhóm $r$ mong muốn $\Rightarrow$ suy ra đường cong
+  \end{block}
+  \vspace{0.3em}
+  \textbf{Điều kiện CM:} Tồn tại đường cong trên $\mathbb{F}_p$ với vết Frobenius $t$ khi:
+  \[
+    4p = t^2 + |D| \cdot y^2 \quad (D < 0 \text{ là biệt thức CM})
+  \]
+  \vspace{0.2em}
+  \textbf{Quy trình 4 bước:}
+  \begin{enumerate}
+    \item Tính $j$-invariant từ đa thức lớp Hilbert $H_D(x) \pmod{p}$
+    \item Suy ra hệ số đường cong $(a, b)$ từ $j$
+    \item Kiểm tra xoắn (twist test): chọn đường cong có $r \mid \#E$
+    \item Tìm điểm sinh $G$ bậc $r$ bằng nhân cofactor
+  \end{enumerate}
+  \vspace{0.2em}
+  Với $D = -3$: $H_{-3}(x) = x \Rightarrow j = 0 \Rightarrow y^2 = x^3 + b$ (dạng đơn giản nhất)
+\end{frame}

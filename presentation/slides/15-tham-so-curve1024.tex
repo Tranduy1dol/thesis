@@ -1,0 +1,31 @@
+\begin{frame}{Tham số đường cong Curve1024}
+  \begin{block}{Phương trình: $E: y^2 = x^3 + 5$ \quad trên $\mathbb{F}_p$}
+    \small
+    $k = 18$, \quad $D = -3$, \quad $|p| = 1024$ bit, \quad $|r| = 512$ bit
+  \end{block}
+  \vspace{0.2em}
+  \textbf{Bậc nhóm $r$ --- biểu diễn 64-bit limb (MSB $\to$ LSB):}
+  \vspace{0.1em}
+
+  {\footnotesize\ttfamily
+  \begin{tabular}{rl}
+    limb 15--8: & \textcolor{fitgreen}{\textbf{0000000000000000}} $\times$ 8 limbs (50\% = 0) \\
+    limb 7: & 8e09c0b6aa3a6250 \\
+    limb 6: & 1809d08152ef6657 \\
+    limb 5: & e905d9793d7814b9 \\
+    limb 4: & 5315dd1940ee9641 \\
+    limb 3: & e67861624813833970 \\
+    limb 2: & b962e6f67bcf6422 \\
+    limb 1: & afc3f5b9ba363faf \\
+    limb 0: & 64eb22\textcolor{red!70!black}{\textbf{00000001}} \\
+  \end{tabular}
+  }
+  \vspace{0.3em}
+
+  \textbf{Đặc trưng cấu trúc:}
+  \begin{itemize}
+    \item 8/16 limb bằng 0 $\Rightarrow$ dễ nhận diện, kiểm tra khi debug
+    \item Đuôi chung \texttt{...00000001}: xác nhận $r = d \cdot 2^{33} + 1$ (NTT-friendly)
+    \item $p$ cũng kết thúc bằng \texttt{...64400000001} --- cùng cấu trúc
+  \end{itemize}
+\end{frame}

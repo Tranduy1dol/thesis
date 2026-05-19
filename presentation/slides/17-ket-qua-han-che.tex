@@ -1,0 +1,37 @@
+\begin{frame}{Kết quả đạt được \& Hạn chế}
+  \begin{columns}[t]
+    \column{0.5\textwidth}
+      \begin{block}{Kết quả}
+        \begin{itemize}
+          \item[$\checkmark$] Tự chủ sinh đường cong KSS18\\1024-bit, không hằng số nước ngoài
+          \item[$\checkmark$] Bảo mật 256-bit, vượt NIST 2030+
+          \item[$\checkmark$] Rust --- an toàn bộ nhớ tuyệt đối
+          \item[$\checkmark$] Schnorr \& ECDSA hoạt động đúng
+        \end{itemize}
+      \end{block}
+      \vspace{0.2em}
+      \begin{block}{Đánh giá an toàn}
+        \small
+        \begin{tabular}{ll}
+          Pollard-$\rho$ & $O(2^{256})$ --- an toàn \\
+          MOV & 18432-bit --- an toàn \\
+          Anomalous & $\#E \neq p$ --- miễn nhiễm \\
+          Invalid Curve & Kiểm tra tại khởi tạo \\
+        \end{tabular}
+      \end{block}
+    \column{0.5\textwidth}
+      \begin{alertblock}{Hạn chế}
+        \begin{itemize}
+          \item \textbf{Timing side-channel}\\
+                Double-and-Add rò rỉ bit scalar\\
+                $\Rightarrow$ cần Montgomery Ladder
+          \item \textbf{Tọa độ Affine}\\
+                1 nghịch đảo/phép cộng điểm\\
+                $\Rightarrow$ cần Jacobian/Projective
+          \item \textbf{Hiệu năng}\\
+                $\sim$8000$\times$ chậm hơn secp256k1\\
+                (do trường lớn + chưa tối ưu ASM)
+        \end{itemize}
+      \end{alertblock}
+  \end{columns}
+\end{frame}

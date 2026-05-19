@@ -1,0 +1,32 @@
+\begin{frame}{Thuật toán Cocks-Pinch: Truyền thống \& Cải tiến}
+  \textbf{Điều kiện:} $r = \Phi_{18}(T) = T^6 - T^3 + 1$,\quad
+  $4p = t^2 + 3y^2$
+  \vspace{0.3em}
+
+  \textbf{4 bước truyền thống:}
+  \begin{enumerate}
+    \small
+    \item Sinh $r$ từ $T$ ngẫu nhiên, kiểm tra tính nguyên tố
+    \item Tính $\beta = \sqrt{-3} \pmod{r}$ (Tonelli-Shanks)
+    \item $t_0 \equiv T^i + 1$, $y_0 \equiv (t_0 - 2)/\beta \pmod{r}$
+    \item Quét lưới $(h_t, h_y) \in [-20,20]^2$: $p = (t^2 + 3y^2)/4$ nguyên tố?
+  \end{enumerate}
+  \vspace{0.3em}
+
+  \begin{columns}[t]
+    \column{0.5\textwidth}
+      \begin{alertblock}{Cải tiến 1: NTT-friendly $r$}
+        $r - 1 = T^3(T^3 - 1)$\\[3pt]
+        Nếu $T \equiv 0 \pmod{2^{12}}$:\\
+        $\nu_2(r-1) = 36$ \textbf{(đảm bảo)}\\[3pt]
+        Không cần rejection sampling
+      \end{alertblock}
+    \column{0.5\textwidth}
+      \begin{alertblock}{Cải tiến 2: NTT-friendly $p$}
+        Mở rộng lưới nâng:\\
+        $\text{range} = 20 + 2^{\max(0, s_p - 36)}$\\[3pt]
+        Kiểm soát $\nu_2(p-1) \geq 36$\\[3pt]
+        Vượt BLS12-381 ($\nu_2 = 32$)
+      \end{alertblock}
+  \end{columns}
+\end{frame}

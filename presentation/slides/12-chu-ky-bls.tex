@@ -1,0 +1,28 @@
+\begin{frame}{Chữ ký tổng hợp BLS}
+  \begin{block}{Phép ghép cặp song tuyến (Bilinear Pairing)}
+    $e: \mathbb{G}_1 \times \mathbb{G}_2 \to \mathbb{G}_T$ thỏa mãn:\\
+    $e([a]P,\, [b]Q) = e(P, Q)^{ab}$ \quad (song tuyến)
+  \end{block}
+  \vspace{0.3em}
+  \begin{columns}[t]
+    \column{0.5\textwidth}
+      \textbf{Quy trình BLS:}
+      \begin{itemize}
+        \item Ký: $\sigma_i = [d_i]\, H(m)$
+        \item Tổng hợp: $\sigma = \sigma_1 + \cdots + \sigma_n$
+        \item Xác minh:\\
+              $e(\sigma, G_2) \stackrel{?}{=} e\bigl(H(m),\, \sum Q_i\bigr)$
+      \end{itemize}
+    \column{0.5\textwidth}
+      \textbf{Vai trò đường cong KSS18:}
+      \begin{itemize}
+        \item $\mathbb{G}_1 \subset E(\mathbb{F}_p)$
+        \item $\mathbb{G}_T \subset \mathbb{F}_{p^{18}}^*$\\
+              (trường 18432-bit)
+        \item Optimal Ate pairing:\\
+              vòng lặp Miller $O(\log r)$
+      \end{itemize}
+      \vspace{0.3em}
+      \textit{Cài đặt đầy đủ phép ghép cặp: hướng phát triển tương lai}
+  \end{columns}
+\end{frame}

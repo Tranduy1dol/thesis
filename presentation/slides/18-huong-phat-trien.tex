@@ -1,0 +1,35 @@
+\begin{frame}{Hướng phát triển}
+  \begin{columns}[t]
+    \column{0.5\textwidth}
+      \begin{block}{Ngắn hạn --- Hiệu năng}
+        \begin{itemize}
+          \item \textbf{Tọa độ Jacobian/Projective}\\
+                1 nghịch đảo/lần nhân vô hướng\\
+                thay vì 1024 $\Rightarrow$ dự kiến $\sim$10$\times$
+          \item \textbf{Montgomery Ladder}\\
+                Constant-time, loại bỏ\\
+                timing side-channel
+          \item \textbf{NAF/Sliding Window}\\
+                Giảm $\sim$25\% số phép add
+        \end{itemize}
+      \end{block}
+    \column{0.5\textwidth}
+      \begin{block}{Trung \& Dài hạn}
+        \begin{itemize}
+          \item \textbf{Phép ghép cặp đầy đủ}\\
+                Vòng lặp Miller + final exp\\
+                trên $\mathbb{F}_{p^{18}}$\\
+                $\Rightarrow$ kích hoạt BLS signatures
+          \item \textbf{MSM Pippenger}\\
+                Tối ưu xác minh đa chữ ký
+          \item \textbf{Giao thức ngưỡng}\\
+                MuSig2/FROST ($t$-trong-$n$)
+          \item \textbf{Kiểm định hình thức}\\
+                Creusot hoặc Kani cho Rust
+        \end{itemize}
+      \end{block}
+  \end{columns}
+  \vspace{0.4em}
+  \centering
+  \small Mã nguồn: \texttt{github.com/Tranduy1dol/curve1024} (MIT License)
+\end{frame}

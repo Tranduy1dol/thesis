@@ -1,0 +1,25 @@
+\begin{frame}{Cài đặt sinh đường cong}
+  \textbf{Thuật toán Cocks-Pinch cải tiến} với ràng buộc NTT:
+  \vspace{0.3em}
+
+  \begin{table}
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      Tham số & CP Truyền thống & CP Cải tiến \\
+      \midrule
+      Ràng buộc $T$ & Không & $T \equiv 0 \pmod{2^{12}}$ \\
+      $\nu_2(r-1)$ & Ngẫu nhiên (1--3) & $\geq 36$ (đảm bảo) \\
+      $\nu_2(p-1)$ & Ngẫu nhiên (1--3) & $\geq 36$ (lưới mở rộng) \\
+      Lưới $(h_t, h_y)$ & $[-20,20]^2$ & $[-21,21]^2$ \\
+      Số lần thử & 100--500 & 3.000--6.000 \\
+      Thời gian & 2--10 s & 30--60 s \\
+      \midrule
+      So với BLS12-381 ($\nu_2=32$) & Không đạt & \textbf{Vượt} \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+  \vspace{0.3em}
+  \textbf{Nhận xét:} Chi phí sinh tham số tăng $\sim$10$\times$ nhưng chỉ chạy \textbf{một lần} ---\\
+  đổi lại cấu trúc NTT vĩnh viễn cho mọi phép tính trên đường cong.
+\end{frame}

@@ -1,0 +1,24 @@
+\begin{frame}{So sánh hiệu năng}
+  \begin{table}
+    \small
+    \begin{tabular}{lcccc}
+      \toprule
+      Đường cong & $|p|$ & Ký & Xác minh & Bảo mật \\
+      \midrule
+      secp256k1 & 256 bit & $\sim$0.2 ms & $\sim$0.4 ms & 128-bit \\
+      P-384 & 384 bit & $\sim$1 ms & $\sim$2 ms & 192-bit \\
+      BLS12-381 & 381 bit & $\sim$1.5 ms & $\sim$3 ms & 128-bit \\
+      \midrule
+      \textbf{Curve1024} & \textbf{1024 bit} & \textbf{1.55 s} & \textbf{2.83 s} & \textbf{256-bit} \\
+      \bottomrule
+    \end{tabular}
+    \caption*{\small Schnorr sign/verify. Curve1024: Criterion, release build, LLVM O3, không AVX-512}
+  \end{table}
+  \vspace{0.3em}
+  \textbf{Kịch bản phù hợp:}
+  \begin{itemize}
+    \item Ký tài liệu pháp lý, ký phần mềm khi phát hành
+    \item Chứng chỉ PKI, giao dịch tài chính giá trị lớn
+    \item Bất kỳ ứng dụng nào chấp nhận độ trễ vài giây
+  \end{itemize}
+\end{frame}
