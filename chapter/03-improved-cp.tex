@@ -49,64 +49,40 @@ larger than the default.
 
 \subsection{Algorithm}\label{algorithm}
 
-The complete NTT-friendly Cocks-Pinch construction proceeds as follows:
+The complete NTT-friendly Cocks-Pinch construction proceeds as follows
+(see Fig.\textasciitilde{}\ref{fig:pipeline}):
 
-\textbf{Input:} Embedding degree \(k=18\), target sizes \((|r|, |p|)\),
-minimum two-adicity \(s\)
+\input{figures/construction-pipeline}
 
-\textbf{Output:} Primes \((p, r)\) with \(\nu_2(r-1) \geq s\) and
-\(\nu_2(p-1) \geq s\)
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  Set \(m \leftarrow \lceil s/3 \rceil\) and
-  \(\text{step} \leftarrow 2^m\)
-\item
-  Repeat:
-
-  \begin{enumerate}
-  \def\labelenumii{\alph{enumii}.}
-  \tightlist
-  \item
-    Choose \(T\) as a random multiple of step in the target range
-  \item
-    Compute \(r \leftarrow T^6 - T^3 + 1\)
-  \item
-    If \(r\) is not prime or \(|r| \neq\) target, continue
-  \item
-    Compute \(\beta \leftarrow \sqrt{-3} \pmod{r}\) (Tonelli-Shanks)
-  \item
-    For each \(i\) with \(\gcd(i, 18) = 1\):
-
-    \begin{itemize}
-    \tightlist
-    \item
-      \(t_0 \leftarrow T^i + 1 \pmod{r}\)
-    \item
-      \(y_0 \leftarrow (t_0 - 2) \cdot \beta^{-1} \pmod{r}\)
-    \item
-      \(\text{range} \leftarrow 20 + 2^{\max(0, s - 3m)}\)
-    \item
-      For \((h_t, h_y) \in [-\text{range}, \text{range}]^2\):
-
-      \begin{itemize}
-      \tightlist
-      \item
-        \(t \leftarrow t_0 + h_t \cdot r\);
-        \(y \leftarrow y_0 + h_y \cdot r\)
-      \item
-        \(p \leftarrow (t^2 + 3y^2) / 4\)
-      \item
-        If \(|p| =\) target AND \(\nu_2(p-1) \geq s\) AND \(p\) is
-        prime: return \((p, r, t, y)\)
-      \end{itemize}
-    \end{itemize}
-  \end{enumerate}
-\item
-  Until max attempts reached
-\end{enumerate}
+\begin{algorithm}[t]
+\caption{NTT-Friendly Cocks-Pinch Construction}
+\label{alg:ntt-cp}
+\begin{algorithmic}[1]
+\REQUIRE Embedding degree $k=18$, target sizes $(|r|, |p|)$, minimum two-adicity $s$
+\ENSURE Primes $(p, r)$ with $\nu_2(r-1) \geq s$ and $\nu_2(p-1) \geq s$
+\STATE $m \leftarrow \lceil s/3 \rceil$; \quad $\text{step} \leftarrow 2^m$
+\REPEAT
+    \STATE Choose $T$ as random multiple of step in target range
+    \STATE $r \leftarrow T^6 - T^3 + 1$
+    \IF{$r$ not prime or $|r| \neq$ target}
+        \STATE \textbf{continue}
+    \ENDIF
+    \STATE $\beta \leftarrow \sqrt{-3} \pmod{r}$ \COMMENT{Tonelli-Shanks}
+    \FOR{each $i$ with $\gcd(i, 18) = 1$}
+        \STATE $t_0 \leftarrow T^i + 1 \pmod{r}$
+        \STATE $y_0 \leftarrow (t_0 - 2) \cdot \beta^{-1} \pmod{r}$
+        \STATE $\text{range} \leftarrow 20 + 2^{\max(0,\, s - 3m)}$
+        \FOR{$(h_t, h_y) \in [-\text{range}, \text{range}]^2$}
+            \STATE $t \leftarrow t_0 + h_t \cdot r$; \quad $y \leftarrow y_0 + h_y \cdot r$
+            \STATE $p \leftarrow (t^2 + 3y^2) / 4$
+            \IF{$|p| = $ target \AND $\nu_2(p-1) \geq s$ \AND $p$ is prime}
+                \RETURN $(p, r, t, y)$
+            \ENDIF
+        \ENDFOR
+    \ENDFOR
+\UNTIL{max attempts reached}
+\end{algorithmic}
+\end{algorithm}
 
 \subsection{Complexity Analysis}\label{complexity-analysis}
 

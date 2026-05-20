@@ -7,7 +7,19 @@ section: 2
 
 Let $\mathbb{F}_p$ be a prime field with $p > 3$. An elliptic curve in Short Weierstrass form is $E: y^2 = x^3 + ax + b$ with $4a^3 + 27b^2 \neq 0$. The set $E(\mathbb{F}_p)$ of rational points forms an abelian group under the chord-and-tangent law [@Silverman2009].
 
-A curve is *pairing-friendly* with embedding degree $k$ if there exists a prime-order subgroup of size $r$ such that $r \mid p^k - 1$ but $r \nmid p^i - 1$ for $0 < i < k$. This enables a bilinear map $e: \mathbb{G}_1 \times \mathbb{G}_2 \to \mathbb{G}_T$ where $\mathbb{G}_T \subset \mathbb{F}_{p^k}^*$, which is the foundation of BLS signatures and zk-SNARKs.
+A *bilinear pairing* is a map $e: \mathbb{G}_1 \times \mathbb{G}_2 \to \mathbb{G}_T$ satisfying:
+
+- **Bilinearity:** $e(aP, bQ) = e(P, Q)^{ab}$ for all $a, b \in \mathbb{Z}$
+- **Non-degeneracy:** $e(P, Q) \neq 1$ for generators $P \in \mathbb{G}_1$, $Q \in \mathbb{G}_2$
+- **Computability:** $e$ can be evaluated in polynomial time via Miller's algorithm [@Miller1986]
+
+Here $\mathbb{G}_1, \mathbb{G}_2$ are prime-order subgroups of $E(\mathbb{F}_p)$ and $E(\mathbb{F}_{p^k})$ respectively, and $\mathbb{G}_T \subset \mathbb{F}_{p^k}^*$ is the target group. The principal pairing constructions are the Weil pairing (symmetric, computes two Miller loops) and the Tate pairing (one Miller loop plus a final exponentiation). The *optimal Ate pairing* [@Vercauteren2010] further reduces the Miller loop length to $|T|$ bits (the curve seed), making it the preferred choice for implementations.
+
+# Embedding Degree and Security
+
+A curve is *pairing-friendly* with embedding degree $k$ if there exists a prime-order subgroup of size $r$ such that $r \mid p^k - 1$ but $r \nmid p^i - 1$ for $0 < i < k$. The embedding degree determines the pairing target field $\mathbb{F}_{p^k}$: the MOV attack [@MOV1993] reduces ECDLP in $\mathbb{G}_1$ to DLP in $\mathbb{F}_{p^k}^*$, so $k$ must be large enough that DLP in $\mathbb{F}_{p^k}$ remains intractable.
+
+For a 1024-bit base field with $k = 18$, the pairing target is $\mathbb{F}_{p^{18}}$---a field of 18,432 bits. This far exceeds the 3,072-bit threshold for 128-bit DLP security and provides substantial margin against the Tower Number Field Sieve (TNFS) [@BarbulescuDuquesne2019; @KimBarbulescu2016]. The choice $k = 18$ also admits the 18th cyclotomic polynomial $\Phi_{18}(T) = T^6 - T^3 + 1$, which produces 512-bit primes $r$ from 86-bit seeds---an efficient ratio for the Cocks-Pinch construction.
 
 # Complex Multiplication Method
 

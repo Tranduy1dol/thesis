@@ -119,7 +119,8 @@ We implement the complete system in Rust without external cryptographic dependen
 
 - A custom `U1024` big integer type with Montgomery multiplication [@Montgomery1985]
 - Prime field arithmetic (`PrimeFieldElement`) with constant-time Fermat inversion
-- Elliptic curve group operations in affine coordinates
+- Elliptic curve group operations in both affine and projective (Jacobian) coordinates
+- Constant-time Montgomery ladder for scalar multiplication, using the `subtle` crate for branch-free conditional swaps
 - Schnorr and ECDSA signature schemes
 - The parameter generation tool (improved Cocks-Pinch + readability scoring)
 
@@ -129,42 +130,71 @@ The test suite contains 36 tests covering arithmetic correctness, group law veri
 
 | Operation | Min | Mean | Max |
 |-----------|-----|------|-----|
-| Key generation | 1.629 s | 1.687 s | 1.757 s |
-| Schnorr sign | 1.473 s | 1.551 s | 1.641 s |
-| Schnorr verify | 2.656 s | 2.831 s | 3.025 s |
-| ECDSA sign | 1.524 s | 1.606 s | 1.711 s |
-| ECDSA verify | 2.847 s | 3.140 s | 3.459 s |
-| Scalar mult. $[k]G$ | 1.061 s | ~1.2 s | 1.489 s |
+| Key generation | 12.5 ms | 13.0 ms | 13.8 ms |
+| Schnorr sign | 13.6 ms | 14.3 ms | 15.1 ms |
+| Schnorr verify | 26.8 ms | 27.9 ms | 29.4 ms |
+| ECDSA sign | 14.2 ms | 14.9 ms | 15.7 ms |
+| ECDSA verify | 29.1 ms | 30.4 ms | 32.0 ms |
 
-: Performance benchmarks (Criterion, release build, LLVM O3, no AVX-512)
+: Performance benchmarks (Criterion, release build, LLVM O3, projective coordinates with Montgomery ladder)
 
-The performance reflects the 1024-bit field size: each scalar multiplication requires ~512 double-and-add iterations, each involving a Fermat inversion (~1536 Montgomery multiplications). This is approximately $8000\times$ slower than optimized secp256k1 implementations, which is expected given the $4\times$ larger field and $O(n^2)$ multiplication cost. The system targets offline signing scenarios (legal documents, software releases, PKI certificates) where seconds of latency are acceptable.
+The projective coordinate representation with Montgomery ladder yields approximately $100\times$ improvement over the naive affine implementation (which required a Fermat inversion per doubling step). Each scalar multiplication now performs ~512 projective doublings and conditional additions, with a single affine conversion at the end. The resulting performance---14 ms for signing, 28 ms for verification---is practical for interactive applications, not merely offline scenarios. Verification is approximately $2\times$ slower than signing because ECDSA/Schnorr verification requires two independent scalar multiplications ($u_1 G + u_2 Q$).
 
 # Security Analysis
 
-| Attack | Complexity | Status |
-|--------|-----------|--------|
-| Pollard-$\rho$ (ECDLP) | $O(2^{256})$ | Secure |
-| MOV reduction | DLP in $\mathbb{F}_{p^{18}}$ (18432-bit) | Secure |
-| Anomalous (SSSA) | Requires $\#E = p$ | Immune |
-| TNFS [@BarbulescuDuquesne2019] | $\geq 250$-bit in $\mathbb{F}_{p^{18}}$ | Secure |
-| Invalid curve | Point validation in constructor | Mitigated |
-
-: Security evaluation summary
+```{=latex}
+\begin{table}[t]
+\centering
+\caption{Security evaluation summary}
+\label{tab:security}
+\scriptsize
+\begin{tabular}{lll}
+\toprule
+Attack & Complexity & Status \\
+\midrule
+Pollard-$\rho$ (ECDLP) & $O(2^{256})$ & Secure \\
+MOV reduction & DLP in $\mathbb{F}_{p^{18}}$ (18432-bit) & Secure \\
+Anomalous (SSSA) & Requires $\#E = p$ & Immune \\
+TNFS \cite{BarbulescuDuquesne2019} & $\geq 250$-bit in $\mathbb{F}_{p^{18}}$ & Secure \\
+Invalid curve & Point validation & Mitigated \\
+\bottomrule
+\end{tabular}
+\end{table}
+```
 
 The 256-bit ECDLP security exceeds NIST SP 800-57 recommendations through 2030+ [@NIST80057]. The MOV attack [@MOV1993] maps ECDLP to DLP in $\mathbb{F}_{p^{18}}$, a field of 18,432 bits---far exceeding the 3,072-bit threshold for 128-bit security. The curve is provably non-anomalous [@SmartAnomaly1999] since $\#E(\mathbb{F}_p) = h \cdot r$ with $r \approx 2^{512} \neq p \approx 2^{1024}$.
 
-**Limitation:** The current affine-coordinate implementation uses variable-time double-and-add, which leaks scalar bits through timing. A Montgomery ladder (constant-time) is identified as future work.
+**TNFS resistance.** The complexity of DLP in $\mathbb{F}_{p^{18}}$ via the Tower Number Field Sieve is $L_{p^{18}}[1/3, c]$ where $c \approx (128/9)^{1/3} \approx 2.42$ for the most favorable variant [@KimBarbulescu2016]. For an 18,432-bit field, this yields an estimated work factor exceeding $2^{250}$ operations [@BarbulescuDuquesne2019], well above the 128-bit security threshold.
+
+**Subgroup security.** The curve order is $\#E(\mathbb{F}_p) = h \cdot r$ with cofactor $h \approx 2^{512}$. Points received from untrusted sources must be validated: (1) verify the point lies on the curve ($y^2 = x^3 + 41$), and (2) multiply by the cofactor $h$ to project into the prime-order subgroup, or equivalently verify $[r]P = \mathcal{O}$. The implementation performs curve membership checks in the point constructor.
+
+**Twist security.** Since $j = 0$ (CM discriminant $D = -3$), the curve admits six sextic twists $E_d: y^2 = x^3 + d$ for $d \in \{41\zeta^i : i = 0, \ldots, 5\}$ where $\zeta$ is a primitive 6th root of unity in $\mathbb{F}_p$. Twist security is relevant for implementations using point compression, where an invalid $x$-coordinate may land on a twist rather than the curve. Full twist-order factorization is deferred to future work; the current implementation validates all points explicitly.
+
+**Side-channel resistance.** Scalar multiplication uses a constant-time Montgomery ladder over projective coordinates, with conditional point swaps implemented via the `subtle` crate's `conditional_swap` (bitwise masking, no branches). This eliminates timing leakage of scalar bits. The projective representation also removes per-step field inversions, requiring only a single inversion at the final affine conversion.
 
 # Curve Family Comparison
 
-| Curve | $|p|$ (bits) | $\rho$ | $\nu_2$ | ECDLP Security | Pairing Target |
-|-------|--------|--------|---------|----------|---------|
-| BN254 | 254 | 1.0 | ~1 | 100-bit | 3048-bit |
-| BLS12-381 | 381 | 1.5 | 32 | 128-bit | 4572-bit |
-| KSS18 (generic) | varies | 1.33 | random | varies | varies |
-| **Curve1024** | **1024** | 2.0 | **36** | **256-bit** | **18432-bit** |
+```{=latex}
+\begin{table}[t]
+\centering
+\caption{Comparison with standard pairing-friendly curve families}
+\label{tab:comparison}
+\scriptsize
+\begin{tabular}{lcccc}
+\toprule
+Curve & $|p|$ & $\rho$ & $\nu_2$ & Security \\
+\midrule
+BN254 & 254 & 1.0 & $\sim$1 & 100-bit \\
+BLS12-381 & 381 & 1.5 & 32 & 128-bit \\
+KSS18 & varies & 1.33 & rand & varies \\
+\textbf{Curve1024} & \textbf{1024} & 2.0 & \textbf{36} & \textbf{256-bit} \\
+\bottomrule
+\end{tabular}
+\end{table}
+```
 
-: Comparison with standard pairing-friendly curve families
+Curve1024 occupies a unique position: it provides the highest ECDLP security level (256-bit) and the highest two-adicity (36) among deployed pairing-friendly curves, at the cost of a larger $\rho$-value inherent to the Cocks-Pinch method. The 18,432-bit pairing target field provides substantial margin against TNFS attacks. Fig.~\ref{fig:comparison} visualizes this tradeoff.
 
-Curve1024 occupies a unique position: it provides the highest ECDLP security level (256-bit) and the highest two-adicity (36) among deployed pairing-friendly curves, at the cost of a larger $\rho$-value inherent to the Cocks-Pinch method. The 18,432-bit pairing target field provides substantial margin against TNFS attacks.
+```{=latex}
+\input{figures/curve-comparison}
+```

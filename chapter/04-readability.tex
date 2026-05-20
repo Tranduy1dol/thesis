@@ -67,6 +67,22 @@ The combined score weights the base field prime \(p\) at \(1.5\times\)
 the scalar field prime \(r\), since \(p\) appears more frequently in
 implementations (field arithmetic, point encoding, serialization).
 
+\textbf{Criterion rationale.} Each criterion targets a distinct aspect
+of human inspectability: \emph{zero limbs} allow developers to
+immediately verify correct initialization in memory dumps (an entire
+64-bit word is either all-zero or not); \emph{binary sparseness} reduces
+the visual complexity of the full binary expansion; \emph{two-adicity}
+is directly observable from trailing zeros; \emph{hex zero density} aids
+reading hexadecimal representations common in test vectors; \emph{simple
+top limb} makes the most-significant word easy to memorize and verify;
+\emph{repeating limbs} create visual patterns that are trivially
+confirmed. The weights reflect implementation impact---a zero limb
+eliminates an entire multiplication operand and 16 hex digits
+simultaneously, justifying its higher score (60) relative to individual
+hex zeros (2). The scoring is a design heuristic; alternative weightings
+that preserve the relative ordering of structural properties yield
+similar top candidates in practice.
+
 \subsection{Search Procedure}\label{search-procedure}
 
 The readability-aware search operates in two modes:

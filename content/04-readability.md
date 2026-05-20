@@ -40,6 +40,8 @@ Each candidate prime is evaluated on eight independent structural criteria:
 
 The combined score weights the base field prime $p$ at $1.5\times$ the scalar field prime $r$, since $p$ appears more frequently in implementations (field arithmetic, point encoding, serialization).
 
+**Criterion rationale.** Each criterion targets a distinct aspect of human inspectability: *zero limbs* allow developers to immediately verify correct initialization in memory dumps (an entire 64-bit word is either all-zero or not); *binary sparseness* reduces the visual complexity of the full binary expansion; *two-adicity* is directly observable from trailing zeros; *hex zero density* aids reading hexadecimal representations common in test vectors; *simple top limb* makes the most-significant word easy to memorize and verify; *repeating limbs* create visual patterns that are trivially confirmed. The weights reflect implementation impact---a zero limb eliminates an entire multiplication operand and 16 hex digits simultaneously, justifying its higher score (60) relative to individual hex zeros (2). The scoring is a design heuristic; alternative weightings that preserve the relative ordering of structural properties yield similar top candidates in practice.
+
 # Search Procedure
 
 The readability-aware search operates in two modes:

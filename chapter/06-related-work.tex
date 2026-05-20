@@ -8,18 +8,37 @@ MNT curves, and polynomial families (BN, BLS, KSS). Their work
 establishes the theoretical framework but does not address
 NTT-friendliness as a design criterion.
 
+\textbf{BN curves and TNFS downgrade.} Barreto-Naehrig curves
+\cite{BarretoNaehrig2005} achieve \(\rho = 1\) with embedding degree
+12, making BN254 the standard for Ethereum's precompiles. However, Kim
+and Barbulescu \cite{KimBarbulescu2016} demonstrated that the extended
+Tower Number Field Sieve reduces BN254's effective security from 128-bit
+to approximately 100-bit. This TNFS vulnerability motivates the move to
+larger fields: our 1024-bit base field with \(k=18\) yields an
+18,432-bit pairing target, providing substantial margin against all
+known NFS variants.
+
 \textbf{TNFS security updates.} Barbulescu and Duquesne
-\cite{BarbulescuDuquesne2019} demonstrated that the Tower Number Field
-Sieve reduces the effective security of many pairing-friendly curves,
-notably downgrading BN256 from 128-bit to approximately 100-bit
-security. This motivates our choice of a 1024-bit base field with
-\(k=18\), yielding a pairing target of 18,432 bits.
+\cite{BarbulescuDuquesne2019} provided updated key size estimations
+showing that many deployed pairing-friendly curves offer less security
+than originally claimed. Their analysis confirms that embedding degree
+18 with a 1024-bit prime provides \(\geq 250\)-bit security in the
+pairing target field.
 
 \textbf{BLS12-381.} Bowe \cite{BLS12_381} designed BLS12-381
 specifically for zk-SNARKs, achieving two-adicity 32 in both fields
 through careful parameter selection within the BLS12 family. Our work
 achieves higher two-adicity (36) using the more flexible Cocks-Pinch
-method, at the cost of a larger \(\rho\)-value.
+method, at the cost of a larger \(\rho\)-value (2.0 vs.~1.5).
+
+\textbf{KSS-18 curves.} Kachisa, Schaefer, and Scott \cite{KSS2008}
+construct pairing-friendly curves with embedding degree 18 using the
+Brezing-Weng method \cite{BrezingWeng2005}, achieving
+\(\rho \approx 1.33\). While KSS-18 offers better bandwidth efficiency
+than Cocks-Pinch (\(\rho = 2\)), the parametric family does not
+inherently guarantee NTT-friendliness, and the fixed polynomial
+structure limits the ability to optimize for readability across a large
+candidate space.
 
 \textbf{Pasta curves.} The Pallas/Vesta cycle \cite{PastaCurves}
 achieves NTT-friendliness through a 2-cycle of curves, enabling
@@ -27,13 +46,15 @@ recursive proof composition. Unlike our approach, Pasta curves are not
 pairing-friendly and target a different application domain (Halo 2
 recursive proofs).
 
-\textbf{Nothing-up-my-sleeve numbers.} The cryptographic community has
-long advocated for ``nothing-up-my-sleeve'' constants (e.g., using
-digits of \(\pi\)) to demonstrate absence of backdoors. Our readability
-scoring takes a complementary approach: rather than deriving primes from
-a fixed public constant, we select the most inspectable prime from a
-large space of equally secure candidates. Both approaches serve the goal
-of transparent parameter generation.
+\textbf{Nothing-up-my-sleeve numbers and SafeCurves.} The cryptographic
+community has long advocated for transparent parameter generation to
+demonstrate absence of backdoors. The SafeCurves project
+\cite{SafeCurves} formalizes criteria including rigidity, twist
+security, and completeness. Our readability scoring takes a
+complementary approach: rather than deriving primes from a fixed public
+constant, we select the most inspectable prime from a large space of
+equally secure candidates, while the Cocks-Pinch seed provides full
+reproducibility.
 
 \textbf{Cocks-Pinch extensions.} Chen, Hong, and Wang
 \cite{CocksPinchK5K8} extend the Cocks-Pinch method to embedding

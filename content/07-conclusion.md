@@ -9,11 +9,11 @@ We presented three contributions to pairing-friendly elliptic curve construction
 
 2. **Readability-aware prime selection.** Our multi-criteria scoring system produces primes that are more amenable to human inspection without any security degradation, addressing the auditability concern in cryptographic parameter generation.
 
-3. **Curve1024.** We instantiate these techniques into a concrete, publicly verifiable curve: $E: y^2 = x^3 + 41$ over a 1024-bit prime field with embedding degree 18, providing 256-bit ECDLP security and NTT support up to length $2^{36}$ in both fields. The complete parameter set (field primes, generator point, CM data) is published and validated by a Rust implementation with 36 passing tests.
+3. **Curve1024.** We instantiate these techniques into a concrete, publicly verifiable curve: $E: y^2 = x^3 + 41$ over a 1024-bit prime field with embedding degree 18, providing 256-bit ECDLP security and NTT support up to length $2^{36}$ in both fields. The complete parameter set (field primes, generator point, CM data) is published and validated by a Rust implementation with constant-time scalar multiplication (Montgomery ladder over projective coordinates) and 36 passing tests.
 
-The system is suitable for offline signing applications requiring long-term security guarantees and for future pairing-based protocols (BLS aggregate signatures, zk-SNARKs) that benefit from the NTT-friendly field structure.
+The system is suitable for applications requiring long-term security guarantees---including interactive signing (14 ms per signature) and future pairing-based protocols (BLS aggregate signatures, zk-SNARKs) that benefit from the NTT-friendly field structure.
 
-**Future work** includes: (1) projective/Jacobian coordinates to eliminate per-operation inversions, (2) constant-time Montgomery ladder for side-channel resistance, (3) full optimal Ate pairing implementation over $\mathbb{F}_{p^{18}}$, and (4) extension to other embedding degrees ($k = 12, 24$).
+**Future work** includes: (1) full optimal Ate pairing implementation over $\mathbb{F}_{p^{18}}$, enabling BLS aggregate signatures and zk-SNARK verification directly on Curve1024, and (2) extension to other embedding degrees ($k = 12, 24$) to explore the tradeoff between pairing target size and field element compactness.
 
 # Availability
 

@@ -33,27 +33,43 @@ This extension guarantees sufficient coverage of bit patterns in $p-1$ at positi
 
 # Algorithm
 
-The complete NTT-friendly Cocks-Pinch construction proceeds as follows:
+The complete NTT-friendly Cocks-Pinch construction proceeds as follows (see Fig.~\ref{fig:pipeline}):
 
-**Input:** Embedding degree $k=18$, target sizes $(|r|, |p|)$, minimum two-adicity $s$
+```{=latex}
+\input{figures/construction-pipeline}
+```
 
-**Output:** Primes $(p, r)$ with $\nu_2(r-1) \geq s$ and $\nu_2(p-1) \geq s$
-
-1. Set $m \leftarrow \lceil s/3 \rceil$ and $\text{step} \leftarrow 2^m$
-2. Repeat:
-   a. Choose $T$ as a random multiple of step in the target range
-   b. Compute $r \leftarrow T^6 - T^3 + 1$
-   c. If $r$ is not prime or $|r| \neq$ target, continue
-   d. Compute $\beta \leftarrow \sqrt{-3} \pmod{r}$ (Tonelli-Shanks)
-   e. For each $i$ with $\gcd(i, 18) = 1$:
-      - $t_0 \leftarrow T^i + 1 \pmod{r}$
-      - $y_0 \leftarrow (t_0 - 2) \cdot \beta^{-1} \pmod{r}$
-      - $\text{range} \leftarrow 20 + 2^{\max(0, s - 3m)}$
-      - For $(h_t, h_y) \in [-\text{range}, \text{range}]^2$:
-        - $t \leftarrow t_0 + h_t \cdot r$; $y \leftarrow y_0 + h_y \cdot r$
-        - $p \leftarrow (t^2 + 3y^2) / 4$
-        - If $|p| =$ target AND $\nu_2(p-1) \geq s$ AND $p$ is prime: return $(p, r, t, y)$
-3. Until max attempts reached
+```{=latex}
+\begin{algorithm}[t]
+\caption{NTT-Friendly Cocks-Pinch Construction}
+\label{alg:ntt-cp}
+\begin{algorithmic}[1]
+\REQUIRE Embedding degree $k=18$, target sizes $(|r|, |p|)$, minimum two-adicity $s$
+\ENSURE Primes $(p, r)$ with $\nu_2(r-1) \geq s$ and $\nu_2(p-1) \geq s$
+\STATE $m \leftarrow \lceil s/3 \rceil$; \quad $\text{step} \leftarrow 2^m$
+\REPEAT
+    \STATE Choose $T$ as random multiple of step in target range
+    \STATE $r \leftarrow T^6 - T^3 + 1$
+    \IF{$r$ not prime or $|r| \neq$ target}
+        \STATE \textbf{continue}
+    \ENDIF
+    \STATE $\beta \leftarrow \sqrt{-3} \pmod{r}$ \COMMENT{Tonelli-Shanks}
+    \FOR{each $i$ with $\gcd(i, 18) = 1$}
+        \STATE $t_0 \leftarrow T^i + 1 \pmod{r}$
+        \STATE $y_0 \leftarrow (t_0 - 2) \cdot \beta^{-1} \pmod{r}$
+        \STATE $\text{range} \leftarrow 20 + 2^{\max(0,\, s - 3m)}$
+        \FOR{$(h_t, h_y) \in [-\text{range}, \text{range}]^2$}
+            \STATE $t \leftarrow t_0 + h_t \cdot r$; \quad $y \leftarrow y_0 + h_y \cdot r$
+            \STATE $p \leftarrow (t^2 + 3y^2) / 4$
+            \IF{$|p| = $ target \AND $\nu_2(p-1) \geq s$ \AND $p$ is prime}
+                \RETURN $(p, r, t, y)$
+            \ENDIF
+        \ENDFOR
+    \ENDFOR
+\UNTIL{max attempts reached}
+\end{algorithmic}
+\end{algorithm}
+```
 
 # Complexity Analysis
 

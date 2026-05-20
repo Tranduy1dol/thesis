@@ -1,0 +1,23 @@
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=0.9cm,
+    block/.style={rectangle, draw, fill=blue!8, minimum width=2.4cm, minimum height=0.6cm, align=center, font=\tiny},
+    arrow/.style={-{Stealth[length=2mm]}, thick},
+]
+    \node[block] (seed) {Choose seed $T \equiv 0\pmod{2^{12}}$};
+    \node[block, below=of seed] (r) {$r = \Phi_{18}(T)$, verify $r$ prime};
+    \node[block, below=of r] (sqrt) {$\beta = \sqrt{-3} \bmod r$};
+    \node[block, below=of sqrt] (lift) {Lift search: find $(h_t, h_y)$ s.t.\\ $p = (t^2+3y^2)/4$ prime, $\nu_2(p{-}1) \geq 36$};
+    \node[block, below=of lift] (cm) {CM method: $D=-3$, $j=0$};
+    \node[block, below=of cm, fill=blue!15, line width=0.8pt] (curve) {\textbf{Curve1024:} $E: y^2 = x^3 + 41$};
+
+    \draw[arrow] (seed) -- (r);
+    \draw[arrow] (r) -- node[right, font=\tiny] {$\nu_2(r{-}1) = 36$ guaranteed} (sqrt);
+    \draw[arrow] (sqrt) -- (lift);
+    \draw[arrow] (lift) -- (cm);
+    \draw[arrow] (cm) -- (curve);
+\end{tikzpicture}
+\caption{NTT-friendly Cocks-Pinch construction pipeline. The seed constraint $T \equiv 0 \pmod{2^{12}}$ guarantees $\nu_2(r-1) = 36$ deterministically; the extended lift search ensures $\nu_2(p-1) \geq 36$.}
+\label{fig:pipeline}
+\end{figure}
