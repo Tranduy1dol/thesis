@@ -1,36 +1,22 @@
 \begin{frame}{Sơ đồ chữ ký số: Schnorr \& ECDSA}
   \begin{columns}[t]
     \column{0.5\textwidth}
-      \begin{block}{Schnorr}
+      \begin{block}{Schnorr --- 384 byte}
         \small
         \textbf{Ký:} $k \xleftarrow{R} [1,r{-}1]$, $R=[k]G$\\
         $e = H(R_x \| R_y \| m) \bmod r$\\
         $s = k + e \cdot d \pmod{r}$\\
-        Chữ ký: $\sigma = (R, s)$ --- 384 byte\\[4pt]
+        Chữ ký: $\sigma = (R, s)$\\[4pt]
         \textbf{Xác minh:} $[s]G \stackrel{?}{=} R + [e]Q$
       \end{block}
     \column{0.5\textwidth}
-      \begin{block}{ECDSA (FIPS 186-4)}
+      \begin{block}{ECDSA (FIPS 186-4) --- 256 byte}
         \small
         \textbf{Ký:} $k \xleftarrow{R} [1,r{-}1]$, $R=[k]G$\\
         $r_{\text{sig}} = R_x \bmod n$, $e = H(m)$\\
         $s = k^{-1}(e + r_{\text{sig}} \cdot d) \bmod n$\\
-        Chữ ký: $(r_{\text{sig}}, s)$ --- 256 byte\\[4pt]
+        Chữ ký: $(r_{\text{sig}}, s)$\\[4pt]
         \textbf{Xác minh:} $[u_1]G + [u_2]Q$, kiểm $P_x$
       \end{block}
   \end{columns}
-  \vspace{0.4em}
-  \begin{table}
-    \small
-    \begin{tabular}{lcc}
-      \toprule
-      & Schnorr & ECDSA \\
-      \midrule
-      Kích thước chữ ký & 384 byte & 256 byte \\
-      Chứng minh bảo mật & RO Model + DL & Heuristic \\
-      Hỗ trợ tổng hợp & Có (MuSig) & Không \\
-      Chuẩn & ISO 14888-3 & FIPS 186-4 \\
-      \bottomrule
-    \end{tabular}
-  \end{table}
 \end{frame}

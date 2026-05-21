@@ -1,32 +1,88 @@
-\begin{frame}{Thuật toán Cocks-Pinch: Truyền thống \& Cải tiến}
-  \textbf{Điều kiện:} $r = \Phi_{18}(T) = T^6 - T^3 + 1$,\quad
-  $4p = t^2 + 3y^2$
-  \vspace{0.3em}
+\begin{frame}{Thuật toán Cocks-Pinch truyền thống}
+  \centering
+  \begin{tikzpicture}[
+    node distance=0.5cm and 0.5cm,
+    compute/.style={
+      draw=clrPurple600, fill=clrPurple50, text=clrPurple800,
+      rounded corners=3pt, align=center,
+      minimum width=1.5cm, minimum height=0.8cm,
+      inner sep=3pt, font=\tiny\sffamily
+    },
+    sample/.style={
+      draw=clrBlue600, fill=clrBlue50, text=clrBlue800,
+      rounded corners=3pt, align=center,
+      minimum width=1.5cm, minimum height=0.8cm,
+      inner sep=3pt, font=\tiny\sffamily
+    },
+    decision/.style={
+      diamond, aspect=1.7,
+      draw=clrAmber600, fill=clrAmber50, text=clrAmber800,
+      align=center, font=\tiny\sffamily, inner sep=1pt
+    },
+    io/.style={
+      draw=clrTeal600, fill=clrTeal50, text=clrTeal800,
+      rounded corners=3pt, align=center,
+      minimum width=1.5cm, minimum height=0.8cm,
+      inner sep=3pt, font=\tiny\sffamily
+    },
+    input/.style={
+      draw=clrGray600, fill=clrGray50, text=clrGray800,
+      rounded corners=3pt, align=center,
+      minimum width=1.5cm, minimum height=0.8cm,
+      inner sep=3pt, font=\tiny\sffamily
+    },
+    arr/.style={-{Stealth[length=4pt]}, semithick, draw=clrGray600},
+    yes/.style={font=\tiny\sffamily, text=clrGreen600},
+    no/.style={font=\tiny\sffamily, text=clrAmber800},
+    lbl/.style={font=\tiny\itshape\sffamily, text=clrGray600},
+  ]
+    %% Row 1: Input -> r -> checkr -> t0 -> y0
+    \node[input] (start) {$k,\; D<0$\\$T \in [T_0, T_{\max}]$\\$\lambda_r,\; \lambda_p$};
+    \node[compute, right=of start] (compr) {$r = \Phi_k(T)$};
+    \node[decision, right=0.6cm of compr] (checkr)
+      {$r$ nguyên tố\\$|r|=\lambda_r$\\$\sqrt{-D}\!\pmod{r}$?};
+    \node[compute, right=0.6cm of checkr] (compt0)
+      {$t_0 = T^i+1 \pmod{r}$};
+    \node[compute, right=of compt0] (compy0)
+      {$y_0 = \frac{t_0-2}{\sqrt{-D}} \pmod{r}$};
 
-  \textbf{4 bước truyền thống:}
-  \begin{enumerate}
-    \small
-    \item Sinh $r$ từ $T$ ngẫu nhiên, kiểm tra tính nguyên tố
-    \item Tính $\beta = \sqrt{-3} \pmod{r}$ (Tonelli-Shanks)
-    \item $t_0 \equiv T^i + 1$, $y_0 \equiv (t_0 - 2)/\beta \pmod{r}$
-    \item Quét lưới $(h_t, h_y) \in [-20,20]^2$: $p = (t^2 + 3y^2)/4$ nguyên tố?
-  \end{enumerate}
-  \vspace{0.3em}
+    %% Row 1 arrows
+    \draw[arr] (start)  -- (compr);
+    \draw[arr] (compr)  -- (checkr);
+    \draw[arr] (checkr) -- node[yes, above] {Có} (compt0);
+    \draw[arr] (compt0) -- (compy0);
 
-  \begin{columns}[t]
-    \column{0.5\textwidth}
-      \begin{alertblock}{Cải tiến 1: NTT-friendly $r$}
-        $r - 1 = T^3(T^3 - 1)$\\[3pt]
-        Nếu $T \equiv 0 \pmod{2^{12}}$:\\
-        $\nu_2(r-1) = 36$ \textbf{(đảm bảo)}\\[3pt]
-        Không cần rejection sampling
-      \end{alertblock}
-    \column{0.5\textwidth}
-      \begin{alertblock}{Cải tiến 2: NTT-friendly $p$}
-        Mở rộng lưới nâng:\\
-        $\text{range} = 20 + 2^{\max(0, s_p - 36)}$\\[3pt]
-        Kiểm soát $\nu_2(p-1) \geq 36$\\[3pt]
-        Vượt BLS12-381 ($\nu_2 = 32$)
-      \end{alertblock}
-  \end{columns}
+    %% checkr "Không" loop: up -> left -> down to compr
+    \draw[arr] (checkr.north) -- ++(0,0.6)
+      node[no, right, pos=0.5] {Không} -| (compr.north);
+
+    %% Labels row 1
+    \node[lbl, below=0.3cm of compr] {$T = T_0 \ldots T_{\max}$};
+    \node[lbl, above=0.2cm of compt0] {$i:\;\gcd(i,k)=1$};
+
+    %% Row 2: y0 -> sample -> p -> checkp -> output
+    \node[sample, below=1.3cm of compy0] (sample)
+      {$t = t_0 + h_t r$\\$y = y_0 + h_y r$};
+    \node[compute, left=of sample] (compp)
+      {$p = \frac{t^2+Dy^2}{4}$};
+    \node[decision, left=0.6cm of compp] (checkp)
+      {$p\!\equiv\!1\!\pmod{k}$\\$p$ nguyên tố?};
+    \node[io, left=0.6cm of checkp] (output)
+      {$(p,r,T,t,y)$};
+
+    %% Connector: compy0 -> sample
+    \draw[arr] (compy0.south) -- ++(0,-0.4) -| (sample.north);
+
+    %% Row 2 arrows (right to left)
+    \draw[arr] (sample) -- (compp);
+    \draw[arr] (compp)  -- (checkp);
+    \draw[arr] (checkp) -- node[yes, above] {Có} (output);
+
+    %% checkp "Không" loop back to sample
+    \draw[arr] (checkp.south) -- ++(0,-0.6)
+      node[no, right, pos=0.5] {Không} -| (sample.south);
+
+    %% Label row 2
+    \node[lbl, below=0.8cm of sample] {thử lại $h_t,\,h_y$};
+  \end{tikzpicture}
 \end{frame}

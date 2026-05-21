@@ -7,8 +7,21 @@
       \hspace{0.15cm}%
       \includegraphics[height=0.75cm]{../figures/FIT_logo.png}%
   };
+
+  %% Centered thank-you text
+  \node[anchor=center, text=uetblue] at (current page.center) {%
+    {\Large\bfseries Cảm ơn thầy cô đã lắng nghe!}%
+  };
+
+  %% Footer — matching global footline template
+  \fill[uetblue]
+    (current page.south west) rectangle
+    ([yshift=0.65cm] current page.south east);
+  \node[anchor=west, text=white, font=\small\bfseries] at
+    ([xshift=0.5cm, yshift=0.32cm] current page.south west)
+    {VNU UET -- Faculty of Information Technology};
+  \node[anchor=east, text=white, font=\small] at
+    ([xshift=-0.5cm, yshift=0.32cm] current page.south east)
+    {\insertframenumber\,/\,\inserttotalframenumber};
 \end{tikzpicture}
-\vspace{3cm}
-\centering
-{\Large\bfseries Cảm ơn thầy cô đã lắng nghe!}
 \end{frame}

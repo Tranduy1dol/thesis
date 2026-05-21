@@ -1,24 +1,41 @@
 \begin{frame}{So sánh hiệu năng}
-  \begin{table}
-    \small
-    \begin{tabular}{lcccc}
-      \toprule
-      Đường cong & $|p|$ & Ký & Xác minh & Bảo mật \\
-      \midrule
-      secp256k1 & 256 bit & $\sim$0.2 ms & $\sim$0.4 ms & 128-bit \\
-      P-384 & 384 bit & $\sim$1 ms & $\sim$2 ms & 192-bit \\
-      BLS12-381 & 381 bit & $\sim$1.5 ms & $\sim$3 ms & 128-bit \\
-      \midrule
-      \textbf{Curve1024} & \textbf{1024 bit} & \textbf{1.55 s} & \textbf{2.83 s} & \textbf{256-bit} \\
-      \bottomrule
-    \end{tabular}
-    \caption*{\small Schnorr sign/verify. Curve1024: Criterion, release build, LLVM O3, không AVX-512}
-  \end{table}
-  \vspace{0.3em}
-  \textbf{Kịch bản phù hợp:}
-  \begin{itemize}
-    \item Ký tài liệu pháp lý, ký phần mềm khi phát hành
-    \item Chứng chỉ PKI, giao dịch tài chính giá trị lớn
-    \item Bất kỳ ứng dụng nào chấp nhận độ trễ vài giây
-  \end{itemize}
+  \begin{columns}[T]
+    \column{0.57\textwidth}
+      {\footnotesize
+      \begin{tabular}{@{}lcccc@{}}
+        \toprule
+        Đường cong & $|p|$ & Ký & Xác minh & Bảo mật \\
+        \midrule
+        secp256k1 & 256 & $\sim$0.2 ms & $\sim$0.4 ms & 128-bit \\
+        P-384 & 384 & $\sim$1 ms & $\sim$2 ms & 192-bit \\
+        BLS12-381 & 381 & $\sim$1.5 ms & $\sim$3 ms & 128-bit \\
+        \midrule
+        \textbf{Curve1024} & \textbf{1024} & \textbf{1.55 s} & \textbf{2.83 s} & \textbf{256-bit} \\
+        \bottomrule
+      \end{tabular}
+      }
+      \vspace{0.3em}
+
+      {\footnotesize
+        Schnorr sign/verify --- Criterion, release build, LLVM O3.\\
+        Đo trên phần mềm thuần Rust, chưa tối ưu ASM.
+      }
+
+    \column{0.43\textwidth}
+      \textbf{Nguyên nhân chậm:}
+      \begin{itemize}
+        \small
+        \item Trường $\mathbb{F}_p$ lớn gấp $4\times$ secp256k1\\
+              $\Rightarrow$ nhân chậm $\sim$$16\times$ (bậc hai)
+        \item Chưa có Montgomery Ladder,\\tọa độ Projective, inline ASM
+      \end{itemize}
+      \vspace{0.3em}
+      \textbf{Kịch bản phù hợp:}
+      \begin{itemize}
+        \small
+        \item Ký tài liệu pháp lý, phần mềm
+        \item Chứng chỉ PKI dài hạn
+        \item Hệ thống cần bảo mật\\hậu lượng tử mức 256-bit
+      \end{itemize}
+  \end{columns}
 \end{frame}

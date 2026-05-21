@@ -1,15 +1,13 @@
-\begin{frame}{Hệ thống liên quan}
+\begin{frame}{Các hệ thống liên quan}
   \begin{table}
     \small
-    \begin{tabular}{lcccl}
+    \begin{tabular}{lcccc}
       \toprule
-      Đường cong & $|p|$ & Bảo mật & NTT & Ngôn ngữ \\
+      Đường cong & $|p|$ & Bảo mật & NTT ($\nu_2$) & Minh bạch \\
       \midrule
-      secp256k1 & 256 bit & 128-bit & Không & C (libsecp256k1) \\
-      P-256 (NIST) & 256 bit & 128-bit & Không & C (OpenSSL) \\
-      BLS12-381 & 381 bit & 128-bit & $\nu_2 = 32$ & C/Rust (blst) \\
-      \midrule
-      \textbf{Curve1024} & \textbf{1024 bit} & \textbf{256-bit} & $\nu_2 = 36$ & \textbf{Rust} \\
+      secp256k1 & 256 bit & 128-bit & Không & Có \\
+      P-256 (NIST) & 256 bit & 128-bit & Không & \textcolor{red!70!black}{\textbf{Không}} \\
+      BLS12-381 & 381 bit & 128-bit & $\nu_2(r{-}1) = 32$ & Có \\
       \bottomrule
     \end{tabular}
   \end{table}
@@ -18,6 +16,6 @@
   \begin{itemize}
     \item Mức bảo mật cố định 128-bit --- không đủ cho kịch bản dài hạn
     \item Tham số không minh bạch (NIST P-256: seed không giải thích)
-    \item Phụ thuộc thư viện C/C++ với rủi ro bộ nhớ
+    \item BLS12-381: chỉ $\mathbb{F}_r$ hỗ trợ NTT, $\mathbb{F}_p$ thì không
   \end{itemize}
 \end{frame}

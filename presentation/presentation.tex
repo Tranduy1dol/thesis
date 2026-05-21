@@ -3,11 +3,29 @@
 \usepackage[utf8]{vietnam}
 \usepackage{amsmath, amssymb, array}
 \usepackage{xcolor, booktabs, graphicx, tikz, listings}
+\usetikzlibrary{positioning, shapes.geometric, shapes.misc, arrows.meta, calc, decorations.pathreplacing}
 
 \definecolor{uetblue}{RGB}{38,63,108}
 \definecolor{fitgreen}{RGB}{93,175,70}
 \definecolor{titlegray}{RGB}{136,136,136}
 \definecolor{lightblue}{RGB}{232,240,254}
+
+\definecolor{clrPurple50}{HTML}{EEEDFE}
+\definecolor{clrPurple600}{HTML}{534AB7}
+\definecolor{clrPurple800}{HTML}{3C3489}
+\definecolor{clrTeal50}{HTML}{E1F5EE}
+\definecolor{clrTeal600}{HTML}{0F6E56}
+\definecolor{clrTeal800}{HTML}{085041}
+\definecolor{clrAmber50}{HTML}{FAEEDA}
+\definecolor{clrAmber600}{HTML}{854F0B}
+\definecolor{clrAmber800}{HTML}{633806}
+\definecolor{clrBlue50}{HTML}{E6F1FB}
+\definecolor{clrBlue600}{HTML}{185FA5}
+\definecolor{clrBlue800}{HTML}{0C447C}
+\definecolor{clrGreen600}{HTML}{3B6D11}
+\definecolor{clrGray50}{HTML}{F1EFE8}
+\definecolor{clrGray600}{HTML}{5F5E5A}
+\definecolor{clrGray800}{HTML}{444441}
 
 \usetheme{default}
 \setbeamertemplate{navigation symbols}{}
@@ -86,7 +104,6 @@
 \input{slides/09-phuong-phap-cm}
 \input{slides/10-cocks-pinch}
 \input{slides/11-chu-ky-schnorr-ecdsa}
-\input{slides/12-chu-ky-bls}
 
 \section{Cài đặt hệ thống}
 \input{slides/13-kien-truc}

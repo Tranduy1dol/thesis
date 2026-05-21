@@ -3,29 +3,66 @@
     \small
     $k = 18$, \quad $D = -3$, \quad $|p| = 1024$ bit, \quad $|r| = 512$ bit
   \end{block}
-  \vspace{0.2em}
-  \textbf{Bậc nhóm $r$ --- biểu diễn 64-bit limb (MSB $\to$ LSB):}
-  \vspace{0.1em}
-
-  {\footnotesize\ttfamily
-  \begin{tabular}{rl}
-    limb 15--8: & \textcolor{fitgreen}{\textbf{0000000000000000}} $\times$ 8 limbs (50\% = 0) \\
-    limb 7: & 8e09c0b6aa3a6250 \\
-    limb 6: & 1809d08152ef6657 \\
-    limb 5: & e905d9793d7814b9 \\
-    limb 4: & 5315dd1940ee9641 \\
-    limb 3: & e67861624813833970 \\
-    limb 2: & b962e6f67bcf6422 \\
-    limb 1: & afc3f5b9ba363faf \\
-    limb 0: & 64eb22\textcolor{red!70!black}{\textbf{00000001}} \\
-  \end{tabular}
-  }
   \vspace{0.3em}
 
-  \textbf{Đặc trưng cấu trúc:}
-  \begin{itemize}
-    \item 8/16 limb bằng 0 $\Rightarrow$ dễ nhận diện, kiểm tra khi debug
-    \item Đuôi chung \texttt{...00000001}: xác nhận $r = d \cdot 2^{33} + 1$ (NTT-friendly)
-    \item $p$ cũng kết thúc bằng \texttt{...64400000001} --- cùng cấu trúc
-  \end{itemize}
+  \begin{columns}[T]
+    \column{0.52\textwidth}
+      \textbf{Cấu trúc bậc nhóm $r$ (512 bit):}
+      \vspace{0.2em}
+
+      \centering
+      \begin{tikzpicture}[
+        cell/.style={minimum width=0.45cm, minimum height=0.35cm,
+                     draw=clrGray600, font=\tiny\ttfamily, inner sep=0pt},
+      ]
+        %% Row label
+        \node[font=\tiny\sffamily, anchor=east] at (-0.15, 0) {limb};
+
+        %% Top half: 8 zero limbs (limbs 15..8)
+        \foreach \i in {0,...,7} {
+          \node[cell, fill=fitgreen!25, text=fitgreen!70!black]
+            at (0.45*\i, 0) {\footnotesize 0};
+        }
+
+        %% Bottom half: 8 data limbs (limbs 7..0)
+        \foreach \i in {0,...,6} {
+          \node[cell, fill=clrBlue50]
+            at (0.45*\i, -0.5) {\footnotesize\textbullet};
+        }
+        %% Last limb with NTT tail
+        \node[cell, fill=red!15, text=red!70!black, minimum width=0.45cm]
+          at (0.45*7, -0.5) {\footnotesize 1};
+
+        %% Brace and labels
+        \draw[decorate, decoration={brace, amplitude=3pt, mirror}]
+          (-0.22, -0.75) -- (3.37, -0.75)
+          node[midway, below=4pt, font=\tiny\sffamily] {$r = d \cdot 2^{33} + 1$};
+
+        \draw[decorate, decoration={brace, amplitude=3pt}]
+          (-0.22, 0.22) -- (3.37, 0.22)
+          node[midway, above=4pt, font=\tiny\sffamily, text=fitgreen!70!black]
+          {50\% limb = 0};
+      \end{tikzpicture}
+
+    \column{0.48\textwidth}
+      \textbf{Tính chất cấu trúc:}
+      \vspace{0.2em}
+
+      {\small
+      \begin{tabular}{@{}l@{\;\;}l@{}}
+        \textcolor{fitgreen}{$\blacksquare$} &
+          8/16 limb bằng 0 \\
+        & \footnotesize dễ nhận diện khi debug \\[6pt]
+        \textcolor{red!70!black}{$\blacksquare$} &
+          $\nu_2(r{-}1) \geq 33$ \\
+        & \footnotesize NTT-friendly ở $\mathbb{F}_r$ \\[6pt]
+        \textcolor{clrBlue600}{$\blacksquare$} &
+          $\nu_2(p{-}1) \geq 36$ \\
+        & \footnotesize NTT-friendly ở $\mathbb{F}_p$ \\[6pt]
+        $\checkmark$ &
+          Không hằng số \\
+        & \footnotesize ``nothing-up-my-sleeve''
+      \end{tabular}
+      }
+  \end{columns}
 \end{frame}

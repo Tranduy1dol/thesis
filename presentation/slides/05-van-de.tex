@@ -1,24 +1,22 @@
 \begin{frame}{Phát biểu bài toán}
   \begin{columns}[t]
     \column{0.5\textwidth}
-      \begin{alertblock}{3 vấn đề cần giải quyết}
+      \begin{alertblock}{Vấn đề cần giải quyết}
         \begin{enumerate}
           \item \textbf{Tự chủ mật mã}\\
                 Sinh đường cong bằng quy trình minh bạch, không seed bí ẩn
           \item \textbf{Trần bảo mật}\\
                 ECC 256-bit $\to$ 128-bit\\
                 Cần 1024-bit $\to$ \textbf{256-bit}
-          \item \textbf{An toàn bộ nhớ}\\
-                Loại bỏ lớp lỗi buffer overflow bằng ngôn ngữ Rust
         \end{enumerate}
       \end{alertblock}
     \column{0.5\textwidth}
-      \begin{block}{Yêu cầu kỹ thuật}
+      \begin{block}{Thách thức}
         \begin{itemize}
-          \item Đường cong pairing-friendly\\($k = 18$, hỗ trợ BLS)
-          \item Cấu trúc NTT-friendly\\($\nu_2(p-1), \nu_2(r-1) \geq 32$)
-          \item Tham số có thể kiểm chứng\\(từ seed $T$ công khai)
-          \item Chữ ký số hoạt động\\(Schnorr, ECDSA)
+          \item Sinh đường cong 1024-bit\\tốn kém tính toán
+          \item Phải đảm bảo kháng\\các tấn công hiện đại (TNFS)
+          \item Cần chứng minh tính đúng đắn\\toán học cho mọi phép toán
+          \item Không dựa vào thư viện\\mật mã có sẵn
         \end{itemize}
       \end{block}
   \end{columns}

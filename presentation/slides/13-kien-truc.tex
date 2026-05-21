@@ -1,28 +1,39 @@
-\begin{frame}{Kiến trúc hệ thống}
-  \begin{columns}[c]
+\begin{frame}[label=sec3]{Công cụ dòng lệnh \texttt{curve1024-sig}}
+  \centering
+  \begin{tikzpicture}[
+    node distance=0.4cm and 0.5cm,
+    layer/.style={draw, rounded corners=3pt, minimum width=2.2cm, minimum height=0.6cm, align=center, font=\scriptsize},
+    arr/.style={-{Stealth[length=4pt]}, semithick, draw=clrGray600},
+  ]
+    \node[layer, fill=clrGray50, draw=clrGray600] (l1) {\texttt{U1024}};
+    \node[layer, fill=blue!25, right=of l1] (l2) {\texttt{PrimeField}};
+    \node[layer, fill=blue!35, right=of l2] (l3) {\texttt{AffinePoint}};
+    \node[layer, fill=orange!25, right=of l3] (l4) {\texttt{KeyPair} + Hash};
+    \node[layer, fill=orange!40, right=of l4] (l5) {\texttt{Schnorr / ECDSA}};
+
+    \draw[arr] (l1) -- (l2);
+    \draw[arr] (l2) -- (l3);
+    \draw[arr] (l3) -- (l4);
+    \draw[arr] (l4) -- (l5);
+  \end{tikzpicture}
+
+  \vspace{0.6em}
+  \begin{columns}[t]
     \column{0.45\textwidth}
-      \begin{block}{Ngăn xếp phần mềm}
-        \begin{enumerate}
-          \item[\textbf{5}] \texttt{Schnorr / ECDSA}
-          \item[\textbf{4}] \texttt{KeyPair} + Hash mở rộng
-          \item[\textbf{3}] \texttt{AffinePoint} --- nhóm EC
-          \item[\textbf{2}] \texttt{PrimeField} --- Montgomery
-          \item[\textbf{1}] \texttt{U1024} --- bignum 1024-bit
-        \end{enumerate}
+      \begin{block}{Lệnh CLI}
+        \small
+        \texttt{keygen} --- sinh cặp khóa\\
+        \texttt{sign -f <file> --scheme schnorr|ecdsa}\\
+        \texttt{verify -f <file> -k <pub>}\\
+        \texttt{export-pub} --- xuất khóa công khai
       \end{block}
     \column{0.55\textwidth}
-      \begin{block}{Đặc điểm thiết kế}
+      \begin{block}{Đặc điểm}
+        \small
         \begin{itemize}
-          \item \textbf{Rust} --- ownership + borrow checker\\
-                loại bỏ lỗi bộ nhớ tại compile-time
-          \item \textbf{Zero dependency} --- không dùng\\
-                thư viện mật mã bên ngoài
-          \item \textbf{Zero-cost abstraction} ---\\
-                trait \texttt{PrimeFieldConfig} với\\
-                hằng số compile-time, inline hoàn toàn
-          \item \textbf{Tham số từ file TOML} ---\\
-                thay đổi đường cong không cần\\
-                biên dịch lại toàn bộ
+          \item Tham số đường cong cấu hình qua file TOML
+          \item Không phụ thuộc thư viện mật mã bên ngoài
+          \item Hỗ trợ thay đổi đường cong mà không sửa mã nguồn
         \end{itemize}
       \end{block}
   \end{columns}

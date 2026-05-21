@@ -1,35 +1,21 @@
 \begin{frame}{Hướng phát triển}
-  \begin{columns}[t]
-    \column{0.5\textwidth}
-      \begin{block}{Ngắn hạn --- Hiệu năng}
-        \begin{itemize}
-          \item \textbf{Tọa độ Jacobian/Projective}\\
-                1 nghịch đảo/lần nhân vô hướng\\
-                thay vì 1024 $\Rightarrow$ dự kiến $\sim$10$\times$
-          \item \textbf{Montgomery Ladder}\\
-                Constant-time, loại bỏ\\
-                timing side-channel
-          \item \textbf{NAF/Sliding Window}\\
-                Giảm $\sim$25\% số phép add
-        \end{itemize}
-      \end{block}
-    \column{0.5\textwidth}
-      \begin{block}{Trung \& Dài hạn}
-        \begin{itemize}
-          \item \textbf{Phép ghép cặp đầy đủ}\\
-                Vòng lặp Miller + final exp\\
-                trên $\mathbb{F}_{p^{18}}$\\
-                $\Rightarrow$ kích hoạt BLS signatures
-          \item \textbf{MSM Pippenger}\\
-                Tối ưu xác minh đa chữ ký
-          \item \textbf{Giao thức ngưỡng}\\
-                MuSig2/FROST ($t$-trong-$n$)
-          \item \textbf{Kiểm định hình thức}\\
-                Creusot hoặc Kani cho Rust
-        \end{itemize}
-      \end{block}
-  \end{columns}
-  \vspace{0.4em}
-  \centering
-  \small Mã nguồn: \texttt{github.com/Tranduy1dol/curve1024} (MIT License)
+  \begin{enumerate}
+    \item \textbf{Tối ưu hiệu năng}\\[2pt]
+      \begin{tabular}{@{}ll@{}}
+        Tọa độ Projective & 1 nghịch đảo/lần nhân vô hướng (dự kiến $\sim$10$\times$) \\
+        Montgomery Ladder  & Constant-time --- loại bỏ timing side-channel \\
+        Sliding Window     & Giảm $\sim$25\% số phép cộng điểm \\
+      \end{tabular}\\[2pt]
+      {\small\textcolor{clrGreen600}{$\Rightarrow$ Thu hẹp khoảng cách hiệu năng với secp256k1 từ 8000$\times$ xuống $\sim$500$\times$}}
+
+    \vspace{0.5em}
+    \item \textbf{Chữ ký BLS \& xác minh gộp}\\[2pt]
+      Cài đặt phép ghép cặp (Miller loop + final exponentiation trên $\mathbb{F}_{p^{18}}$)\\
+      {\small\textcolor{clrGreen600}{$\Rightarrow$ Khai thác embedding degree $k{=}18$ --- ưu thế cốt lõi của KSS18}}
+
+    \vspace{0.5em}
+    \item \textbf{Kiểm định hình thức}\\[2pt]
+      Chứng minh tính đúng đắn bằng Creusot/Kani cho Rust\\
+      {\small\textcolor{clrGreen600}{$\Rightarrow$ Đảm bảo mức tin cậy cần thiết cho triển khai mật mã thực tế}}
+  \end{enumerate}
 \end{frame}

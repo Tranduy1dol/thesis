@@ -1,23 +1,17 @@
-\begin{frame}{Kết quả đạt được \& Hạn chế}
+\begin{frame}[label=sec4]{Kết quả đạt được \& Hạn chế}
   \begin{columns}[t]
     \column{0.5\textwidth}
       \begin{block}{Kết quả}
         \begin{itemize}
-          \item[$\checkmark$] Tự chủ sinh đường cong KSS18\\1024-bit, không hằng số nước ngoài
-          \item[$\checkmark$] Bảo mật 256-bit, vượt NIST 2030+
-          \item[$\checkmark$] Rust --- an toàn bộ nhớ tuyệt đối
+          \item[$\checkmark$] Sinh đường cong KSS18 1024-bit\\
+                với cả $\mathbb{F}_r$, $\mathbb{F}_p$ hỗ trợ NTT
+          \item[$\checkmark$] Bảo mật 256-bit đối xứng\\
+                (Pollard-$\rho$: $O(2^{256})$, MOV: 18432-bit)
+          \item[$\checkmark$] Miễn nhiễm Anomalous ($\#E \neq p$)\\
+                và Invalid Curve (kiểm tra khởi tạo)
           \item[$\checkmark$] Schnorr \& ECDSA hoạt động đúng
+          \item[$\checkmark$] Không hằng số ``nothing-up-my-sleeve''
         \end{itemize}
-      \end{block}
-      \vspace{0.2em}
-      \begin{block}{Đánh giá an toàn}
-        \small
-        \begin{tabular}{ll}
-          Pollard-$\rho$ & $O(2^{256})$ --- an toàn \\
-          MOV & 18432-bit --- an toàn \\
-          Anomalous & $\#E \neq p$ --- miễn nhiễm \\
-          Invalid Curve & Kiểm tra tại khởi tạo \\
-        \end{tabular}
       \end{block}
     \column{0.5\textwidth}
       \begin{alertblock}{Hạn chế}
@@ -30,7 +24,7 @@
                 $\Rightarrow$ cần Jacobian/Projective
           \item \textbf{Hiệu năng}\\
                 $\sim$8000$\times$ chậm hơn secp256k1\\
-                (do trường lớn + chưa tối ưu ASM)
+                (trường lớn $4\times$ + chưa tối ưu ASM)
         \end{itemize}
       \end{alertblock}
   \end{columns}

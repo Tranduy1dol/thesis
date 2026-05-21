@@ -13,19 +13,31 @@
   \node[anchor=north, text=uetblue, font=\Large\bfseries] at
     ([yshift=-0.6cm] current page.north) {Nội dung trình bày};
 
-  %% Cards (4 sections)
-  \foreach \i/\num/\txt in {
-    1/01/{GIỚI\\THIỆU},
-    2/02/{CƠ SỞ\\LÝ THUYẾT},
-    3/03/{CÀI ĐẶT\\HỆ THỐNG},
-    4/04/{KẾT\\LUẬN}%
-  }{
-    \node[draw=uetblue, rounded corners=6pt, minimum width=3cm, minimum height=2.2cm,
-          text=uetblue, align=center, font=\small\bfseries,
-          fill=lightblue]
-      at ([xshift={-5.25cm + (\i-1)*3.5cm}, yshift=-0.5cm] current page.center)
-      {\fontsize{20}{22}\selectfont\color{uetblue!40}\num\\[6pt]\txt};
-  }
+  %% Clickable TOC list
+  \node[anchor=center, text=uetblue, font=\large] at
+    ([yshift=-0.3cm] current page.center) {%
+    \begin{tabular}{@{}r@{\hspace{0.3cm}} !{\color{uetblue}\vrule width 1.2pt} @{\hspace{0.3cm}}l@{}}
+      \textbf{\color{uetblue!40}\fontsize{18}{20}\selectfont 01} &
+        \hyperlink{sec1}{\textbf{Giới thiệu}} \\[14pt]
+      \textbf{\color{uetblue!40}\fontsize{18}{20}\selectfont 02} &
+        \hyperlink{sec2}{\textbf{Cơ sở lý thuyết toán học}} \\[14pt]
+      \textbf{\color{uetblue!40}\fontsize{18}{20}\selectfont 03} &
+        \hyperlink{sec3}{\textbf{Cài đặt hệ thống}} \\[14pt]
+      \textbf{\color{uetblue!40}\fontsize{18}{20}\selectfont 04} &
+        \hyperlink{sec4}{\textbf{Kết luận}}
+    \end{tabular}%
+  };
+
+  %% Footer — matching global footline template
+  \fill[uetblue]
+    (current page.south west) rectangle
+    ([yshift=0.65cm] current page.south east);
+  \node[anchor=west, text=white, font=\small\bfseries] at
+    ([xshift=0.5cm, yshift=0.32cm] current page.south west)
+    {VNU UET -- Faculty of Information Technology};
+  \node[anchor=east, text=white, font=\small] at
+    ([xshift=-0.5cm, yshift=0.32cm] current page.south east)
+    {\insertframenumber\,/\,\inserttotalframenumber};
 
 \end{tikzpicture}
 \end{frame}
