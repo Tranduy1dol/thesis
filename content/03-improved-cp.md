@@ -5,7 +5,7 @@ section: 3
 
 We modify the traditional Cocks-Pinch algorithm to guarantee high two-adicity in both output primes. The key insight is that the algebraic structure of the cyclotomic polynomial $\Phi_{18}$ allows deterministic control over the two-adicity of $r$, while an extended lift search achieves the same for $p$.
 
-# NTT-Friendly Scalar Field via Seed Constraint
+# NTT-friendly Scalar Field via Seed Constraint
 
 Since $r = \Phi_{18}(T) = T^6 - T^3 + 1$, we observe:
 
@@ -15,11 +15,15 @@ If $T \equiv 0 \pmod{2^m}$, then $T^3 \equiv 0 \pmod{2^{3m}}$. Since $T^3 - 1$ i
 
 $$\nu_2(r - 1) = \nu_2(T^3) = 3m$$
 
-**Consequence:** To guarantee $\nu_2(r-1) \geq s$, it suffices to choose $T \equiv 0 \pmod{2^{\lceil s/3 \rceil}}$. This is a *deterministic* guarantee requiring no rejection sampling.
+**Lemma 1.** *Let $k=18$ and $r = \Phi_{18}(T)$. If $T \equiv 0 \pmod{2^m}$, then $\nu_2(r-1) = 3m$. In particular, to guarantee $\nu_2(r-1) \geq s$, it suffices to choose $T \equiv 0 \pmod{2^{\lceil s/3 \rceil}}$.*
+
+*Proof.* Since $r - 1 = T^3(T^3 - 1)$ and $T^3 - 1$ is odd when $T$ is even, we have $\nu_2(r-1) = \nu_2(T^3) = 3m$. $\square$
+
+This is a deterministic guarantee requiring no rejection sampling.
 
 For our target of $s = 36$, we set $m = \lceil 36/3 \rceil = 12$, constraining $T \equiv 0 \pmod{2^{12}}$. The search space remains $2^{86-12} = 2^{74}$ candidates---more than sufficient for finding prime $r$.
 
-# NTT-Friendly Base Field via Extended Lift Search
+# NTT-friendly Base Field via Extended Lift Search
 
 After obtaining a valid $r$ with the desired two-adicity, the base field prime is:
 
@@ -27,13 +31,13 @@ $$p = \frac{(t_0 + h_t r)^2 + 3(y_0 + h_y r)^2}{4}$$
 
 The two-adicity of $p-1$ depends on the lift parameters $(h_t, h_y)$. To ensure $\nu_2(p-1) \geq s_p$, we extend the search grid beyond the default $[-20, 20]^2$:
 
-$$\text{half\_range} = 20 + 2^{\max(0,\, s_p - 3m)}$$
+$$\text{half\_range} = 20 + 2^{\min(s_p - \nu_2(r-1),\; 10)}$$
 
-This extension guarantees sufficient coverage of bit patterns in $p-1$ at positions above $3m$. For $s_p = 36$ and $m = 12$ (so $3m = 36$), the grid remains at $[-21, 21]^2$---only marginally larger than the default.
+where $\nu_2(r-1) = 3m$ from Lemma 1. The exponent is capped at 10 to bound the search space at $(2 \times 1044)^2$ iterations in the worst case. For $s_p = 36$ and $\nu_2(r-1) = 36$, the exponent is $\min(0, 10) = 0$, giving half\_range $= 21$ and a grid of $[-21, 21]^2$---only marginally larger than the default.
 
 # Algorithm
 
-The complete NTT-friendly Cocks-Pinch construction proceeds as follows (see Fig.~\ref{fig:pipeline}):
+The complete NTT-friendly Cocks-Pinch construction proceeds as follows (see `\figurename~\ref{fig:pipeline}`{=latex}):
 
 ```{=latex}
 \input{figures/construction-pipeline}
@@ -41,7 +45,7 @@ The complete NTT-friendly Cocks-Pinch construction proceeds as follows (see Fig.
 
 ```{=latex}
 \begin{algorithm}[t]
-\caption{NTT-Friendly Cocks-Pinch Construction}
+\caption{NTT-friendly Cocks-Pinch Construction}
 \label{alg:ntt-cp}
 \begin{algorithmic}[1]
 \REQUIRE Embedding degree $k=18$, target sizes $(|r|, |p|)$, minimum two-adicity $s$
@@ -57,7 +61,7 @@ The complete NTT-friendly Cocks-Pinch construction proceeds as follows (see Fig.
     \FOR{each $i$ with $\gcd(i, 18) = 1$}
         \STATE $t_0 \leftarrow T^i + 1 \pmod{r}$
         \STATE $y_0 \leftarrow (t_0 - 2) \cdot \beta^{-1} \pmod{r}$
-        \STATE $\text{range} \leftarrow 20 + 2^{\max(0,\, s - 3m)}$
+        \STATE $\text{range} \leftarrow 20 + 2^{\min(s - \nu_2(r-1),\; 10)}$
         \FOR{$(h_t, h_y) \in [-\text{range}, \text{range}]^2$}
             \STATE $t \leftarrow t_0 + h_t \cdot r$; \quad $y \leftarrow y_0 + h_y \cdot r$
             \STATE $p \leftarrow (t^2 + 3y^2) / 4$
@@ -73,7 +77,7 @@ The complete NTT-friendly Cocks-Pinch construction proceeds as follows (see Fig.
 
 # Complexity Analysis
 
-The following table compares the traditional and improved algorithms. The NTT constraint increases the average number of attempts by approximately 10--60$\times$ (from ~100--500 to ~3,000--6,000), but the absolute generation time remains under one minute---a one-time cost amortized over the lifetime of the curve parameters.
+The following table compares the traditional and improved algorithms. The NTT constraint increases the average number of attempts by approximately 10--60$\times$ (from ${\sim}100$--500 to ${\sim}3{,}000$--6,000), but the absolute generation time remains under one minute---a one-time cost amortized over the lifetime of the curve parameters.
 
 | Metric | Traditional | Improved |
 |--------|-------------|----------|

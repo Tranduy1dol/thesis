@@ -35,11 +35,8 @@ The Cocks-Pinch method [@CocksPinch2001] constructs pairing-friendly curves by s
 
 1. **Generate $r$**: Choose a parameter $T$ and compute $r = \Phi_{18}(T) = T^6 - T^3 + 1$. Verify that $r$ is prime.
 2. **Compute square root**: Find $\beta = \sqrt{-3} \pmod{r}$ via Tonelli-Shanks.
-3. **Compute CM parameters**: For each $i$ with $\gcd(i, 18) = 1$:
-$$t_0 \equiv T^i + 1 \pmod{r}, \quad y_0 \equiv \frac{t_0 - 2}{\beta} \pmod{r}$$
-4. **Lift to integers**: Search over $(h_t, h_y) \in [-20, 20]^2$ for:
-$$t = t_0 + h_t \cdot r, \quad y = y_0 + h_y \cdot r$$
-such that $p = (t^2 + 3y^2)/4$ is a prime of the target size.
+3. **CM parameters**: For each $i$ with $\gcd(i, 18) = 1$, compute $t_0 \equiv T^i + 1 \pmod{r}$ and $y_0 \equiv (t_0 - 2)/\beta \pmod{r}$.
+4. **Lift to integers**: Search over $(h_t, h_y) \in [-20, 20]^2$ for $t = t_0 + h_t \cdot r$, $y = y_0 + h_y \cdot r$ such that $p = (t^2 + 3y^2)/4$ is prime of the target size.
 
 The resulting curve has $\rho = \log p / \log r \approx 2$, which is the standard tradeoff of the Cocks-Pinch method compared to parametric families ($\rho = 1$ for BN, $\rho = 1.5$ for BLS12).
 

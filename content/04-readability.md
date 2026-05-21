@@ -47,7 +47,7 @@ The combined score weights the base field prime $p$ at $1.5\times$ the scalar fi
 The readability-aware search operates in two modes:
 
 - **Fast mode**: Returns the first valid $(p, r)$ pair (original behavior).
-- **Readable mode**: For each valid $r$, explores the *full* lift range to find the highest-scoring $p$. Tracks the global best across $N$ successful attempts (default $N = 50$) within a time budget.
+- **Readable mode**: For each valid $r$, explores the *full* lift range to find the highest-scoring $p$. The search terminates when *either* a time budget (default 8 hours) expires *or* $N$ successful candidates (default $N = 50$) have been collected, whichever occurs first. The time budget is checked at the start of each iteration and takes priority.
 
 In readable mode, the generator exhaustively searches all $(h_t, h_y)$ combinations for each valid $r$, scoring every prime candidate that passes the security filter. The best-scoring $(p, r)$ pair across all attempts is retained.
 

@@ -27,24 +27,24 @@ where $d_r$ is a 476-bit odd integer. In 64-bit limb representation (MSB first):
 
 | Limb | Value | Note |
 |------|-------|------|
-| 15 | `0000000000000000` | zero |
-| 14 | `0000000000000000` | zero |
-| 13 | `0000000000000000` | zero |
-| 12 | `0000000000000000` | zero |
-| 11 | `0000000000000000` | zero |
-| 10 | `0000000000000000` | zero |
-| 9 | `0000000000000000` | zero |
-| 8 | `0000000000000000` | zero |
-| 7 | `c042c3389e72044d` | |
-| 6 | `9ec8078aea7bc954` | |
-| 5 | `ebf209d918f0ef27` | |
-| 4 | `425259e247711927` | |
-| 3 | `97463bf23832d0de` | |
-| 2 | `5e46e47fc61cab50` | |
-| 1 | `4bcfd36fc2a945c5` | |
-| 0 | `1055d97000000001` | tail: $d \cdot 2^{36} + 1$ |
+| 15 | `0x0000000000000000` | zero |
+| 14 | `0x0000000000000000` | zero |
+| 13 | `0x0000000000000000` | zero |
+| 12 | `0x0000000000000000` | zero |
+| 11 | `0x0000000000000000` | zero |
+| 10 | `0x0000000000000000` | zero |
+| 9 | `0x0000000000000000` | zero |
+| 8 | `0x0000000000000000` | zero |
+| 7 | `0xc042c3389e72044d` | |
+| 6 | `0x9ec8078aea7bc954` | |
+| 5 | `0xebf209d918f0ef27` | |
+| 4 | `0x425259e247711927` | |
+| 3 | `0x97463bf23832d0de` | |
+| 2 | `0x5e46e47fc61cab50` | |
+| 1 | `0x4bcfd36fc2a945c5` | |
+| 0 | `0x1055d97000000001` | tail: $d \cdot 2^{36} + 1$ |
 
-: Scalar field prime $r$ — limb decomposition
+: Scalar field prime $r$ — 64-bit limbs, hex, MSB first
 
 **Key readability features:** 8 of 16 limbs are zero (50%), and the final limb visually confirms the NTT-friendly structure with the `00000001` suffix (36 trailing zero bits before the $+1$).
 
@@ -58,26 +58,26 @@ where $d_p$ is a 988-bit odd integer. The final limb shares the same tail patter
 
 | Limb | Value | Note |
 |------|-------|------|
-| 15 | `c0859da83a500988` | |
-| 14 | `10eea35c61fea054` | |
-| 13 | `c866902599220d30` | |
-| 12 | `c93f38265ed6b830` | |
-| 11 | `5785b8a073e482e8` | |
-| 10 | `685cfeeb388dc45e` | |
-| 9 | `bca1686245b326fe` | |
-| 8 | `824ca74ac0844160` | |
-| 7 | `f4e289806084e50e` | |
-| 6 | `6c02f32cb94d786b` | |
-| 5 | `f80fb080c07d6a07` | |
-| 4 | `73f2b4591eb70df3` | |
-| 3 | `9367aa32ebb42449` | |
-| 2 | `e0a648f61a20e876` | |
-| 1 | `f971f3bf976a7d6a` | |
-| 0 | `dd20d97000000001` | tail: $d \cdot 2^{36} + 1$ |
+| 15 | `0xc0859da83a500988` | |
+| 14 | `0x10eea35c61fea054` | |
+| 13 | `0xc866902599220d30` | |
+| 12 | `0xc93f38265ed6b830` | |
+| 11 | `0x5785b8a073e482e8` | |
+| 10 | `0x685cfeeb388dc45e` | |
+| 9 | `0xbca1686245b326fe` | |
+| 8 | `0x824ca74ac0844160` | |
+| 7 | `0xf4e289806084e50e` | |
+| 6 | `0x6c02f32cb94d786b` | |
+| 5 | `0xf80fb080c07d6a07` | |
+| 4 | `0x73f2b4591eb70df3` | |
+| 3 | `0x9367aa32ebb42449` | |
+| 2 | `0xe0a648f61a20e876` | |
+| 1 | `0xf971f3bf976a7d6a` | |
+| 0 | `0xdd20d97000000001` | tail: $d \cdot 2^{36} + 1$ |
 
-: Base field prime $p$ — limb decomposition
+: Base field prime $p$ — 64-bit limbs, hex, MSB first
 
-**Shared tail pattern:** Both $p$ and $r$ end with `...d970_00000001`, a direct consequence of the seed constraint propagating through the construction. This visual consistency aids manual verification.
+**Shared structure:** The lowest limb of both primes ends with `0x...d97000000001`, encoding the factor $d \cdot 2^{36} + 1$. This is a direct algebraic consequence of the seed constraint $T \equiv 0 \pmod{2^{12}}$ (Lemma 1), not a coincidence — any auditor can independently verify it by recomputing $\Phi_{18}(T) \bmod 2^{36}$.
 
 ## Curve Summary
 
@@ -97,7 +97,7 @@ where $d_p$ is a 988-bit odd integer. The final limb shares the same tail patter
 
 The curve equation $y^2 = x^3 + 41$ arises from the CM method with $D = -3$: the Hilbert class polynomial $H_{-3}(x) = x$ gives $j = 0$, yielding the family $y^2 = x^3 + b$. The twist $b = 41$ is selected by verifying which of the six sextic twists has group order divisible by $r$.
 
-A generator point $G = (G_x, G_y)$ of prime order $r$ is obtained by cofactor multiplication of a random curve point. The full coordinates are published in the project repository [@LumenMath].
+A generator point $G = (G_x, G_y)$ of prime order $r$ is obtained by cofactor multiplication of a random curve point. The full coordinates are published in the project repository [@Curve1024Impl].
 
 ## Readability Metrics
 
@@ -115,7 +115,7 @@ The scalar field prime $r$ is notably sparse: half its limb representation is ze
 
 # Implementation
 
-We implement the complete system in Rust without external cryptographic dependencies [@LumenMath]. The implementation comprises:
+We implement the complete system in Rust without external cryptographic dependencies [@Curve1024Impl]. The implementation comprises:
 
 - A custom `U1024` big integer type with Montgomery multiplication [@Montgomery1985]
 - Prime field arithmetic (`PrimeFieldElement`) with constant-time Fermat inversion
@@ -136,7 +136,7 @@ The test suite contains 36 tests covering arithmetic correctness, group law veri
 | ECDSA sign | 14.2 ms | 14.9 ms | 15.7 ms |
 | ECDSA verify | 29.1 ms | 30.4 ms | 32.0 ms |
 
-: Performance benchmarks (Criterion, release build, LLVM O3, projective coordinates with Montgomery ladder)
+: Performance benchmarks ($n = 100$ iterations, Criterion, release build, LLVM O3, projective coordinates with Montgomery ladder). Machine: Intel Core i7-1260P, 16 GB RAM, Arch Linux 7.0.5.
 
 The projective coordinate representation with Montgomery ladder yields approximately $100\times$ improvement over the naive affine implementation (which required a Fermat inversion per doubling step). Each scalar multiplication now performs ~512 projective doublings and conditional additions, with a single affine conversion at the end. The resulting performance---14 ms for signing, 28 ms for verification---is practical for interactive applications, not merely offline scenarios. Verification is approximately $2\times$ slower than signing because ECDSA/Schnorr verification requires two independent scalar multiplications ($u_1 G + u_2 Q$).
 
@@ -186,14 +186,14 @@ Curve & $|p|$ & $\rho$ & $\nu_2$ & Security \\
 \midrule
 BN254 & 254 & 1.0 & $\sim$1 & 100-bit \\
 BLS12-381 & 381 & 1.5 & 32 & 128-bit \\
-KSS18 & varies & 1.33 & rand & varies \\
+KSS18 & varies & 1.33 & instance-dep. & varies \\
 \textbf{Curve1024} & \textbf{1024} & 2.0 & \textbf{36} & \textbf{256-bit} \\
 \bottomrule
 \end{tabular}
 \end{table}
 ```
 
-Curve1024 occupies a unique position: it provides the highest ECDLP security level (256-bit) and the highest two-adicity (36) among deployed pairing-friendly curves, at the cost of a larger $\rho$-value inherent to the Cocks-Pinch method. The 18,432-bit pairing target field provides substantial margin against TNFS attacks. Fig.~\ref{fig:comparison} visualizes this tradeoff.
+Among the curves compared in `\tablename~\ref{tab:comparison}`{=latex}, Curve1024 provides the highest ECDLP security level (256-bit) and the highest two-adicity (36), at the cost of a larger $\rho$-value inherent to the Cocks-Pinch method. The 18,432-bit pairing target field provides substantial margin against TNFS attacks. `\figurename~\ref{fig:comparison}`{=latex} visualizes this tradeoff.
 
 ```{=latex}
 \input{figures/curve-comparison}

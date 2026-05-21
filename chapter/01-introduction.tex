@@ -33,11 +33,12 @@ that resist manual inspection.
 \item
   \textbf{Improved Cocks-Pinch with NTT constraints.} We modify the
   Cocks-Pinch construction to \emph{guarantee} high two-adicity in both
-  field primes by constraining the cyclotomic seed \(T\). Choosing
-  \(T \equiv 0 \pmod{2^{12}}\) yields \(\nu_2(r-1) \geq 36\)
-  deterministically, while an extended lift search ensures
-  \(\nu_2(p-1) \geq 36\). The resulting two-adicity of 36 exceeds
-  BLS12-381's value of 32.
+  field primes by constraining the cyclotomic seed \(T\). Specifically,
+  choosing \(T \equiv 0 \pmod{2^{12}}\) yields \(\nu_2(r-1) \geq 36\)
+  deterministically (formalized in Lemma 1, Section 3), while an
+  extended lift search ensures \(\nu_2(p-1) \geq 36\). In our
+  construction, we obtain a two-adicity of 36, compared to BLS12-381's
+  value of 32.
 \item
   \textbf{Readability-aware prime selection.} We introduce a
   multi-criteria scoring system that evaluates candidate primes on eight
@@ -50,8 +51,9 @@ that resist manual inspection.
   verifiable curve with embedding degree \(k=18\), scalar field order
   \(r \approx 2^{512}\) (256-bit ECDLP security), and equation
   \(E: y^2 = x^3 + 41\). The full parameter set---including generator
-  point---is published and validated by a Rust implementation with 36
-  passing tests.
+  point---is published alongside a Rust implementation whose test suite
+  verifies group arithmetic correctness and confirms resistance against
+  MOV, Anomalous, and TNFS attacks.
 \end{enumerate}
 
 \textbf{Organization.} Section 2 reviews background on pairing-friendly

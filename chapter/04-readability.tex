@@ -94,9 +94,11 @@ The readability-aware search operates in two modes:
   behavior).
 \item
   \textbf{Readable mode}: For each valid \(r\), explores the \emph{full}
-  lift range to find the highest-scoring \(p\). Tracks the global best
-  across \(N\) successful attempts (default \(N = 50\)) within a time
-  budget.
+  lift range to find the highest-scoring \(p\). The search terminates
+  when \emph{either} a time budget (default 8 hours) expires \emph{or}
+  \(N\) successful candidates (default \(N = 50\)) have been collected,
+  whichever occurs first. The time budget is checked at the start of
+  each iteration and takes priority.
 \end{itemize}
 
 In readable mode, the generator exhaustively searches all \((h_t, h_y)\)

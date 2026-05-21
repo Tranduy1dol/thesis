@@ -9,6 +9,8 @@
 \usepackage{booktabs}
 \usepackage{multirow}
 \usepackage{hyperref}
+\usepackage{url}
+\def\UrlBreaks{\do\/\do-\do.\do_\do~}
 \usepackage{cite}
 \usepackage{array}
 \usepackage{fancyvrb}
@@ -18,8 +20,22 @@
 \pgfplotsset{compat=1.18}
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning}
 
+% Section heading style: bold, left-aligned, Arabic numbering
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+\makeatletter
+\renewcommand{\section}{\@startsection{section}{1}{\z@}%
+  {-2.0ex \@plus -0.5ex \@minus -.2ex}%
+  {1.0ex \@plus .2ex}%
+  {\normalfont\large\bfseries}}
+\renewcommand{\subsection}{\@startsection{subsection}{2}{\z@}%
+  {-3.25ex \@plus -1ex \@minus -.2ex}%
+  {1.5ex \@plus .2ex}%
+  {\normalfont\normalsize\bfseries}}
+\makeatother
+
 % Pandoc tightlist support
-\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}\setlength{\emergencystretch}{3em}}
 
 % Pandoc syntax highlighting (if code blocks are used)
 \newcommand{\VerbBar}{|}
@@ -59,16 +75,20 @@
 \newcommand{\WarningTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
 \newcommand{\passthrough}[1]{#1}
 
+\IEEEoverridecommandlockouts
+
 \begin{document}
 
-\title{NTT-Friendly Pairing Curve Construction with\\Readability-Aware Prime Selection over a 1024-bit Field}
+\title{NTT-friendly Pairing Curve Construction with\\Readability-Aware Prime Selection over a 1024-bit Field}
 
 \author{
-\IEEEauthorblockN{Tran Duy}
+\IEEEauthorblockN{Manh Duy Tran}
 \IEEEauthorblockA{University of Engineering and Technology\\
 Vietnam National University, Hanoi\\
-Email: placeholder@vnu.edu.vn}
+Email: tmd.iid2004@gmail.com}
 }
+
+\IEEEpubid{\footnotesize Code and parameters available at \url{https://github.com/Tranduy1dol/curve1024} (tag v1.5.0-alpha).}
 
 \maketitle
 

@@ -33,27 +33,27 @@ where \(d_r\) is a 476-bit odd integer. In 64-bit limb representation
 
 \begin{table}[t]
 \centering
-\caption{Scalar field prime \(r\) --- limb decomposition}
+\caption{Scalar field prime \(r\) --- 64-bit limbs, hex, MSB first}
 \begin{tabular}{lll}
 \toprule
 Limb & Value & Note \\
 \midrule
-15 & \texttt{0000000000000000} & zero \\
-14 & \texttt{0000000000000000} & zero \\
-13 & \texttt{0000000000000000} & zero \\
-12 & \texttt{0000000000000000} & zero \\
-11 & \texttt{0000000000000000} & zero \\
-10 & \texttt{0000000000000000} & zero \\
-9 & \texttt{0000000000000000} & zero \\
-8 & \texttt{0000000000000000} & zero \\
-7 & \texttt{c042c3389e72044d} &  \\
-6 & \texttt{9ec8078aea7bc954} &  \\
-5 & \texttt{ebf209d918f0ef27} &  \\
-4 & \texttt{425259e247711927} &  \\
-3 & \texttt{97463bf23832d0de} &  \\
-2 & \texttt{5e46e47fc61cab50} &  \\
-1 & \texttt{4bcfd36fc2a945c5} &  \\
-0 & \texttt{1055d97000000001} & tail: \(d \cdot 2^{36} + 1\) \\
+15 & \texttt{0x0000000000000000} & zero \\
+14 & \texttt{0x0000000000000000} & zero \\
+13 & \texttt{0x0000000000000000} & zero \\
+12 & \texttt{0x0000000000000000} & zero \\
+11 & \texttt{0x0000000000000000} & zero \\
+10 & \texttt{0x0000000000000000} & zero \\
+9 & \texttt{0x0000000000000000} & zero \\
+8 & \texttt{0x0000000000000000} & zero \\
+7 & \texttt{0xc042c3389e72044d} &  \\
+6 & \texttt{0x9ec8078aea7bc954} &  \\
+5 & \texttt{0xebf209d918f0ef27} &  \\
+4 & \texttt{0x425259e247711927} &  \\
+3 & \texttt{0x97463bf23832d0de} &  \\
+2 & \texttt{0x5e46e47fc61cab50} &  \\
+1 & \texttt{0x4bcfd36fc2a945c5} &  \\
+0 & \texttt{0x1055d97000000001} & tail: \(d \cdot 2^{36} + 1\) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -74,35 +74,37 @@ tail pattern as \(r\):
 
 \begin{table}[t]
 \centering
-\caption{Base field prime \(p\) --- limb decomposition}
+\caption{Base field prime \(p\) --- 64-bit limbs, hex, MSB first}
 \begin{tabular}{lll}
 \toprule
 Limb & Value & Note \\
 \midrule
-15 & \texttt{c0859da83a500988} &  \\
-14 & \texttt{10eea35c61fea054} &  \\
-13 & \texttt{c866902599220d30} &  \\
-12 & \texttt{c93f38265ed6b830} &  \\
-11 & \texttt{5785b8a073e482e8} &  \\
-10 & \texttt{685cfeeb388dc45e} &  \\
-9 & \texttt{bca1686245b326fe} &  \\
-8 & \texttt{824ca74ac0844160} &  \\
-7 & \texttt{f4e289806084e50e} &  \\
-6 & \texttt{6c02f32cb94d786b} &  \\
-5 & \texttt{f80fb080c07d6a07} &  \\
-4 & \texttt{73f2b4591eb70df3} &  \\
-3 & \texttt{9367aa32ebb42449} &  \\
-2 & \texttt{e0a648f61a20e876} &  \\
-1 & \texttt{f971f3bf976a7d6a} &  \\
-0 & \texttt{dd20d97000000001} & tail: \(d \cdot 2^{36} + 1\) \\
+15 & \texttt{0xc0859da83a500988} &  \\
+14 & \texttt{0x10eea35c61fea054} &  \\
+13 & \texttt{0xc866902599220d30} &  \\
+12 & \texttt{0xc93f38265ed6b830} &  \\
+11 & \texttt{0x5785b8a073e482e8} &  \\
+10 & \texttt{0x685cfeeb388dc45e} &  \\
+9 & \texttt{0xbca1686245b326fe} &  \\
+8 & \texttt{0x824ca74ac0844160} &  \\
+7 & \texttt{0xf4e289806084e50e} &  \\
+6 & \texttt{0x6c02f32cb94d786b} &  \\
+5 & \texttt{0xf80fb080c07d6a07} &  \\
+4 & \texttt{0x73f2b4591eb70df3} &  \\
+3 & \texttt{0x9367aa32ebb42449} &  \\
+2 & \texttt{0xe0a648f61a20e876} &  \\
+1 & \texttt{0xf971f3bf976a7d6a} &  \\
+0 & \texttt{0xdd20d97000000001} & tail: \(d \cdot 2^{36} + 1\) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{Shared tail pattern:} Both \(p\) and \(r\) end with
-\texttt{...d970\_00000001}, a direct consequence of the seed constraint
-propagating through the construction. This visual consistency aids
-manual verification.
+\textbf{Shared structure:} The lowest limb of both primes ends with
+\texttt{0x...d97000000001}, encoding the factor \(d \cdot 2^{36} + 1\).
+This is a direct algebraic consequence of the seed constraint
+\(T \equiv 0 \pmod{2^{12}}\) (Lemma 1), not a coincidence --- any
+auditor can independently verify it by recomputing
+\(\Phi_{18}(T) \bmod 2^{36}\).
 
 \subsubsection{Curve Summary}\label{curve-summary}
 
@@ -134,7 +136,7 @@ divisible by \(r\).
 
 A generator point \(G = (G_x, G_y)\) of prime order \(r\) is obtained by
 cofactor multiplication of a random curve point. The full coordinates
-are published in the project repository \cite{LumenMath}.
+are published in the project repository \cite{Curve1024Impl}.
 
 \subsubsection{Readability Metrics}\label{readability-metrics}
 
@@ -161,7 +163,7 @@ debugging output. Both primes exceed BLS12-381's two-adicity of 32.
 \subsection{Implementation}\label{implementation}
 
 We implement the complete system in Rust without external cryptographic
-dependencies \cite{LumenMath}. The implementation comprises:
+dependencies \cite{Curve1024Impl}. The implementation comprises:
 
 \begin{itemize}
 \tightlist
@@ -191,8 +193,9 @@ law verification, and attack simulation (MOV, Anomalous, Invalid Curve).
 
 \begin{table}[t]
 \centering
-\caption{Performance benchmarks (Criterion, release build, LLVM O3, projective
-coordinates with Montgomery ladder)}
+\caption{Performance benchmarks (\(n = 100\) iterations, Criterion, release
+build, LLVM O3, projective coordinates with Montgomery ladder). Machine:
+Intel Core i7-1260P, 16 GB RAM, Arch Linux 7.0.5.}
 \begin{tabular}{llll}
 \toprule
 Operation & Min & Mean & Max \\
@@ -291,17 +294,17 @@ Curve & $|p|$ & $\rho$ & $\nu_2$ & Security \\
 \midrule
 BN254 & 254 & 1.0 & $\sim$1 & 100-bit \\
 BLS12-381 & 381 & 1.5 & 32 & 128-bit \\
-KSS18 & varies & 1.33 & rand & varies \\
+KSS18 & varies & 1.33 & instance-dep. & varies \\
 \textbf{Curve1024} & \textbf{1024} & 2.0 & \textbf{36} & \textbf{256-bit} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Curve1024 occupies a unique position: it provides the highest ECDLP
-security level (256-bit) and the highest two-adicity (36) among deployed
-pairing-friendly curves, at the cost of a larger \(\rho\)-value inherent
-to the Cocks-Pinch method. The 18,432-bit pairing target field provides
+Among the curves compared in \tablename~\ref{tab:comparison}, Curve1024
+provides the highest ECDLP security level (256-bit) and the highest
+two-adicity (36), at the cost of a larger \(\rho\)-value inherent to the
+Cocks-Pinch method. The 18,432-bit pairing target field provides
 substantial margin against TNFS attacks.
-Fig.\textasciitilde{}\ref{fig:comparison} visualizes this tradeoff.
+\figurename~\ref{fig:comparison} visualizes this tradeoff.
 
 \input{figures/curve-comparison}
