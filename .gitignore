@@ -13,6 +13,14 @@
 *.dvi
 *.ps
 *.lol
+*.nav
+*.snm
+
+# Generated LaTeX (from pandoc)
+chapter/*.tex
+
+# PDF output
+main.pdf
 
 # Obsidian - user-specific files
 .obsidian/workspace.json
